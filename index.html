@@ -239,10 +239,12 @@
     }
 
     .project {
+      display: block;
       border-radius: 26px;
       padding: 24px;
       position: relative;
       overflow: hidden;
+      transition: transform 180ms ease, box-shadow 180ms ease;
     }
 
     .project::before {
@@ -277,6 +279,19 @@
     }
 
     .project a {
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .project:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 34px 90px rgba(50, 44, 37, 0.18);
+    }
+
+    .project-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       color: var(--primary-dark);
       font-weight: 700;
     }
@@ -444,32 +459,32 @@
           </p>
         </div>
         <div class="projects">
-          <article class="project">
+          <a class="project" href="https://cagri.diginapps.com/" target="_blank" rel="noreferrer">
             <span>Portfoy</span>
             <h4>Kisisel Tanitim Sayfasi</h4>
             <p>
               Kendimi, yeteneklerimi ve yaptigim isleri sade ama etkili bir dil ile anlattigim ana merkez.
             </p>
-            <a href="#iletisim">Detay ekle</a>
-          </article>
+            <span class="project-link">Projeyi ac</span>
+          </a>
 
-          <article class="project">
+          <a class="project" href="https://cagri.diginapps.com/" target="_blank" rel="noreferrer">
             <span>Blog</span>
             <h4>Ogrenme Gunlugu</h4>
             <p>
               Teknoloji, uretkenlik veya ilgilendigim konular hakkinda yazilar ekleyebilecegim bir alan.
             </p>
-            <a href="#hakkimda">Icerigi planla</a>
-          </article>
+            <span class="project-link">Projeyi ac</span>
+          </a>
 
-          <article class="project">
+          <a class="project" href="https://cagri.diginapps.com/" target="_blank" rel="noreferrer">
             <span>Hizmet</span>
             <h4>Calisma ve Isbirligi Alani</h4>
             <p>
               Ileride freelance isler, danismanlik veya isbirligi teklifleri icin kullanabilecegim bolum.
             </p>
-            <a href="#iletisim">Iletisim kur</a>
-          </article>
+            <span class="project-link">Projeyi ac</span>
+          </a>
         </div>
       </section>
 
@@ -504,35 +519,35 @@
           </article>
         </div>
         <div class="projects">
-          <article class="project">
+          <a class="project" href="https://cagri.diginapps.com/" target="_blank" rel="noreferrer">
             <span>Altyapi</span>
             <h4>Laravel Tabanli Omurga</h4>
             <p>
               Proje, Laravel ekosistemi uzerinde kurgulandi ve buyuyebilecek bir
               kurumsal yapi mantigiyla hazirlandi.
             </p>
-            <a href="#iletisim">Demo talebi ekle</a>
-          </article>
+            <span class="project-link">Canli uygulamayi ac</span>
+          </a>
 
-          <article class="project">
+          <a class="project" href="https://cagri.diginapps.com/" target="_blank" rel="noreferrer">
             <span>Guvenlik</span>
             <h4>Dosya ve Rol Kontrolu</h4>
             <p>
               Sistemde roller ayriliyor; dosyalar private storage mantigi ile
               korunuyor ve akis adimlari yetkiye gore ilerliyor.
             </p>
-            <a href="#hakkimda">Sureci anlat</a>
-          </article>
+            <span class="project-link">Canli uygulamayi ac</span>
+          </a>
 
-          <article class="project">
+          <a class="project" href="https://cagri.diginapps.com/" target="_blank" rel="noreferrer">
             <span>Hedef</span>
             <h4>Uretime Hazir Bir Temel</h4>
             <p>
               Bu haliyle calisir bir omurga sunuyor; gelismis raporlama, CRUD
               ekranlari ve UX iyilestirmeleriyle daha da buyutulebilir.
             </p>
-            <a href="#ana-sayfa">Projeyi one cikar</a>
-          </article>
+            <span class="project-link">Canli uygulamayi ac</span>
+          </a>
         </div>
       </section>
 
