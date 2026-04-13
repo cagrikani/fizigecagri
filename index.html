@@ -85,7 +85,10 @@
     .panel,
     .feature-card,
     .project,
-    .note {
+    .note,
+    .app-shell,
+    .kanban-card,
+    .timeline-card {
       background: var(--card);
       border: 1px solid rgba(255, 255, 255, 0.45);
       box-shadow: var(--shadow);
@@ -278,11 +281,6 @@
       line-height: 1.7;
     }
 
-    .project a {
-      color: var(--primary-dark);
-      font-weight: 700;
-    }
-
     .project:hover {
       transform: translateY(-4px);
       box-shadow: 0 34px 90px rgba(50, 44, 37, 0.18);
@@ -294,6 +292,138 @@
       gap: 8px;
       color: var(--primary-dark);
       font-weight: 700;
+    }
+
+    .app-shell {
+      border-radius: 34px;
+      padding: 28px;
+      margin-top: 22px;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .app-title h4 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+    }
+
+    .app-title p,
+    .metric-label,
+    .metric-value,
+    .kanban-card p,
+    .timeline-card p {
+      color: var(--muted);
+    }
+
+    .app-title p {
+      margin: 0;
+      line-height: 1.7;
+      max-width: 55ch;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4f8f68;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      border-radius: 24px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--line);
+    }
+
+    .metric-label {
+      display: block;
+      font-size: 0.84rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: 2rem;
+      color: var(--ink);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .kanban-column h5,
+    .timeline-card h5 {
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+
+    .kanban-column h5 {
+      color: var(--muted);
+    }
+
+    .kanban-card,
+    .timeline-card {
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 12px;
+    }
+
+    .kanban-card strong,
+    .timeline-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .mini-tag {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(184, 92, 56, 0.12);
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .timeline-list {
+      display: grid;
+      gap: 12px;
     }
 
     .about-grid {
@@ -363,7 +493,13 @@
     @media (max-width: 920px) {
       .hero,
       .projects,
-      .about-grid {
+      .about-grid,
+      .workspace,
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kanban {
         grid-template-columns: 1fr;
       }
 
@@ -398,7 +534,10 @@
       .feature-card,
       .project,
       .note,
-      .cta {
+      .cta,
+      .app-shell,
+      .kanban-card,
+      .timeline-card {
         border-radius: 24px;
       }
     }
@@ -426,7 +565,7 @@
           </p>
           <div class="actions">
             <a class="button" href="#projeler">Projeleri incele</a>
-            <a class="button-secondary" href="#iletisim">Benimle iletisime gec</a>
+            <a class="button-secondary" href="#is-takibi">Is takibi demosunu gor</a>
           </div>
         </article>
 
@@ -459,31 +598,31 @@
           </p>
         </div>
         <div class="projects">
-          <a class="project" href="https://diginapps.com/task" target="_blank" rel="noreferrer">
-            <span>Portfoy</span>
-            <h4>Kisisel Tanitim Sayfasi</h4>
+          <a class="project" href="#is-takibi">
+            <span>Urun</span>
+            <h4>PDF Inceleme Akis Sistemi</h4>
             <p>
-              Kendimi, yeteneklerimi ve yaptigim isleri sade ama etkili bir dil ile anlattigim ana merkez.
+              Yonetici kullanici ekler, PDF gorevleri atar ve tum teslimleri tek panelden izler.
             </p>
-            <span class="project-link">Projeyi ac</span>
+            <span class="project-link">Demo bolumune git</span>
           </a>
 
-          <a class="project" href="https://diginapps.com/task" target="_blank" rel="noreferrer">
-            <span>Blog</span>
-            <h4>Ogrenme Gunlugu</h4>
+          <a class="project" href="#is-takibi">
+            <span>Akis</span>
+            <h4>Gorev Ata, Incele, Tekrar Yukle</h4>
             <p>
-              Teknoloji, uretkenlik veya ilgilendigim konular hakkinda yazilar ekleyebilecegim bir alan.
+              Her kullanici sadece kendi gorevlerini gorur; dosyayi indirir, inceler ve yeni surumu geri yollar.
             </p>
-            <span class="project-link">Projeyi ac</span>
+            <span class="project-link">Sureci incele</span>
           </a>
 
-          <a class="project" href="https://diginapps.com/task" target="_blank" rel="noreferrer">
-            <span>Hizmet</span>
-            <h4>Calisma ve Isbirligi Alani</h4>
+          <a class="project" href="#is-takibi">
+            <span>Yonetim</span>
+            <h4>Deadline ve Teslim Takibi</h4>
             <p>
-              Ileride freelance isler, danismanlik veya isbirligi teklifleri icin kullanabilecegim bolum.
+              Son tarih, geciken dosyalar, bekleyen incelemeler ve tamamlanan isler ayni yerde gorunur.
             </p>
-            <span class="project-link">Projeyi ac</span>
+            <span class="project-link">Paneli gor</span>
           </a>
         </div>
       </section>
@@ -492,62 +631,161 @@
         <div class="section-header">
           <h3>One Cikan Proje: Is Takibi</h3>
           <p>
-            Bu bolum, ogretmen komisyonlari icin tasarlanan is akisi sistemini
-            tanitiyor. Uygulamanin kendisi sunucu gerektiren bir Laravel projesi,
-            bu sayfada ise onu anlasilir ve profesyonel bir proje vitrini olarak sunuyorum.
+            Bu proje, PDF tabanli gorevlerin kullanicilar arasinda planli bicimde
+            dagitilmasi icin tasarlandi. Yonetici dosya yollar, teslim tarihini koyar
+            ve kullanicilar inceledikleri dosyalari sisteme yeniden yukler.
           </p>
         </div>
         <div class="about-grid">
           <article class="note">
             <h4>Proje ne yapiyor?</h4>
             <p>
-              Is Takibi, cok kurumlu yapiya uygun olarak gelistirilmis bir komisyon
-              ve gorev yonetim sistemidir. Rol bazli erisim, dosya guvenligi, gorev
-              akis yonetimi ve inceleme sureclerini tek yerde toplar.
+              Is Takibi, belge inceleme surecini daginik mesajlardan alip tek bir
+              panele toplar. Kullanici olusturma, gorev atama, son tarih belirleme
+              ve PDF teslimlerini duzenli sekilde izleme mantigiyla calisir.
             </p>
           </article>
 
           <article class="note">
             <h4>Temel moduller</h4>
             <ul>
-              <li>Task Batch ve Teacher Task akisi</li>
-              <li>Direct Review ve Layout Package surecleri</li>
-              <li>Rol ve yetki sistemi</li>
-              <li>Private dosya yukleme ve indirme guvenligi</li>
-              <li>Bildirim, queue ve test omurgasi</li>
+              <li>Kullanici ekleme ve rol yonetimi</li>
+              <li>PDF gorevi olusturma ve atama</li>
+              <li>Son tarih ve durum takibi</li>
+              <li>Incelenen dosyayi yeniden yukleme</li>
+              <li>Tek panelden tum teslimleri izleme</li>
             </ul>
           </article>
         </div>
         <div class="projects">
-          <a class="project" href="https://diginapps.com/task" target="_blank" rel="noreferrer">
-            <span>Altyapi</span>
-            <h4>Laravel Tabanli Omurga</h4>
+          <article class="project">
+            <span>Yonetici</span>
+            <h4>Kullanici ve PDF Dagitimi</h4>
             <p>
-              Proje, Laravel ekosistemi uzerinde kurgulandi ve buyuyebilecek bir
-              kurumsal yapi mantigiyla hazirlandi.
+              Yonetici tarafinda yeni kullanici eklenir, dosya yuklenir ve gorev ilgili
+              kisiye ya da ekibe atanir.
             </p>
-            <span class="project-link">Canli uygulamayi ac</span>
-          </a>
+            <span class="project-link">Atama paneli</span>
+          </article>
 
-          <a class="project" href="https://diginapps.com/task" target="_blank" rel="noreferrer">
-            <span>Guvenlik</span>
-            <h4>Dosya ve Rol Kontrolu</h4>
+          <article class="project">
+            <span>Kullanici</span>
+            <h4>Incele ve Teslim Et</h4>
             <p>
-              Sistemde roller ayriliyor; dosyalar private storage mantigi ile
-              korunuyor ve akis adimlari yetkiye gore ilerliyor.
+              Kullanici sadece kendi gorevini gorur, dosyayi indirir, inceleme yapar
+              ve yeni PDF surumunu sisteme geri yukler.
             </p>
-            <span class="project-link">Canli uygulamayi ac</span>
-          </a>
+            <span class="project-link">Teslim akisi</span>
+          </article>
 
-          <a class="project" href="https://diginapps.com/task" target="_blank" rel="noreferrer">
-            <span>Hedef</span>
-            <h4>Uretime Hazir Bir Temel</h4>
+          <article class="project">
+            <span>Takip</span>
+            <h4>Durum ve Gecikme Kontrolu</h4>
             <p>
-              Bu haliyle calisir bir omurga sunuyor; gelismis raporlama, CRUD
-              ekranlari ve UX iyilestirmeleriyle daha da buyutulebilir.
+              Kim teslim etti, kim gecikti, hangi dosya bekliyor gibi tum cevaplar
+              yonetici panelinde gorunur.
             </p>
-            <span class="project-link">Canli uygulamayi ac</span>
-          </a>
+            <span class="project-link">Takip ekrani</span>
+          </article>
+        </div>
+        <div class="app-shell">
+          <div class="app-header">
+            <div class="app-title">
+              <h4>Is Takibi Panel Gorunumu</h4>
+              <p>
+                Asagidaki kisim, projenin sayfa icinde kodlanmis tanitim demosu.
+                Gercek uygulama mantigini anlatan bir panel duzeni gibi tasarlandi.
+              </p>
+            </div>
+            <div class="status-pill"><span class="status-dot"></span> Demo akisi hazir</div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric">
+              <span class="metric-label">Aktif Gorev</span>
+              <p class="metric-value">12</p>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Bekleyen Inceleme</span>
+              <p class="metric-value">4</p>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Bugun Teslim</span>
+              <p class="metric-value">3</p>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Tamamlanan</span>
+              <p class="metric-value">27</p>
+            </article>
+          </div>
+
+          <div class="workspace">
+            <div class="kanban">
+              <div class="kanban-column">
+                <h5>Hazirlanan Gorevler</h5>
+                <article class="kanban-card">
+                  <strong>Matematik AYT Deneme 02</strong>
+                  <p>Kaynak PDF yuklendi. Inceleme icin 3 kullaniciya atandi.</p>
+                  <span class="mini-tag">Son tarih: 18 Nisan</span>
+                </article>
+                <article class="kanban-card">
+                  <strong>TYT Fizik Kontrol Dosyasi</strong>
+                  <p>Yonetici ilk surumu sisteme ekledi ve gorev acildi.</p>
+                  <span class="mini-tag">Durum: Dagitildi</span>
+                </article>
+              </div>
+
+              <div class="kanban-column">
+                <h5>Inceleme Asamasi</h5>
+                <article class="kanban-card">
+                  <strong>Paragraf Soru Seti</strong>
+                  <p>Kullanici dosyayi indirdi, inceleme notlarini son surume isliyor.</p>
+                  <span class="mini-tag">2 dosya bekleniyor</span>
+                </article>
+                <article class="kanban-card">
+                  <strong>Geometri PDF Revizyonu</strong>
+                  <p>Bir kullanici yeniden yukledi, iki kisi daha teslim edecek.</p>
+                  <span class="mini-tag">Teslim: Bugun</span>
+                </article>
+              </div>
+
+              <div class="kanban-column">
+                <h5>Tamamlananlar</h5>
+                <article class="kanban-card">
+                  <strong>Kimya Kazanim Kontrolu</strong>
+                  <p>Butun incelemeler tamamlandi ve son PDF sisteme kaydedildi.</p>
+                  <span class="mini-tag">Arsivlendi</span>
+                </article>
+                <article class="kanban-card">
+                  <strong>Tarih Deneme Geri Bildirimi</strong>
+                  <p>Yonetici tum teslimleri onayladi ve surec kapatildi.</p>
+                  <span class="mini-tag">Kapandi</span>
+                </article>
+              </div>
+            </div>
+
+            <aside class="timeline-card">
+              <h5>Bugunku Akis</h5>
+              <div class="timeline-list">
+                <div>
+                  <strong>09:10</strong>
+                  <p>Yonetici yeni PDF yukledi ve 5 kullaniciya atama yapti.</p>
+                </div>
+                <div>
+                  <strong>11:25</strong>
+                  <p>Iki kullanici inceleme dosyasini sisteme geri yukledi.</p>
+                </div>
+                <div>
+                  <strong>14:40</strong>
+                  <p>Bir gorev son tarihe yaklastigi icin panelde uyari olustu.</p>
+                </div>
+                <div>
+                  <strong>16:05</strong>
+                  <p>Koordinator tamamlanan dosyalari tek ekranda kontrol etti.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
 
