@@ -300,6 +300,208 @@
       margin-top: 22px;
     }
 
+    .demo-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 22px 0 18px;
+    }
+
+    .demo-tab {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .demo-tab.active {
+      background: var(--primary);
+      color: #fff7f1;
+      border-color: transparent;
+    }
+
+    .demo-screen {
+      display: none;
+    }
+
+    .demo-screen.active {
+      display: block;
+    }
+
+    .admin-layout,
+    .user-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .demo-panel {
+      border-radius: 26px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.44);
+      border: 1px solid var(--line);
+    }
+
+    .demo-panel h5 {
+      margin: 0 0 14px;
+      font-size: 1.1rem;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .task-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 20px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      font: inherit;
+      color: inherit;
+    }
+
+    .task-item:hover,
+    .task-item.active {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(50, 44, 37, 0.12);
+      border-color: rgba(184, 92, 56, 0.32);
+    }
+
+    .task-item strong,
+    .detail-card strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .task-meta,
+    .detail-card p,
+    .detail-card li,
+    .upload-box p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .task-meta {
+      font-size: 0.95rem;
+    }
+
+    .detail-card {
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    .upload-box {
+      border: 1px dashed rgba(184, 92, 56, 0.4);
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .upload-box input {
+      width: 100%;
+      margin: 14px 0 10px;
+    }
+
+    .upload-status {
+      min-height: 24px;
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .demo-note {
+      margin: 18px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .auth-switch,
+    .toolbar-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .pill-list,
+    .storage-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pill-item,
+    .storage-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid var(--line);
+    }
+
+    .pill-item span,
+    .storage-item small {
+      color: var(--muted);
+    }
+
+    .storage-item {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
     .app-header {
       display: flex;
       justify-content: space-between;
@@ -495,7 +697,10 @@
       .projects,
       .about-grid,
       .workspace,
-      .metric-grid {
+      .metric-grid,
+      .admin-layout,
+      .user-layout,
+      .form-grid {
         grid-template-columns: 1fr;
       }
 
@@ -786,6 +991,147 @@
               </div>
             </aside>
           </div>
+
+          <p class="demo-note">
+            Bu demo kayitlari tarayicinda saklar. Yuklenen PDF'ler ayni cihaz ve ayni tarayicida
+            kalici gorunur; paylasimli sunucu depolamasi icin daha sonra backend gerekir.
+          </p>
+
+          <div class="toolbar-row" style="margin-top: 20px;">
+            <div class="auth-switch" aria-label="Rol secici">
+              <button class="demo-tab active" type="button" data-screen="admin-screen">Yonetici Ekrani</button>
+              <button class="demo-tab" type="button" data-screen="user-screen">Kullanici Ekrani</button>
+            </div>
+            <div class="status-pill"><span class="status-dot"></span><span id="active-role-label">Aktif rol: Yonetici</span></div>
+          </div>
+
+          <section class="demo-screen active" id="admin-screen">
+            <div class="admin-layout">
+              <article class="demo-panel">
+                <h5>Kullanici Ekle</h5>
+                <form id="user-form">
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="user-name">Ad Soyad</label>
+                      <input id="user-name" name="name" type="text" placeholder="Ornek: Ayse Yilmaz" required />
+                    </div>
+                    <div class="field">
+                      <label for="user-role">Rol</label>
+                      <select id="user-role" name="role">
+                        <option value="Reviewer">Reviewer</option>
+                        <option value="Editor">Editor</option>
+                        <option value="Coordinator">Coordinator</option>
+                      </select>
+                    </div>
+                    <div class="field full">
+                      <button class="button" type="submit">Kullaniciyi Ekle</button>
+                    </div>
+                  </div>
+                </form>
+                <div class="pill-list" id="user-list"></div>
+              </article>
+
+              <article class="demo-panel">
+                <h5>Gorev ve PDF Olustur</h5>
+                <form id="task-form">
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="task-title-input">Gorev Basligi</label>
+                      <input id="task-title-input" name="title" type="text" placeholder="Ornek: AYT Matematik PDF Kontrolu" required />
+                    </div>
+                    <div class="field">
+                      <label for="task-deadline-input">Son Tarih</label>
+                      <input id="task-deadline-input" name="deadline" type="date" required />
+                    </div>
+                    <div class="field full">
+                      <label for="task-description-input">Aciklama</label>
+                      <textarea id="task-description-input" name="description" placeholder="Kullanicilarin bu PDF ile ne yapacagini yaz."></textarea>
+                    </div>
+                    <div class="field">
+                      <label for="task-assignee-input">Atanan Kullanici</label>
+                      <select id="task-assignee-input" name="assignee"></select>
+                    </div>
+                    <div class="field">
+                      <label for="task-pdf-input">Kaynak PDF</label>
+                      <input id="task-pdf-input" name="file" type="file" accept=".pdf" required />
+                    </div>
+                    <div class="field full">
+                      <button class="button" type="submit">Gorevi Olustur</button>
+                    </div>
+                  </div>
+                </form>
+                <div class="upload-status" id="task-form-status"></div>
+              </article>
+            </div>
+
+            <div class="admin-layout" style="margin-top: 18px;">
+              <article class="demo-panel">
+                <h5>Yonetici Gorev Dagitimi</h5>
+                <div class="task-list" id="admin-task-list">
+                </div>
+              </article>
+
+              <article class="demo-panel">
+                <h5>Secilen Gorev Detayi</h5>
+                <div class="detail-card">
+                  <strong id="admin-task-title">AYT Matematik PDF Kontrolu</strong>
+                  <p id="admin-task-description">Kaynak dosya yuklendi. Kullanici listesi olusturuldu ve sistem tarafindan son tarih ile birlikte dagitim yapildi.</p>
+                </div>
+                <div class="detail-card">
+                  <strong>Atanan Kullanicilar</strong>
+                  <ul id="admin-task-users">
+                    <li>Ayse Yilmaz • PDF'i indirdi</li>
+                    <li>Mehmet Kaya • Incelemeye basladi</li>
+                    <li>Zeynep Demir • Teslim bekleniyor</li>
+                  </ul>
+                </div>
+                <div class="detail-card">
+                  <strong>Beklenen Cikti</strong>
+                  <p id="admin-task-output">Incelenmis PDF ve varsa not dokumani sisteme yeniden yuklenecek.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="demo-screen" id="user-screen">
+            <div class="user-layout">
+              <article class="demo-panel">
+                <h5>Kullanici Gorevlerim</h5>
+                <div class="field">
+                  <label for="demo-user-select">Kullanici Sec</label>
+                  <select id="demo-user-select"></select>
+                </div>
+                <div class="task-list" id="user-task-list"></div>
+              </article>
+
+              <article class="demo-panel">
+                <h5>Kullanici Islem Alani</h5>
+                <div class="detail-card">
+                  <strong id="user-task-title">AYT Matematik PDF Kontrolu</strong>
+                  <p id="user-task-description">Sisteme yuklenen kaynak PDF'i indir, incele ve guncellenmis surumu geri yukle.</p>
+                </div>
+                <div class="detail-card">
+                  <strong>Gorev Adimlari</strong>
+                  <ul id="user-task-steps">
+                    <li>1. Kaynak PDF'i indir</li>
+                    <li>2. Inceleme ve duzeltmeleri yap</li>
+                    <li>3. Yeni PDF surumunu yukle</li>
+                  </ul>
+                </div>
+                <div class="upload-box">
+                  <strong>Incelenmis Dosyayi Yukle</strong>
+                  <p>Secilen PDF ayni tarayicida saklanir ve teslim edilmis olarak gorev kartina yansir.</p>
+                  <input id="demo-upload" type="file" accept=".pdf" />
+                  <button class="button" id="demo-upload-button" type="button">Teslim Et</button>
+                  <div class="upload-status" id="demo-upload-status"></div>
+                </div>
+                <div class="detail-card" style="margin-top: 14px;">
+                  <strong>Kaydedilen PDF'ler</strong>
+                  <div class="storage-list" id="stored-files-list"></div>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -837,5 +1183,344 @@
       <span>Cloudflare Pages uzerinde yayinda</span>
     </footer>
   </div>
+  <script>
+    const STORAGE_KEY = 'is-takibi-demo-state-v2';
+
+    const defaultState = {
+      users: [
+        { id: 'u1', name: 'Ayse Yilmaz', role: 'Reviewer' },
+        { id: 'u2', name: 'Mehmet Kaya', role: 'Reviewer' },
+        { id: 'u3', name: 'Zeynep Demir', role: 'Coordinator' }
+      ],
+      tasks: [
+        {
+          id: 't1',
+          title: 'AYT Matematik PDF Kontrolu',
+          description: 'Kaynak dosya yuklendi. Kullanici listesi olusturuldu ve sistem tarafindan son tarih ile birlikte dagitim yapildi.',
+          deadline: '2026-04-18',
+          assigneeId: 'u1',
+          sourceFileName: 'ayt-matematik-kontrol.pdf',
+          reviewFileName: '',
+          status: 'Incelemede'
+        },
+        {
+          id: 't2',
+          title: 'TYT Fizik Revizyon Paketi',
+          description: 'Revizyon icin kaynak PDF dagitildi. Inceleme notlari bekleniyor.',
+          deadline: '2026-04-20',
+          assigneeId: 'u2',
+          sourceFileName: 'tyt-fizik-revizyon.pdf',
+          reviewFileName: '',
+          status: 'Dagitildi'
+        },
+        {
+          id: 't3',
+          title: 'Paragraf Deneme Son Okuma',
+          description: 'Butun dosyalar geri geldi. Son kontrol asamasi devam ediyor.',
+          deadline: '2026-04-16',
+          assigneeId: 'u3',
+          sourceFileName: 'paragraf-son-okuma.pdf',
+          reviewFileName: 'paragraf-son-okuma-sonsurum.pdf',
+          status: 'Kontrolde'
+        }
+      ],
+      uploads: []
+    };
+
+    let state = loadState();
+    let selectedTaskId = state.tasks[0]?.id || null;
+    let activeUserId = state.users[0]?.id || null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : structuredClone(defaultState);
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function findUser(id) {
+      return state.users.find((user) => user.id === id);
+    }
+
+    function findTask(id) {
+      return state.tasks.find((task) => task.id === id);
+    }
+
+    const tabs = document.querySelectorAll('.demo-tab');
+    const screens = document.querySelectorAll('.demo-screen');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.classList.remove('active'));
+        screens.forEach((screen) => screen.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.screen).classList.add('active');
+        document.getElementById('active-role-label').textContent =
+          tab.dataset.screen === 'admin-screen' ? 'Aktif rol: Yonetici' : 'Aktif rol: Kullanici';
+      });
+    });
+
+    function renderUsers() {
+      const list = document.getElementById('user-list');
+      const assigneeSelect = document.getElementById('task-assignee-input');
+      const demoUserSelect = document.getElementById('demo-user-select');
+
+      list.innerHTML = state.users
+        .map((user) => `
+          <div class="pill-item">
+            <strong>${user.name}</strong>
+            <span>${user.role}</span>
+          </div>
+        `)
+        .join('');
+
+      const options = state.users
+        .map((user) => `<option value="${user.id}">${user.name} • ${user.role}</option>`)
+        .join('');
+
+      assigneeSelect.innerHTML = options;
+      demoUserSelect.innerHTML = options;
+
+      if (!activeUserId || !findUser(activeUserId)) {
+        activeUserId = state.users[0]?.id || null;
+      }
+
+      assigneeSelect.value = state.users[0]?.id || '';
+      demoUserSelect.value = activeUserId || '';
+    }
+
+    function renderAdminTasks() {
+      const list = document.getElementById('admin-task-list');
+      list.innerHTML = state.tasks
+        .map((task) => {
+          const assignee = findUser(task.assigneeId);
+          return `
+            <button class="task-item ${task.id === selectedTaskId ? 'active' : ''}" type="button" data-admin-task-id="${task.id}">
+              <strong>${task.title}</strong>
+              <div class="task-meta">${assignee ? assignee.name : 'Atanmadi'} • Son tarih ${task.deadline} • Durum: ${task.status}</div>
+            </button>
+          `;
+        })
+        .join('');
+
+      document.querySelectorAll('[data-admin-task-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedTaskId = button.dataset.adminTaskId;
+          renderAdminTasks();
+          renderTaskDetail();
+        });
+      });
+    }
+
+    function renderTaskDetail() {
+      const task = findTask(selectedTaskId) || state.tasks[0];
+      if (!task) {
+        return;
+      }
+      selectedTaskId = task.id;
+      const assignee = findUser(task.assigneeId);
+      const upload = state.uploads.find((item) => item.taskId === task.id);
+      document.getElementById('admin-task-title').textContent = task.title;
+      document.getElementById('admin-task-description').textContent = task.description;
+      document.getElementById('admin-task-output').textContent =
+        upload
+          ? `Incelenmis dosya kaydedildi: ${upload.name}`
+          : 'Incelenmis PDF ve varsa not dokumani sisteme yeniden yuklenecek.';
+      document.getElementById('admin-task-users').innerHTML = `
+        <li>${assignee ? assignee.name : 'Atanmadi'} • ${task.status}</li>
+        <li>Kaynak PDF • ${task.sourceFileName}</li>
+        <li>Yeniden yuklenen dosya • ${upload ? upload.name : 'Henuz yok'}</li>
+      `;
+    }
+
+    function renderUserTasks() {
+      const list = document.getElementById('user-task-list');
+      const tasks = state.tasks.filter((task) => task.assigneeId === activeUserId);
+      if (!tasks.length) {
+        list.innerHTML = '<div class="detail-card"><strong>Gorev bulunamadi</strong><p>Bu kullaniciya henuz gorev atanmamis.</p></div>';
+        document.getElementById('user-task-title').textContent = 'Gorev yok';
+        document.getElementById('user-task-description').textContent = 'Yonetici tarafinda yeni bir gorev olusturuldugunda burada gorunecek.';
+        document.getElementById('user-task-steps').innerHTML = '<li>1. Yonetici gorev atayacak</li><li>2. PDF sisteme dusecek</li><li>3. Kullanici teslim yapabilecek</li>';
+        return;
+      }
+
+      if (!tasks.find((task) => task.id === selectedTaskId)) {
+        selectedTaskId = tasks[0].id;
+      }
+
+      list.innerHTML = tasks
+        .map((task) => `
+          <button class="task-item ${task.id === selectedTaskId ? 'active' : ''}" type="button" data-user-task-id="${task.id}">
+            <strong>${task.title}</strong>
+            <div class="task-meta">Son tarih ${task.deadline} • Kaynak: ${task.sourceFileName} • Durum: ${task.status}</div>
+          </button>
+        `)
+        .join('');
+
+      document.querySelectorAll('[data-user-task-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedTaskId = button.dataset.userTaskId;
+          renderUserTasks();
+          renderUserTaskDetail();
+        });
+      });
+
+      renderUserTaskDetail();
+    }
+
+    function renderUserTaskDetail() {
+      const task = findTask(selectedTaskId);
+      const upload = state.uploads.find((item) => item.taskId === selectedTaskId);
+      if (!task) return;
+      document.getElementById('user-task-title').textContent = task.title;
+      document.getElementById('user-task-description').textContent =
+        `${task.description} Kaynak PDF: ${task.sourceFileName}`;
+      document.getElementById('user-task-steps').innerHTML = `
+        <li>1. Kaynak PDF'i incele</li>
+        <li>2. Duzenlenmis surumu hazirla</li>
+        <li>3. PDF'i sisteme yeniden yukle</li>
+        <li>4. Durum guncellemesini panelden takip et</li>
+      `;
+      document.getElementById('demo-upload-status').textContent =
+        upload ? `Kayitli teslim bulundu: ${upload.name}` : '';
+      renderStoredFiles();
+    }
+
+    function renderStoredFiles() {
+      const list = document.getElementById('stored-files-list');
+      const uploads = state.uploads.filter((item) => item.userId === activeUserId);
+      if (!uploads.length) {
+        list.innerHTML = '<div class="storage-item"><strong>Henuz kayitli PDF yok</strong><small>Ilk teslimden sonra burada listelenecek.</small></div>';
+        return;
+      }
+      list.innerHTML = uploads
+        .map((item) => `
+          <div class="storage-item">
+            <strong>${item.name}</strong>
+            <small>Gorev: ${findTask(item.taskId)?.title || 'Bilinmiyor'}</small>
+            <small>Kayit zamani: ${item.savedAt}</small>
+            ${item.dataUrl ? `<a class="project-link" href="${item.dataUrl}" download="${item.name}">PDF'i indir</a>` : ''}
+          </div>
+        `)
+        .join('');
+    }
+
+    function renderMetrics() {
+      document.querySelectorAll('.metric-value')[0].textContent = String(state.tasks.length);
+      document.querySelectorAll('.metric-value')[1].textContent = String(state.tasks.filter((task) => task.status === 'Incelemede').length);
+      document.querySelectorAll('.metric-value')[2].textContent = String(state.tasks.filter((task) => task.deadline === '2026-04-18').length);
+      document.querySelectorAll('.metric-value')[3].textContent = String(state.tasks.filter((task) => task.reviewFileName).length);
+    }
+
+    function refresh() {
+      saveState();
+      renderUsers();
+      renderAdminTasks();
+      renderTaskDetail();
+      renderUserTasks();
+      renderStoredFiles();
+      renderMetrics();
+    }
+
+    document.getElementById('user-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      state.users.push({
+        id: `u${Date.now()}`,
+        name: form.get('name').toString().trim(),
+        role: form.get('role').toString()
+      });
+      event.currentTarget.reset();
+      refresh();
+    });
+
+    document.getElementById('task-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formEl = event.currentTarget;
+      const form = new FormData(formEl);
+      const file = document.getElementById('task-pdf-input').files[0];
+      const status = document.getElementById('task-form-status');
+      if (!file) {
+        status.textContent = 'Kaynak PDF secmelisin.';
+        return;
+      }
+      const task = {
+        id: `t${Date.now()}`,
+        title: form.get('title').toString().trim(),
+        description: form.get('description').toString().trim() || 'Yeni gorev acildi.',
+        deadline: form.get('deadline').toString(),
+        assigneeId: form.get('assignee').toString(),
+        sourceFileName: file.name,
+        reviewFileName: '',
+        status: 'Dagitildi'
+      };
+      state.tasks.unshift(task);
+      selectedTaskId = task.id;
+      status.textContent = `${task.title} olusturuldu ve ${findUser(task.assigneeId)?.name || 'kullaniciya'} atandi.`;
+      formEl.reset();
+      refresh();
+    });
+
+    document.getElementById('demo-user-select').addEventListener('change', (event) => {
+      activeUserId = event.target.value;
+      renderUserTasks();
+      renderStoredFiles();
+    });
+
+    document.getElementById('demo-upload-button').addEventListener('click', async () => {
+      const input = document.getElementById('demo-upload');
+      const status = document.getElementById('demo-upload-status');
+      const task = findTask(selectedTaskId);
+      if (!input.files.length) {
+        status.textContent = 'Once bir PDF secmelisin.';
+        return;
+      }
+      if (!task) {
+        status.textContent = 'Once bir gorev sec.';
+        return;
+      }
+      const file = input.files[0];
+      const savedAt = new Date().toLocaleString('tr-TR');
+      status.textContent = 'PDF tarayicida kaydediliyor...';
+      let dataUrl = '';
+      try {
+        dataUrl = await readFileAsDataUrl(file);
+      } catch (error) {
+        status.textContent = 'PDF okunurken hata oldu.';
+        return;
+      }
+      state.uploads = state.uploads.filter((item) => !(item.taskId === task.id && item.userId === activeUserId));
+      state.uploads.unshift({
+        id: `f${Date.now()}`,
+        taskId: task.id,
+        userId: activeUserId,
+        name: file.name,
+        savedAt,
+        dataUrl
+      });
+      task.reviewFileName = file.name;
+      task.status = 'Teslim Edildi';
+      input.value = '';
+      status.textContent = `${file.name} kaydedildi ve teslim edildi olarak isaretlendi.`;
+      refresh();
+    });
+
+    refresh();
+  </script>
 </body>
 </html>
