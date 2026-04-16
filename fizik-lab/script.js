@@ -1539,68 +1539,33 @@ function drawOptics(trace) {
 
   const drawMirrorBody = (item, isSelected) => {
     const points = mirrorPolyline(item);
-    const angle = degToRad(item.angle);
-    const frontOffset = item.type === "concave-mirror" ? -7 : item.type === "convex-mirror" ? 7 : 0;
-    const backOffset = item.type === "concave-mirror" ? 11 : item.type === "convex-mirror" ? -11 : 10;
-
-    if (item.type === "plane-mirror") {
-      const endpoints = mirrorEndpoints(item);
-      const normal = normalizeVector({ x: -Math.sin(angle), y: Math.cos(angle) });
-      const backStart = { x: endpoints.start.x + normal.x * backOffset, y: endpoints.start.y + normal.y * backOffset };
-      const backEnd = { x: endpoints.end.x + normal.x * backOffset, y: endpoints.end.y + normal.y * backOffset };
-
-      ctx.beginPath();
-      ctx.moveTo(backStart.x, backStart.y);
-      ctx.lineTo(backEnd.x, backEnd.y);
-      ctx.strokeStyle = isSelected ? "#5f4b6f" : "#44304f";
-      ctx.lineWidth = 8;
-      ctx.lineCap = "round";
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(endpoints.start.x, endpoints.start.y);
-      ctx.lineTo(endpoints.end.x, endpoints.end.y);
-      ctx.strokeStyle = isSelected ? "#bfe9ff" : "#94dfff";
-      ctx.lineWidth = 6;
-      ctx.stroke();
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      return;
-    }
 
     ctx.beginPath();
     points.forEach((point, index) => {
-      const rotated = rotateLocalPoint({ x: backOffset, y: 0 }, angle);
-      const shifted = { x: point.x + rotated.x, y: point.y + rotated.y };
-      if (index === 0) ctx.moveTo(shifted.x, shifted.y);
-      else ctx.lineTo(shifted.x, shifted.y);
+      if (index === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
     });
     ctx.strokeStyle = isSelected ? "#5f4b6f" : "#44304f";
-    ctx.lineWidth = 8;
+    ctx.lineWidth = item.type === "plane-mirror" ? 10 : 12;
     ctx.lineCap = "round";
     ctx.stroke();
 
     ctx.beginPath();
     points.forEach((point, index) => {
-      const rotated = rotateLocalPoint({ x: frontOffset, y: 0 }, angle);
-      const shifted = { x: point.x + rotated.x, y: point.y + rotated.y };
-      if (index === 0) {
-        ctx.moveTo(shifted.x, shifted.y);
-      } else {
-        ctx.lineTo(shifted.x, shifted.y);
-      }
+      if (index === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
     });
 
     ctx.strokeStyle = isSelected ? "#bfe9ff" : "#94dfff";
-    ctx.lineWidth = isSelected ? 8 : 6;
+    ctx.lineWidth = item.type === "plane-mirror" ? (isSelected ? 6 : 5) : (isSelected ? 7 : 6);
     ctx.lineCap = "round";
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    if (item.type !== "plane-mirror") {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+      ctx.lineWidth = 1.75;
+      ctx.stroke();
+    }
   };
 
   const opticalObjects = currentItems().filter((item) => item.type === "optical-object");
