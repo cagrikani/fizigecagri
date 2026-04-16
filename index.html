@@ -1044,6 +1044,7 @@
           </p>
           <div class="actions">
             <a class="button" href="https://appeals-pace-eight-rendered.trycloudflare.com/login" target="_blank" rel="noreferrer">Is Takibi Sistemine Gir</a>
+            <a class="button-secondary" href="#fizik-lab">Fizik laboratuvarini ac</a>
             <a class="button-secondary" href="#is-takibi">Is takibi demosunu gor</a>
           </div>
         </article>
@@ -1104,13 +1105,13 @@
             <span class="project-link">Paneli gor</span>
           </a>
 
-          <a class="project" href="#fizik-lab">
+          <a class="project" href="./fizik-lab/index.html">
             <span>Egitim</span>
             <h4>Fizik Sanal Laboratuvari</h4>
             <p>
               Kullanici bos bir sahnede ayna, mercek, lazer, cisim ve kuvvet araclariyla kendi deneyini kurar.
             </p>
-            <span class="project-link">Laboratuvari ac</span>
+            <span class="project-link">Uygulamayi ac</span>
           </a>
         </div>
       </section>
@@ -1426,27 +1427,25 @@
         <div class="section-header">
           <h3>Yeni Proje: Fizik Sanal Laboratuvari</h3>
           <p>
-            Bu alan, kullanicinin bos bir calisma penceresiyle karsilasip kendi fizik duzenegini
-            kurabilecegi sekilde tasarlandi. Optikte lazer, ayna ve mercek; mekanikte ise cisim
-            ve kuvvet oklari sahneye eklenip yerleri degistirilebilir.
+            Bu proje portfoy icinde tanitiliyor, ancak uygulamanin kendisi ayri bir sayfada calisiyor.
+            Boylece ana site sade kaliyor; fizik laboratuvari ise kendi tam ekran deney alaninda aciliyor.
           </p>
         </div>
 
         <div class="about-grid">
           <article class="note">
-            <h4>Optik modul</h4>
+            <h4>Optik araclari</h4>
             <p>
-              Lazer isigini sahneye koy, aynayi dondur, mercegi tasit ve isin yolunun nasil
-              degistigini aninda gor. Kullanici kendi yerlesimini kurarak yansima ve odaklanma
-              senaryolari olusturabilir.
+              Lazer, ayna ve mercek nesneleri bos sahneye eklenir. Kullanici bu nesneleri
+              surukleyip yerlestirir ve isigin yansima ya da odaklanma davranisini gozlemler.
             </p>
           </article>
 
           <article class="note">
             <h4>Mekanik modul</h4>
             <p>
-              Cismi sahneye ekle, kuvvet oklarini cisme bagla ve simulasyonu baslatarak net
-              kuvvetin hareketi nasil etkiledigini izle. Her duzenek bos sahneden baslar.
+              Cisim ve kuvvet oklarini ekleyip net kuvvetin harekete etkisini incelemek mumkundur.
+              Kutle, hiz ve kuvvet degerleri panelden degistirilebilir.
             </p>
           </article>
         </div>
@@ -1454,87 +1453,38 @@
         <div class="app-shell">
           <div class="app-header">
             <div class="app-title">
-              <h4>Fizik Tasarim Studyo</h4>
+              <h4>Bagimsiz Uygulama Olarak Hazirlandi</h4>
               <p>
-                Asagidaki saha bilerek bos baslar. Arac kutusundan nesne ekleyip surukleyerek
-                kendi deney duzenegini kurabilir, sonra simule ederek sonucu okuyabilirsin.
+                Uygulama artik bu portfoy sayfasina gomulu bir demo degil. Ayrica `benim-site/fizik-lab`
+                altinda ayri proje olarak bulunuyor ve butonla dogrudan aciliyor.
               </p>
             </div>
-            <div class="status-pill"><span class="status-dot"></span> Bos laboratuvar hazir</div>
+            <div class="status-pill"><span class="status-dot"></span> Ayri uygulama sayfasi hazir</div>
           </div>
 
-          <div class="physics-shell">
-            <aside class="physics-sidebar">
-              <article class="physics-card">
-                <h5>Modul Sec</h5>
-                <p class="physics-hint">
-                  Istersen once optik duzenek kur, istersen mekanik kuvvet deneyi ciz. Her modul
-                  kendi bos sahnesiyle calisir.
-                </p>
-                <div class="mode-switch" aria-label="Fizik modul secici">
-                  <button class="mode-button active" type="button" data-physics-scene="optics">Optik</button>
-                  <button class="mode-button" type="button" data-physics-scene="mechanics">Mekanik</button>
-                </div>
-              </article>
+          <div class="about-grid">
+            <article class="note">
+              <h4>Uygulamada neler var?</h4>
+              <ul>
+                <li>Bos sahneyle baslayan duzenek olusturma</li>
+                <li>Optik ve mekanik modul secimi</li>
+                <li>Suruklenebilir fizik nesneleri</li>
+                <li>Secili nesne icin sayisal ayar paneli</li>
+                <li>Ornek duzenek ve simulasyon kontrolleri</li>
+              </ul>
+            </article>
 
-              <article class="physics-card">
-                <h5>Arac Kutusu</h5>
-                <div class="physics-tool-grid" id="physics-toolbox"></div>
-                <div class="physics-actions" style="margin-top: 12px;">
-                  <button class="mini-button" id="physics-sample-button" type="button">Ornek kurulum</button>
-                  <button class="mini-button" id="physics-clear-button" type="button">Sahneyi temizle</button>
-                </div>
-              </article>
-
-              <article class="physics-card">
-                <h5>Secili Nesne</h5>
-                <div class="physics-inspector" id="physics-inspector"></div>
-              </article>
-
-              <article class="physics-card">
-                <h5>Simulasyon</h5>
-                <div class="physics-actions">
-                  <button class="button" id="physics-run-button" type="button">Isin yolunu hesapla</button>
-                  <button class="button-secondary" id="physics-pause-button" type="button">Isini gizle</button>
-                </div>
-                <p class="physics-hint" id="physics-status">
-                  Arac kutusundan bir nesne secip bos sahneye yerlestir. Sonra nesneleri surukleyerek
-                  duzenegi tamamla.
-                </p>
-              </article>
-            </aside>
-
-            <div class="physics-stage">
-              <div class="physics-stage-toolbar">
-                <div class="physics-legend" id="physics-legend"></div>
-                <div class="status-pill" id="physics-scene-label"><span class="status-dot"></span> Aktif modul: Optik</div>
+            <article class="note">
+              <h4>Nasil aciliyor?</h4>
+              <p>
+                Asagidaki buton portfoy icinden cikmadan bu projenin kendi sayfasina gider.
+                Orada uygulama tam alan calisir ve fizik araclariyla dogrudan etkilesime gecilir.
+              </p>
+              <div class="actions" style="margin-top: 18px;">
+                <a class="button" href="./fizik-lab/index.html">Fizik uygulamasini ac</a>
+                <a class="button-secondary" href="./fizik-lab/index.html" target="_blank" rel="noreferrer">Yeni sekmede ac</a>
               </div>
-
-              <div class="physics-canvas-shell">
-                <canvas id="physics-canvas" width="960" height="560" aria-label="Fizik simulasyon sahasi"></canvas>
-                <div class="physics-empty-state" id="physics-empty-state">
-                  Arac kutusundan bir fizik araci sec. Sahneye yerlestir, surukle ve kendi
-                  laboratuvar duzenegini olustur.
-                </div>
-              </div>
-
-              <div class="physics-readout-grid">
-                <article class="physics-readout">
-                  <span>Sahne Ozeti</span>
-                  <strong id="physics-readout-primary">0 nesne</strong>
-                </article>
-                <article class="physics-readout">
-                  <span>Simulasyon</span>
-                  <strong id="physics-readout-secondary">Hazir</strong>
-                </article>
-                <article class="physics-readout">
-                  <span>Detay</span>
-                  <strong id="physics-readout-tertiary">Bos calisma alani</strong>
-                </article>
-              </div>
-
-              <div class="physics-object-list" id="physics-object-list"></div>
-            </div>
+            </article>
           </div>
         </div>
       </section>
