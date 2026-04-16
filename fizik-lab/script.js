@@ -3,8 +3,11 @@ const STORAGE_KEY = "fizik-lab-state-v1";
 const toolCatalog = {
   optics: [
     { type: "laser", label: "Lazer", description: "Tek bir isik kaynagi ekler." },
-    { type: "mirror", label: "Ayna", description: "Duze yansima yapan optik yuzey." },
-    { type: "lens", label: "Mercek", description: "Isini odaga dogru yeniden yonlendirir." }
+    { type: "plane-mirror", label: "Duz Ayna", description: "Standart dogrusal yansima yapar." },
+    { type: "concave-mirror", label: "Cukur Ayna", description: "Isini odaga toplayan icbukey ayna." },
+    { type: "convex-mirror", label: "Tumsek Ayna", description: "Isini dagitan disbukey ayna." },
+    { type: "convex-lens", label: "Ince Kenarli Mercek", description: "Ortasi kalin, isigi odaga toplar." },
+    { type: "concave-lens", label: "Kalin Kenarli Mercek", description: "Ortasi ince, isigi dagitir." }
   ],
   mechanics: [
     { type: "block", label: "Cisim", description: "Kuvvet uygulanabilen hareketli blok." },
@@ -45,12 +48,25 @@ function normalizeState(raw) {
     return structuredClone(defaultState);
   }
 
+  const normalizeItems = (items) =>
+    items.map((item) => {
+      if (item.type === "mirror") {
+        return { ...item, type: "plane-mirror" };
+      }
+
+      if (item.type === "lens") {
+        return { ...item, type: "convex-lens" };
+      }
+
+      return item;
+    });
+
   return {
     scene: raw.scene === "mechanics" ? "mechanics" : "optics",
     opticsVisible: raw.opticsVisible !== false,
     running: false,
     notice: typeof raw.notice === "string" ? raw.notice : "",
-    optics: { items: Array.isArray(raw.optics?.items) ? raw.optics.items : [] },
+    optics: { items: Array.isArray(raw.optics?.items) ? normalizeItems(raw.optics.items) : [] },
     mechanics: { items: Array.isArray(raw.mechanics?.items) ? raw.mechanics.items : [] }
   };
 }
@@ -130,6 +146,67 @@ function mirrorEndpoints(item) {
   };
 }
 
+function rotateLocalPoint(point, angle) {
+  return {
+    x: point.x * Math.cos(angle) - point.y * Math.sin(angle),
+    y: point.x * Math.sin(angle) + point.y * Math.cos(angle)
+  };
+}
+
+function mirrorProfileX(item, y) {
+  if (item.type === "plane-mirror") {
+    return 0;
+  }
+
+  const radius = item.radius || 170;
+  const limitedY = clamp(y, -item.length / 2 + 0.01, item.length / 2 - 0.01);
+  const sagitta = radius - Math.sqrt(Math.max(radius * radius - limitedY * limitedY, 0));
+
+  if (item.type === "concave-mirror") {
+    return -sagitta;
+  }
+
+  return sagitta;
+}
+
+function mirrorPolyline(item, steps = 28) {
+  if (item.type === "plane-mirror") {
+    const endpoints = mirrorEndpoints(item);
+    return [endpoints.start, endpoints.end];
+  }
+
+  const angle = degToRad(item.angle);
+  const points = [];
+
+  for (let index = 0; index <= steps; index += 1) {
+    const t = index / steps;
+    const localY = -item.length / 2 + item.length * t;
+    const localX = mirrorProfileX(item, localY);
+    const rotated = rotateLocalPoint({ x: localX, y: localY }, angle);
+    points.push({ x: item.x + rotated.x, y: item.y + rotated.y });
+  }
+
+  return points;
+}
+
+function lensHalfWidth(item, localY) {
+  const progress = 1 - Math.abs(localY) / (item.height / 2);
+
+  if (item.type === "convex-lens") {
+    return item.edgeWidth / 2 + progress * item.bulge;
+  }
+
+  return item.edgeWidth / 2 + (1 - progress) * item.bulge;
+}
+
+function isMirror(item) {
+  return item.type === "plane-mirror" || item.type === "concave-mirror" || item.type === "convex-mirror";
+}
+
+function isLens(item) {
+  return item.type === "convex-lens" || item.type === "concave-lens";
+}
+
 function forceEnd(item) {
   return { x: item.x + item.dx, y: item.y + item.dy };
 }
@@ -141,12 +218,20 @@ function makeItem(type) {
     return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: -8 };
   }
 
-  if (type === "mirror") {
-    return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: -35, length: 140 };
+  if (type === "plane-mirror") {
+    return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: -35, length: 140, radius: 0 };
   }
 
-  if (type === "lens") {
-    return { id: uid("lens"), type, x: 700, y: 300, height: 190, focalLength: 140 };
+  if (type === "concave-mirror" || type === "convex-mirror") {
+    return { id: uid("mirror"), type, x: 440 + offset, y: 250, angle: 0, length: 150, radius: 180 };
+  }
+
+  if (type === "convex-lens") {
+    return { id: uid("lens"), type, x: 700, y: 300, height: 190, focalLength: 140, edgeWidth: 16, bulge: 24 };
+  }
+
+  if (type === "concave-lens") {
+    return { id: uid("lens"), type, x: 700, y: 300, height: 190, focalLength: -120, edgeWidth: 18, bulge: 26 };
   }
 
   if (type === "block") {
@@ -183,17 +268,23 @@ function constrainItem(item) {
     item.angle = clamp(Number(item.angle) || 0, -180, 180);
   }
 
-  if (item.type === "mirror") {
+  if (isMirror(item)) {
     item.x = clamp(Number(item.x) || 0, 30, width - 30);
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
     item.angle = clamp(Number(item.angle) || 0, -180, 180);
     item.length = clamp(Number(item.length) || 140, 60, 240);
+    item.radius = item.type === "plane-mirror" ? 0 : clamp(Number(item.radius) || 180, 90, 320);
   }
 
-  if (item.type === "lens") {
+  if (isLens(item)) {
     item.x = clamp(Number(item.x) || 0, 60, width - 60);
     item.height = clamp(Number(item.height) || 180, 80, 300);
-    item.focalLength = clamp(Number(item.focalLength) || 120, 40, 260);
+    item.focalLength =
+      item.type === "concave-lens"
+        ? clamp(Number(item.focalLength) || -120, -260, -40)
+        : clamp(Number(item.focalLength) || 120, 40, 260);
+    item.edgeWidth = clamp(Number(item.edgeWidth) || 16, 10, 34);
+    item.bulge = clamp(Number(item.bulge) || 24, 10, 44);
     item.y = clamp(Number(item.y) || 0, item.height / 2 + 16, height - item.height / 2 - 16);
   }
 
@@ -217,16 +308,26 @@ function constrainItem(item) {
 
 function itemTitle(item) {
   if (item.type === "laser") return "Lazer kaynagi";
-  if (item.type === "mirror") return "Ayna";
-  if (item.type === "lens") return "Mercek";
+  if (item.type === "plane-mirror") return "Duz ayna";
+  if (item.type === "concave-mirror") return "Cukur ayna";
+  if (item.type === "convex-mirror") return "Tumsek ayna";
+  if (item.type === "convex-lens") return "Ince kenarli mercek";
+  if (item.type === "concave-lens") return "Kalin kenarli mercek";
   if (item.type === "block") return "Cisim";
   return "Kuvvet oku";
 }
 
 function itemMeta(item) {
   if (item.type === "laser") return `${Math.round(item.angle)} derece aci`;
-  if (item.type === "mirror") return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px`;
-  if (item.type === "lens") return `${Math.round(item.focalLength)} px odak uzakligi`;
+  if (isMirror(item)) {
+    const radiusText = item.type === "plane-mirror" ? "duz yuzey" : `R ${Math.round(item.radius)}`;
+    return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px • ${radiusText}`;
+  }
+
+  if (isLens(item)) {
+    return `${Math.round(item.focalLength)} px odak • yukseklik ${Math.round(item.height)} px`;
+  }
+
   if (item.type === "block") return `${item.mass} kg • hiz ${item.vx.toFixed(1)}, ${item.vy.toFixed(1)}`;
   return `${Math.round(Math.hypot(item.dx, item.dy))} N yaklasik kuvvet`;
 }
@@ -251,8 +352,8 @@ function renderLegend() {
   if (state.scene === "optics") {
     legend.innerHTML = `
       <span class="legend-chip laser">Lazer izi</span>
-      <span class="legend-chip mirror">Ayna yuzeyi</span>
-      <span class="legend-chip lens">Mercek odagi</span>
+      <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
+      <span class="legend-chip lens">Gercek gorunumlu mercek</span>
     `;
     return;
   }
@@ -305,14 +406,28 @@ function renderInspector() {
     fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1, true));
   }
 
-  if (item.type === "mirror") {
+  if (isMirror(item)) {
     fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1));
     fields.push(numberField("Uzunluk", "length", item.length, 60, 240, 1));
+    if (item.type !== "plane-mirror") {
+      fields.push(numberField("Egrilik Yaricapi", "radius", item.radius, 90, 320, 1));
+    }
   }
 
-  if (item.type === "lens") {
+  if (isLens(item)) {
     fields.push(numberField("Yukseklik", "height", item.height, 80, 300, 1));
-    fields.push(numberField("Odak", "focalLength", item.focalLength, 40, 260, 1));
+    fields.push(
+      numberField(
+        "Odak",
+        "focalLength",
+        item.focalLength,
+        item.type === "concave-lens" ? -260 : 40,
+        item.type === "concave-lens" ? -40 : 260,
+        1
+      )
+    );
+    fields.push(numberField("Kenar Kalinligi", "edgeWidth", item.edgeWidth, 10, 34, 1));
+    fields.push(numberField("Govis Bombesi", "bulge", item.bulge, 10, 44, 1));
   }
 
   if (item.type === "block") {
@@ -459,25 +574,43 @@ function reflect(direction, endpoints) {
   });
 }
 
+function reflectFromTangent(direction, tangent) {
+  const surface = normalizeVector(tangent);
+  let normal = { x: -surface.y, y: surface.x };
+  if (dot(direction, normal) > 0) {
+    normal = { x: -normal.x, y: -normal.y };
+  }
+
+  return normalizeVector({
+    x: direction.x - 2 * dot(direction, normal) * normal.x,
+    y: direction.y - 2 * dot(direction, normal) * normal.y
+  });
+}
+
 function closestOpticsHit(origin, direction) {
   let closest = null;
 
   currentItems().forEach((item) => {
-    if (item.type === "mirror") {
-      const endpoints = mirrorEndpoints(item);
-      const hit = raySegmentIntersection(origin, direction, endpoints.start, endpoints.end);
+    if (isMirror(item)) {
+      const points = mirrorPolyline(item);
 
-      if (hit && (!closest || hit.t < closest.t)) {
-        closest = {
-          t: hit.t,
-          item,
-          point: hit.point,
-          nextDirection: reflect(direction, endpoints)
-        };
+      for (let index = 0; index < points.length - 1; index += 1) {
+        const start = points[index];
+        const end = points[index + 1];
+        const hit = raySegmentIntersection(origin, direction, start, end);
+
+        if (hit && (!closest || hit.t < closest.t)) {
+          closest = {
+            t: hit.t,
+            item,
+            point: hit.point,
+            nextDirection: reflectFromTangent(direction, { x: end.x - start.x, y: end.y - start.y })
+          };
+        }
       }
     }
 
-    if (item.type === "lens" && Math.abs(direction.x) > 0.0001) {
+    if (isLens(item) && Math.abs(direction.x) > 0.0001) {
       const t = (item.x - origin.x) / direction.x;
       if (t <= 0.01) return;
 
@@ -491,14 +624,18 @@ function closestOpticsHit(origin, direction) {
           y: item.y
         };
 
+        const nextDirection =
+          item.type === "concave-lens"
+            ? normalizeVector({ x: item.x - focus.x, y: hitY - item.y })
+            : Math.abs(hitY - item.y) < 8
+              ? direction
+              : normalizeVector({ x: focus.x - item.x, y: focus.y - hitY });
+
         closest = {
           t,
           item,
           point: { x: item.x, y: hitY },
-          nextDirection:
-            Math.abs(hitY - item.y) < 8
-              ? direction
-              : normalizeVector({ x: focus.x - item.x, y: focus.y - hitY })
+          nextDirection
         };
       }
     }
@@ -565,6 +702,93 @@ function drawArrow(start, end, color, width = 3) {
 }
 
 function drawOptics(trace) {
+  const drawLensBody = (item, isSelected) => {
+    const top = item.y - item.height / 2;
+    const bottom = item.y + item.height / 2;
+    const mid = item.y;
+    const leftTop = { x: item.x - item.edgeWidth / 2, y: top };
+    const leftBottom = { x: item.x - item.edgeWidth / 2, y: bottom };
+    const rightTop = { x: item.x + item.edgeWidth / 2, y: top };
+    const rightBottom = { x: item.x + item.edgeWidth / 2, y: bottom };
+    const bulge = item.bulge;
+
+    ctx.beginPath();
+    ctx.moveTo(leftTop.x, leftTop.y);
+
+    if (item.type === "convex-lens") {
+      ctx.bezierCurveTo(item.x - bulge, top + item.height * 0.22, item.x - bulge, bottom - item.height * 0.22, leftBottom.x, leftBottom.y);
+      ctx.lineTo(rightBottom.x, rightBottom.y);
+      ctx.bezierCurveTo(item.x + bulge, bottom - item.height * 0.22, item.x + bulge, top + item.height * 0.22, rightTop.x, rightTop.y);
+    } else {
+      ctx.bezierCurveTo(item.x + bulge * 0.4, top + item.height * 0.22, item.x + bulge * 0.4, bottom - item.height * 0.22, leftBottom.x, leftBottom.y);
+      ctx.lineTo(rightBottom.x, rightBottom.y);
+      ctx.bezierCurveTo(item.x - bulge * 0.4, bottom - item.height * 0.22, item.x - bulge * 0.4, top + item.height * 0.22, rightTop.x, rightTop.y);
+    }
+
+    ctx.closePath();
+    ctx.fillStyle = isSelected ? "rgba(162, 218, 255, 0.34)" : "rgba(110, 168, 254, 0.22)";
+    ctx.strokeStyle = isSelected ? "#b7dcff" : "#7eb7ff";
+    ctx.lineWidth = isSelected ? 4 : 3;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = "rgba(126, 183, 255, 0.35)";
+    ctx.beginPath();
+    ctx.moveTo(item.x + item.focalLength, mid - 24);
+    ctx.lineTo(item.x + item.focalLength, mid + 24);
+    ctx.moveTo(item.x - item.focalLength, mid - 24);
+    ctx.lineTo(item.x - item.focalLength, mid + 24);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+
+  const drawMirrorBody = (item, isSelected) => {
+    const points = mirrorPolyline(item);
+    const angle = degToRad(item.angle);
+    const shadowOffset =
+      item.type === "concave-mirror" ? -8 : item.type === "convex-mirror" ? 8 : 0;
+
+    if (item.type !== "plane-mirror") {
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+
+      for (let index = points.length - 1; index >= 0; index -= 1) {
+        const point = points[index];
+        const rotated = rotateLocalPoint({ x: shadowOffset, y: 0 }, angle);
+        ctx.lineTo(point.x + rotated.x, point.y + rotated.y);
+      }
+
+      ctx.closePath();
+      ctx.fillStyle = item.type === "concave-mirror" ? "rgba(255, 212, 117, 0.18)" : "rgba(255, 181, 84, 0.12)";
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+
+    ctx.strokeStyle = isSelected ? "#ffe4a3" : "#ffb454";
+    ctx.lineWidth = isSelected ? 8 : 6;
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  };
+
   currentItems().forEach((item) => {
     const isSelected = item.id === selectedId;
 
@@ -581,34 +805,12 @@ function drawOptics(trace) {
       drawArrow({ x: item.x, y: item.y }, beamEnd, "#ffe8e8", 2);
     }
 
-    if (item.type === "mirror") {
-      const endpoints = mirrorEndpoints(item);
-      ctx.strokeStyle = isSelected ? "#ffe08a" : "#ffb454";
-      ctx.lineWidth = isSelected ? 8 : 6;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(endpoints.start.x, endpoints.start.y);
-      ctx.lineTo(endpoints.end.x, endpoints.end.y);
-      ctx.stroke();
+    if (isMirror(item)) {
+      drawMirrorBody(item, isSelected);
     }
 
-    if (item.type === "lens") {
-      ctx.strokeStyle = isSelected ? "#8fc3ff" : "#6ea8fe";
-      ctx.lineWidth = isSelected ? 8 : 6;
-      ctx.beginPath();
-      ctx.moveTo(item.x, item.y - item.height / 2);
-      ctx.lineTo(item.x, item.y + item.height / 2);
-      ctx.stroke();
-
-      ctx.setLineDash([6, 6]);
-      ctx.strokeStyle = "rgba(110, 168, 254, 0.42)";
-      ctx.beginPath();
-      ctx.moveTo(item.x - item.focalLength, item.y - 24);
-      ctx.lineTo(item.x - item.focalLength, item.y + 24);
-      ctx.moveTo(item.x + item.focalLength, item.y - 24);
-      ctx.lineTo(item.x + item.focalLength, item.y + 24);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    if (isLens(item)) {
+      drawLensBody(item, isSelected);
     }
   });
 
@@ -616,7 +818,7 @@ function drawOptics(trace) {
   ctx.shadowColor = "rgba(255, 107, 107, 0.6)";
   ctx.shadowBlur = 14;
   trace.segments.forEach((segment) => {
-    ctx.strokeStyle = segment.kind === "lens" ? "#ffb454" : "#ff6b6b";
+    ctx.strokeStyle = isLens(segment.kind ? { type: segment.kind } : {}) ? "#ffb454" : "#ff6b6b";
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(segment.from.x, segment.from.y);
@@ -786,8 +988,9 @@ function loadSample() {
   if (state.scene === "optics") {
     state.optics.items = [
       { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
-      { id: uid("mirror"), type: "mirror", x: 440, y: 260, angle: -42, length: 160 },
-      { id: uid("lens"), type: "lens", x: 720, y: 250, height: 200, focalLength: 150 }
+      { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
+      { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
+      { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
     ];
     selectedId = state.optics.items[0].id;
     state.opticsVisible = true;
@@ -929,14 +1132,22 @@ function hitItem(point) {
       return Math.hypot(point.x - item.x, point.y - item.y) <= 20;
     }
 
-    if (item.type === "mirror") {
-      const endpoints = mirrorEndpoints(item);
-      return distanceToSegment(point, endpoints.start, endpoints.end) <= 12;
+    if (isMirror(item)) {
+      const points = mirrorPolyline(item);
+      for (let index = 0; index < points.length - 1; index += 1) {
+        if (distanceToSegment(point, points[index], points[index + 1]) <= 12) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
-    if (item.type === "lens") {
+    if (isLens(item)) {
+      const localY = point.y - item.y;
+      const halfWidth = lensHalfWidth(item, localY);
       return (
-        Math.abs(point.x - item.x) <= 12 &&
+        Math.abs(point.x - item.x) <= halfWidth + 6 &&
         point.y >= item.y - item.height / 2 &&
         point.y <= item.y + item.height / 2
       );
