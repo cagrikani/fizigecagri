@@ -342,12 +342,13 @@ function centerPoints(item) {
 }
 
 function imageForElement(item, objectItem) {
-  if (!objectItem || objectItem.type !== "optical-object") {
+  if (!objectItem || (objectItem.type !== "optical-object" && objectItem.type !== "round-object")) {
     return null;
   }
 
   const local = toLocal({ x: objectItem.x, y: objectItem.y }, item);
   const doValue = -local.x;
+  const size = objectItem.type === "round-object" ? objectItem.radius : objectItem.height;
 
   if (doValue <= 1) {
     return null;
@@ -363,8 +364,8 @@ function imageForElement(item, objectItem) {
     const di = 1 / denominator;
     const magnification = -di / doValue;
     return {
-      point: fromLocal({ x: di, y: 0 }, item),
-      height: objectItem.height * magnification,
+      point: fromLocal({ x: di, y: local.y * magnification }, item),
+      height: size * magnification,
       virtual: di < 0
     };
   }
@@ -372,8 +373,8 @@ function imageForElement(item, objectItem) {
   if (isMirror(item)) {
     if (item.type === "plane-mirror") {
       return {
-        point: fromLocal({ x: local.x * -1, y: 0 }, item),
-        height: objectItem.height,
+        point: fromLocal({ x: local.x * -1, y: local.y }, item),
+        height: size,
         virtual: true
       };
     }
@@ -387,8 +388,8 @@ function imageForElement(item, objectItem) {
     const di = 1 / denominator;
     const magnification = -di / doValue;
     return {
-      point: fromLocal({ x: -di, y: 0 }, item),
-      height: objectItem.height * magnification,
+      point: fromLocal({ x: -di, y: local.y * magnification }, item),
+      height: size * magnification,
       virtual: di < 0
     };
   }
@@ -408,7 +409,7 @@ function makeItem(type) {
   }
 
   if (type === "round-object") {
-    return { id: uid("round"), type, x: 240 + offset, y: 300, radius: 26 };
+    return { id: uid("round"), type, x: 240 + offset, y: 300, radius: 20 };
   }
 
   if (type === "eye") {
@@ -504,7 +505,7 @@ function constrainItem(item) {
   if (isRoundObject(item)) {
     item.x = clamp(Number(item.x) || 0, 30, width - 30);
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
-    item.radius = clamp(Number(item.radius) || 26, 12, 48);
+    item.radius = clamp(Number(item.radius) || 20, 10, 40);
   }
 
   if (isEye(item)) {
@@ -620,12 +621,34 @@ function itemMeta(item) {
   return `${Math.round(Math.hypot(item.dx, item.dy))} N yaklasik kuvvet`;
 }
 
+function toolGlyph(type) {
+  const glyphs = {
+    laser: '<span class="tool-glyph laser"><span></span></span>',
+    "optical-object": '<span class="tool-glyph optical-object"><span></span></span>',
+    "round-object": '<span class="tool-glyph round-object"><span></span></span>',
+    eye: '<span class="tool-glyph eye"><span></span></span>',
+    "depth-tank": '<span class="tool-glyph depth-tank"><span></span></span>',
+    fiber: '<span class="tool-glyph fiber"><span></span></span>',
+    prism: '<span class="tool-glyph prism"><span></span></span>',
+    "plane-mirror": '<span class="tool-glyph plane-mirror"><span></span></span>',
+    "concave-mirror": '<span class="tool-glyph concave-mirror"><span></span></span>',
+    "convex-mirror": '<span class="tool-glyph convex-mirror"><span></span></span>',
+    "convex-lens": '<span class="tool-glyph convex-lens"><span></span></span>',
+    "concave-lens": '<span class="tool-glyph concave-lens"><span></span></span>',
+    block: '<span class="tool-glyph block"><span></span></span>',
+    force: '<span class="tool-glyph force"><span></span></span>'
+  };
+
+  return glyphs[type] || '<span class="tool-glyph"><span></span></span>';
+}
+
 function renderToolGrid() {
   const grid = document.getElementById("tool-grid");
   grid.innerHTML = toolCatalog[state.scene]
     .map(
       (tool) => `
         <button class="tool-card" type="button" data-add="${tool.type}">
+          ${toolGlyph(tool.type)}
           <strong>${tool.label}</strong>
           <small>${tool.description}</small>
         </button>
@@ -701,7 +724,7 @@ function renderInspector() {
   }
 
   if (isRoundObject(item)) {
-    fields.push(numberField("Yaricap", "radius", item.radius, 12, 48, 1, true));
+    fields.push(numberField("Yaricap", "radius", item.radius, 10, 40, 1, true));
   }
 
   if (isEye(item)) {
@@ -941,7 +964,8 @@ function apparentViewForEye(tank, eye, objectItem) {
 
   const eyeDepth = bounds.interfaceY - eye.y;
   const realDepth = objectItem.y - bounds.interfaceY;
-  const apparentDepth = realDepth * (tank.topIndex / tank.bottomIndex);
+  const heightBias = clamp(1 - (eyeDepth / Math.max(eyeDepth + realDepth, 1)) * 0.35, 0.45, 1);
+  const apparentDepth = realDepth * (tank.topIndex / tank.bottomIndex) * heightBias;
   const interfaceBias = eyeDepth / (eyeDepth + realDepth * (tank.topIndex / tank.bottomIndex) + 0.001);
   const interfaceX = eye.x + (objectItem.x - eye.x) * interfaceBias;
   const apparentX = eye.x + ((interfaceX - eye.x) * (eyeDepth + apparentDepth)) / Math.max(eyeDepth, 1);
@@ -976,10 +1000,18 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
     return null;
   }
 
-  return {
-    imagePoint: fromLocal(imageLocal, mirror),
-    hitPoint: fromLocal({ x: 0, y: hitY }, mirror)
-  };
+  const imagePoint = fromLocal(imageLocal, mirror);
+  const hitPoint = fromLocal({ x: 0, y: hitY }, mirror);
+  const viewVector = { x: hitPoint.x - eye.x, y: hitPoint.y - eye.y };
+  const viewDistance = Math.hypot(viewVector.x, viewVector.y);
+  const forward = { x: Math.cos(degToRad(eye.angle || 0)), y: Math.sin(degToRad(eye.angle || 0)) };
+  const facing = Math.acos(clamp(dot(normalizeVector(viewVector), forward), -1, 1)) * (180 / Math.PI);
+
+  if (viewDistance > 340 || facing > 34) {
+    return null;
+  }
+
+  return { imagePoint, hitPoint };
 }
 
 function buildFiberGuide(item, hitPoint, direction) {
@@ -1569,6 +1601,20 @@ function drawOptics(trace) {
         image.virtual
       );
     });
+
+    roundObjects.forEach((roundObject) => {
+      const image = imageForElement(item, roundObject);
+      if (!image || !Number.isFinite(image.height)) {
+        return;
+      }
+
+      drawRoundObject(
+        { x: image.point.x, y: image.point.y, radius: Math.max(Math.abs(image.height), 6) },
+        image.virtual ? "rgba(255, 209, 102, 0.78)" : "rgba(255, 107, 107, 0.88)",
+        0.9,
+        image.virtual
+      );
+    });
   });
 
   currentItems().forEach((item) => {
@@ -1848,7 +1894,7 @@ function loadSample() {
     state.optics.items = [
       { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
       { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
-      { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 22 },
+      { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 18 },
       { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
       { id: uid("tank"), type: "depth-tank", x: 280, y: 320, width: 220, height: 220, interfaceLevel: 92, topIndex: 1, bottomIndex: 1.33 },
       { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
