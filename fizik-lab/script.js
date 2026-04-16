@@ -34,6 +34,15 @@ const canvas = document.getElementById("lab-canvas");
 const ctx = canvas.getContext("2d");
 const viewport = { width: 960, height: 600 };
 
+const LASER_COLORS = {
+  red: { label: "Kirmizi", hex: "#ff5f56", bend: 0.94 },
+  orange: { label: "Turuncu", hex: "#ff9f43", bend: 0.97 },
+  yellow: { label: "Sari", hex: "#ffd93d", bend: 1 },
+  green: { label: "Yesil", hex: "#40d67b", bend: 1.03 },
+  blue: { label: "Mavi", hex: "#5da9ff", bend: 1.07 },
+  violet: { label: "Mor", hex: "#b26bff", bend: 1.11 }
+};
+
 let state = loadState();
 let selectedId = null;
 let dragState = null;
@@ -114,6 +123,14 @@ function normalizeVector(vector) {
 
 function dot(a, b) {
   return a.x * b.x + a.y * b.y;
+}
+
+function laserColorData(mode, colorKey = "red") {
+  if (mode !== "single") {
+    return { label: "Beyaz", hex: "#ffffff", bend: 1 };
+  }
+
+  return LASER_COLORS[colorKey] || LASER_COLORS.red;
 }
 
 function cross(a, b) {
@@ -401,7 +418,7 @@ function makeItem(type) {
   const offset = currentItems().length * 28;
 
   if (type === "laser") {
-    return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: -8 };
+    return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: -8, colorMode: "white", color: "red" };
   }
 
   if (type === "optical-object") {
@@ -494,6 +511,8 @@ function constrainItem(item) {
     item.x = clamp(Number(item.x) || 0, 20, width - 20);
     item.y = clamp(Number(item.y) || 0, 20, height - 20);
     item.angle = clamp(Number(item.angle) || 0, -180, 180);
+    item.colorMode = item.colorMode === "single" ? "single" : "white";
+    item.color = LASER_COLORS[item.color] ? item.color : "red";
   }
 
   if (item.type === "optical-object") {
@@ -597,7 +616,10 @@ function itemTitle(item) {
 }
 
 function itemMeta(item) {
-  if (item.type === "laser") return `${Math.round(item.angle)} derece aci`;
+  if (item.type === "laser") {
+    const color = laserColorData(item.colorMode, item.color);
+    return `${Math.round(item.angle)} derece • ${color.label} isik`;
+  }
   if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
   if (item.type === "round-object") return `${Math.round(item.radius)} px yaricap`;
   if (item.type === "eye") return `${Math.round(item.angle)} derece bakis`;
@@ -686,6 +708,19 @@ function numberField(label, prop, value, min, max, step, full = false) {
   `;
 }
 
+function selectField(label, prop, value, options, full = false) {
+  return `
+    <div class="field ${full ? "full" : ""}">
+      <label>${label}</label>
+      <select data-prop="${prop}">
+        ${options
+          .map((option) => `<option value="${option.value}" ${option.value === value ? "selected" : ""}>${option.label}</option>`)
+          .join("")}
+      </select>
+    </div>
+  `;
+}
+
 function renderInspector() {
   const inspector = document.getElementById("inspector");
   const item = selectedItem();
@@ -707,6 +742,29 @@ function renderInspector() {
 
   if (item.type === "laser") {
     fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1, true));
+    fields.push(
+      selectField(
+        "Isik Turu",
+        "colorMode",
+        item.colorMode,
+        [
+          { value: "white", label: "Beyaz" },
+          { value: "single", label: "Tek renk" }
+        ],
+        true
+      )
+    );
+    if (item.colorMode === "single") {
+      fields.push(
+        selectField(
+          "Renk",
+          "color",
+          item.color,
+          Object.entries(LASER_COLORS).map(([value, data]) => ({ value, label: data.label })),
+          true
+        )
+      );
+    }
   }
 
   if (item.type === "optical-object") {
@@ -1004,7 +1062,7 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
   return { imagePoint, hitPoint };
 }
 
-function buildFiberGuide(item, hitPoint, direction) {
+function buildFiberGuide(item, hitPoint, direction, beamColor) {
   const bounds = fiberBounds(item);
   const travelingRight = direction.x >= 0;
   const exitX = travelingRight ? bounds.right : bounds.left;
@@ -1017,17 +1075,17 @@ function buildFiberGuide(item, hitPoint, direction) {
 
   for (let bounce = 0; bounce < item.bounces; bounce += 1) {
     const next = { x: startX + stepX * (bounce + 1), y: targetY };
-    segments.push({ from: { ...current }, to: next, kind: "fiber", color: "#6ee7ff" });
+    segments.push({ from: { ...current }, to: next, kind: "fiber", color: beamColor || "#6ee7ff" });
     current = next;
     targetY = targetY < item.y ? item.y + usableHeight : item.y - usableHeight;
   }
 
   const exitPoint = { x: exitX, y: item.y };
-  segments.push({ from: { ...current }, to: exitPoint, kind: "fiber", color: "#6ee7ff" });
+  segments.push({ from: { ...current }, to: exitPoint, kind: "fiber", color: beamColor || "#6ee7ff" });
   return { segments, exitPoint, nextDirection: normalizeVector({ x: travelingRight ? 1 : -1, y: 0 }) };
 }
 
-function buildPrismDispersion(item, entryPoint, direction) {
+function buildPrismDispersion(item, entryPoint, direction, laser) {
   const vertices = prismVertices(item);
   const edges = [
     [vertices[0], vertices[1]],
@@ -1061,9 +1119,14 @@ function buildPrismDispersion(item, entryPoint, direction) {
     ? normalizeVector(rotateLocalPoint({ x: 0.9, y: 0.55 }, degToRad(item.angle)))
     : normalizeVector(rotateLocalPoint({ x: 1, y: 0.22 }, degToRad(item.angle)));
   const spread = item.dispersion / 180 * Math.PI;
-  const colors = ["#ff3b30", "#ff7a00", "#ffd60a", "#34c759", "#32ade6", "#5856d6", "#bf5af2"];
+  const monochrome = laser?.colorMode === "single";
+  const monoColor = laserColorData(laser?.colorMode, laser?.color);
+  const colors = monochrome
+    ? [monoColor.hex]
+    : ["#ff3b30", "#ff7a00", "#ffd60a", "#34c759", "#32ade6", "#5856d6", "#bf5af2"];
   const outgoing = colors.map((color, index) => {
-    const delta = (index - (colors.length - 1) / 2) * (spread / 3);
+    const bendFactor = monochrome ? monoColor.bend : 1;
+    const delta = (index - (colors.length - 1) / 2) * (spread / 3) * bendFactor;
     const rayDir = normalizeVector(rotateLocalPoint(centerDirection, delta));
     return {
       from: exitPoint,
@@ -1079,17 +1142,17 @@ function buildPrismDispersion(item, entryPoint, direction) {
   return {
     insideSegments: totalInternalReflection
       ? [
-          { from: entryPoint, to: reflectionPoint, kind: "prism", color: "#ffffff" },
-          { from: reflectionPoint, to: exitPoint, kind: "prism", color: "#f3f0ff" }
+          { from: entryPoint, to: reflectionPoint, kind: "prism", color: monochrome ? monoColor.hex : "#ffffff" },
+          { from: reflectionPoint, to: exitPoint, kind: "prism", color: monochrome ? monoColor.hex : "#f3f0ff" }
         ]
-      : [{ from: entryPoint, to: exitPoint, kind: "prism", color: "#ffffff" }],
+      : [{ from: entryPoint, to: exitPoint, kind: "prism", color: monochrome ? monoColor.hex : "#ffffff" }],
     outgoing,
     totalInternalReflection,
     criticalAngle
   };
 }
 
-function closestOpticsHit(origin, direction) {
+function closestOpticsHit(origin, direction, laser) {
   let closest = null;
 
   currentItems().forEach((item) => {
@@ -1101,7 +1164,7 @@ function closestOpticsHit(origin, direction) {
       if (t > 0.01) {
         const hitY = origin.y + direction.y * t;
         if (hitY >= bounds.top && hitY <= bounds.bottom && (!closest || t < closest.t)) {
-          const guide = buildFiberGuide(item, { x: faceX, y: hitY }, direction);
+          const guide = buildFiberGuide(item, { x: faceX, y: hitY }, direction, laserColorData(laser?.colorMode, laser?.color).hex);
           closest = {
             t,
             item,
@@ -1123,7 +1186,7 @@ function closestOpticsHit(origin, direction) {
 
         if (hit && (!closest || hit.t < closest.t)) {
           const insideDirection = normalizeVector(rotateLocalPoint({ x: 1, y: 0.02 }, degToRad(item.angle)));
-          const prismRays = buildPrismDispersion(item, hit.point, insideDirection);
+          const prismRays = buildPrismDispersion(item, hit.point, insideDirection, laser);
           closest = {
             t: hit.t,
             item,
@@ -1164,8 +1227,10 @@ function closestOpticsHit(origin, direction) {
       const bottom = item.y + item.height / 2;
 
       if (hitY >= top && hitY <= bottom && (!closest || t < closest.t)) {
+        const beam = laserColorData(laser?.colorMode, laser?.color);
+        const adjustedFocus = item.focalLength * (laser?.colorMode === "single" ? beam.bend : 1);
         const focus = {
-          x: item.x + (direction.x >= 0 ? item.focalLength : -item.focalLength),
+          x: item.x + (direction.x >= 0 ? adjustedFocus : -adjustedFocus),
           y: item.y
         };
 
@@ -1180,7 +1245,8 @@ function closestOpticsHit(origin, direction) {
           t,
           item,
           point: { x: item.x, y: hitY },
-          nextDirection
+          nextDirection,
+          beamColor: beam.hex
         };
       }
     }
@@ -1199,6 +1265,7 @@ function buildOpticsTrace() {
   }
 
   lasers.forEach((laser) => {
+    const beam = laserColorData(laser.colorMode, laser.color);
     let origin = { x: laser.x, y: laser.y };
     let direction = normalizeVector({
       x: Math.cos(degToRad(laser.angle)),
@@ -1206,14 +1273,14 @@ function buildOpticsTrace() {
     });
 
     for (let step = 0; step < 12; step += 1) {
-      const hit = closestOpticsHit(origin, direction);
+      const hit = closestOpticsHit(origin, direction, laser);
 
       if (!hit) {
-        segments.push({ from: { ...origin }, to: extendRayToBounds(origin, direction), kind: "free" });
+        segments.push({ from: { ...origin }, to: extendRayToBounds(origin, direction), kind: "free", color: beam.hex });
         break;
       }
 
-      segments.push({ from: { ...origin }, to: { ...hit.point }, kind: hit.item.type });
+      segments.push({ from: { ...origin }, to: { ...hit.point }, kind: hit.item.type, color: hit.beamColor || beam.hex });
       if (Array.isArray(hit.extraSegments)) {
         segments.push(...hit.extraSegments);
       }
@@ -1473,40 +1540,60 @@ function drawOptics(trace) {
   const drawMirrorBody = (item, isSelected) => {
     const points = mirrorPolyline(item);
     const angle = degToRad(item.angle);
-    const shadowOffset =
-      item.type === "concave-mirror" ? -8 : item.type === "convex-mirror" ? 8 : 0;
+    const frontOffset = item.type === "concave-mirror" ? -7 : item.type === "convex-mirror" ? 7 : 0;
+    const backOffset = item.type === "concave-mirror" ? 11 : item.type === "convex-mirror" ? -11 : 10;
 
-    if (item.type !== "plane-mirror") {
+    if (item.type === "plane-mirror") {
+      const endpoints = mirrorEndpoints(item);
+      const normal = normalizeVector({ x: -Math.sin(angle), y: Math.cos(angle) });
+      const backStart = { x: endpoints.start.x + normal.x * backOffset, y: endpoints.start.y + normal.y * backOffset };
+      const backEnd = { x: endpoints.end.x + normal.x * backOffset, y: endpoints.end.y + normal.y * backOffset };
+
       ctx.beginPath();
-      points.forEach((point, index) => {
-        if (index === 0) {
-          ctx.moveTo(point.x, point.y);
-        } else {
-          ctx.lineTo(point.x, point.y);
-        }
-      });
+      ctx.moveTo(backStart.x, backStart.y);
+      ctx.lineTo(backEnd.x, backEnd.y);
+      ctx.strokeStyle = isSelected ? "#5f4b6f" : "#44304f";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      ctx.stroke();
 
-      for (let index = points.length - 1; index >= 0; index -= 1) {
-        const point = points[index];
-        const rotated = rotateLocalPoint({ x: shadowOffset, y: 0 }, angle);
-        ctx.lineTo(point.x + rotated.x, point.y + rotated.y);
-      }
+      ctx.beginPath();
+      ctx.moveTo(endpoints.start.x, endpoints.start.y);
+      ctx.lineTo(endpoints.end.x, endpoints.end.y);
+      ctx.strokeStyle = isSelected ? "#bfe9ff" : "#94dfff";
+      ctx.lineWidth = 6;
+      ctx.stroke();
 
-      ctx.closePath();
-      ctx.fillStyle = item.type === "concave-mirror" ? "rgba(255, 212, 117, 0.18)" : "rgba(255, 181, 84, 0.12)";
-      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      return;
     }
 
     ctx.beginPath();
     points.forEach((point, index) => {
+      const rotated = rotateLocalPoint({ x: backOffset, y: 0 }, angle);
+      const shifted = { x: point.x + rotated.x, y: point.y + rotated.y };
+      if (index === 0) ctx.moveTo(shifted.x, shifted.y);
+      else ctx.lineTo(shifted.x, shifted.y);
+    });
+    ctx.strokeStyle = isSelected ? "#5f4b6f" : "#44304f";
+    ctx.lineWidth = 8;
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const rotated = rotateLocalPoint({ x: frontOffset, y: 0 }, angle);
+      const shifted = { x: point.x + rotated.x, y: point.y + rotated.y };
       if (index === 0) {
-        ctx.moveTo(point.x, point.y);
+        ctx.moveTo(shifted.x, shifted.y);
       } else {
-        ctx.lineTo(point.x, point.y);
+        ctx.lineTo(shifted.x, shifted.y);
       }
     });
 
-    ctx.strokeStyle = isSelected ? "#ffe4a3" : "#ffb454";
+    ctx.strokeStyle = isSelected ? "#bfe9ff" : "#94dfff";
     ctx.lineWidth = isSelected ? 8 : 6;
     ctx.lineCap = "round";
     ctx.stroke();
@@ -1524,16 +1611,24 @@ function drawOptics(trace) {
     const isSelected = item.id === selectedId;
 
     if (item.type === "laser") {
+      const beamColor = laserColorData(item.colorMode, item.color).hex;
       const beamEnd = {
         x: item.x + Math.cos(degToRad(item.angle)) * 28,
         y: item.y + Math.sin(degToRad(item.angle)) * 28
       };
-
-      ctx.fillStyle = isSelected ? "#ffffff" : "#f5f7ff";
+      ctx.save();
+      ctx.translate(item.x, item.y);
+      ctx.rotate(degToRad(item.angle));
+      ctx.fillStyle = isSelected ? "rgba(231, 239, 255, 0.96)" : "rgba(203, 214, 232, 0.92)";
       ctx.beginPath();
-      ctx.arc(item.x, item.y, 16, 0, Math.PI * 2);
+      ctx.roundRect(-18, -11, 28, 22, 8);
       ctx.fill();
-      drawArrow({ x: item.x, y: item.y }, beamEnd, "#ffffff", 2);
+      ctx.fillStyle = beamColor;
+      ctx.beginPath();
+      ctx.arc(10, 0, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      drawArrow({ x: item.x + Math.cos(degToRad(item.angle)) * 6, y: item.y + Math.sin(degToRad(item.angle)) * 6 }, beamEnd, beamColor, 2);
     }
 
     if (item.type === "optical-object") {
@@ -1853,7 +1948,7 @@ function loadSample() {
   state.running = false;
   lastTick = 0;
   state.optics.items = [
-    { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
+      { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12, colorMode: "white", color: "red" },
     { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
     { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 18 },
     { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
@@ -2087,7 +2182,7 @@ function initEvents() {
     const item = selectedItem();
     if (!item) return;
 
-    item[input.dataset.prop] = Number(input.value);
+    item[input.dataset.prop] = input.tagName === "SELECT" ? input.value : Number(input.value);
     constrainItem(item);
     state.notice = `${itemTitle(item)} guncellendi.`;
     saveState();
