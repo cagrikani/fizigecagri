@@ -655,6 +655,271 @@
       padding-left: 18px;
     }
 
+    .physics-shell {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .physics-sidebar {
+      display: grid;
+      gap: 16px;
+    }
+
+    .physics-card,
+    .physics-readout,
+    .physics-object-item {
+      border-radius: 24px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.54);
+      border: 1px solid var(--line);
+    }
+
+    .physics-card h5,
+    .physics-readout strong {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .physics-hint,
+    .physics-meta,
+    .physics-readout span,
+    .physics-object-item small {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .physics-hint {
+      margin: 10px 0 0;
+      font-size: 0.95rem;
+    }
+
+    .mode-switch,
+    .physics-actions,
+    .physics-legend,
+    .physics-stage-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .mode-switch {
+      margin-top: 16px;
+    }
+
+    .mode-button,
+    .tool-button,
+    .mini-button,
+    .physics-object-item {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: inherit;
+      font: inherit;
+    }
+
+    .mode-button,
+    .mini-button {
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .mode-button.active,
+    .tool-button:hover,
+    .mini-button:hover,
+    .physics-object-item.active {
+      background: rgba(184, 92, 56, 0.12);
+      border-color: rgba(184, 92, 56, 0.28);
+    }
+
+    .mode-button.active {
+      color: var(--primary-dark);
+    }
+
+    .physics-tool-grid,
+    .physics-readout-grid,
+    .physics-object-list,
+    .physics-inspector-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .physics-tool-grid,
+    .physics-readout-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tool-button {
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      padding: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .tool-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(50, 44, 37, 0.12);
+    }
+
+    .tool-button strong {
+      font-size: 0.96rem;
+    }
+
+    .tool-button small {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .physics-stage {
+      display: grid;
+      gap: 14px;
+    }
+
+    .physics-stage-toolbar {
+      justify-content: space-between;
+    }
+
+    .physics-canvas-shell {
+      position: relative;
+      border-radius: 30px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at top left, rgba(184, 92, 56, 0.12), transparent 30%),
+        radial-gradient(circle at right bottom, rgba(83, 120, 110, 0.16), transparent 26%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(241, 244, 240, 0.86));
+      min-height: 560px;
+    }
+
+    #physics-canvas {
+      display: block;
+      width: 100%;
+      height: 560px;
+      touch-action: none;
+    }
+
+    .physics-empty-state {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      max-width: 280px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      line-height: 1.7;
+      pointer-events: none;
+    }
+
+    .physics-readout {
+      padding: 18px;
+    }
+
+    .physics-readout span {
+      display: block;
+      font-size: 0.84rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .legend-dot.optics-ray {
+      background: #f05b4f;
+    }
+
+    .legend-dot.optics-lens {
+      background: #3c8dac;
+    }
+
+    .legend-dot.mechanics-force {
+      background: #d97706;
+    }
+
+    .legend-dot.mechanics-block {
+      background: #53786e;
+    }
+
+    .physics-inspector {
+      display: grid;
+      gap: 14px;
+    }
+
+    .physics-inspector-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inspector-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .inspector-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .inspector-field label {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .inspector-field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 12px;
+      font: inherit;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+    }
+
+    .physics-object-list {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .physics-object-item {
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .physics-object-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(50, 44, 37, 0.12);
+    }
+
+    .physics-object-item strong {
+      font-size: 0.96rem;
+    }
+
     .cta {
       margin-top: 28px;
       border-radius: 34px;
@@ -698,6 +963,8 @@
       .about-grid,
       .workspace,
       .metric-grid,
+      .physics-shell,
+      .physics-readout-grid,
       .admin-layout,
       .user-layout,
       .form-grid {
@@ -731,6 +998,12 @@
         gap: 10px 14px;
       }
 
+      .physics-tool-grid,
+      .physics-inspector-grid,
+      .physics-object-list {
+        grid-template-columns: 1fr;
+      }
+
       h1 {
         max-width: 11ch;
       }
@@ -754,6 +1027,7 @@
       <a class="brand" href="#ana-sayfa">Benim Portfoyum</a>
       <nav class="nav">
         <a href="#projeler">Projeler</a>
+        <a href="#fizik-lab">Fizik Lab</a>
         <a href="#hakkimda">Hakkimda</a>
         <a href="#iletisim">Iletisim</a>
       </nav>
@@ -828,6 +1102,15 @@
               Son tarih, geciken dosyalar, bekleyen incelemeler ve tamamlanan isler ayni yerde gorunur.
             </p>
             <span class="project-link">Paneli gor</span>
+          </a>
+
+          <a class="project" href="#fizik-lab">
+            <span>Egitim</span>
+            <h4>Fizik Sanal Laboratuvari</h4>
+            <p>
+              Kullanici bos bir sahnede ayna, mercek, lazer, cisim ve kuvvet araclariyla kendi deneyini kurar.
+            </p>
+            <span class="project-link">Laboratuvari ac</span>
           </a>
         </div>
       </section>
@@ -1136,6 +1419,123 @@
               </article>
             </div>
           </section>
+        </div>
+      </section>
+
+      <section class="section" id="fizik-lab">
+        <div class="section-header">
+          <h3>Yeni Proje: Fizik Sanal Laboratuvari</h3>
+          <p>
+            Bu alan, kullanicinin bos bir calisma penceresiyle karsilasip kendi fizik duzenegini
+            kurabilecegi sekilde tasarlandi. Optikte lazer, ayna ve mercek; mekanikte ise cisim
+            ve kuvvet oklari sahneye eklenip yerleri degistirilebilir.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <article class="note">
+            <h4>Optik modul</h4>
+            <p>
+              Lazer isigini sahneye koy, aynayi dondur, mercegi tasit ve isin yolunun nasil
+              degistigini aninda gor. Kullanici kendi yerlesimini kurarak yansima ve odaklanma
+              senaryolari olusturabilir.
+            </p>
+          </article>
+
+          <article class="note">
+            <h4>Mekanik modul</h4>
+            <p>
+              Cismi sahneye ekle, kuvvet oklarini cisme bagla ve simulasyonu baslatarak net
+              kuvvetin hareketi nasil etkiledigini izle. Her duzenek bos sahneden baslar.
+            </p>
+          </article>
+        </div>
+
+        <div class="app-shell">
+          <div class="app-header">
+            <div class="app-title">
+              <h4>Fizik Tasarim Studyo</h4>
+              <p>
+                Asagidaki saha bilerek bos baslar. Arac kutusundan nesne ekleyip surukleyerek
+                kendi deney duzenegini kurabilir, sonra simule ederek sonucu okuyabilirsin.
+              </p>
+            </div>
+            <div class="status-pill"><span class="status-dot"></span> Bos laboratuvar hazir</div>
+          </div>
+
+          <div class="physics-shell">
+            <aside class="physics-sidebar">
+              <article class="physics-card">
+                <h5>Modul Sec</h5>
+                <p class="physics-hint">
+                  Istersen once optik duzenek kur, istersen mekanik kuvvet deneyi ciz. Her modul
+                  kendi bos sahnesiyle calisir.
+                </p>
+                <div class="mode-switch" aria-label="Fizik modul secici">
+                  <button class="mode-button active" type="button" data-physics-scene="optics">Optik</button>
+                  <button class="mode-button" type="button" data-physics-scene="mechanics">Mekanik</button>
+                </div>
+              </article>
+
+              <article class="physics-card">
+                <h5>Arac Kutusu</h5>
+                <div class="physics-tool-grid" id="physics-toolbox"></div>
+                <div class="physics-actions" style="margin-top: 12px;">
+                  <button class="mini-button" id="physics-sample-button" type="button">Ornek kurulum</button>
+                  <button class="mini-button" id="physics-clear-button" type="button">Sahneyi temizle</button>
+                </div>
+              </article>
+
+              <article class="physics-card">
+                <h5>Secili Nesne</h5>
+                <div class="physics-inspector" id="physics-inspector"></div>
+              </article>
+
+              <article class="physics-card">
+                <h5>Simulasyon</h5>
+                <div class="physics-actions">
+                  <button class="button" id="physics-run-button" type="button">Isin yolunu hesapla</button>
+                  <button class="button-secondary" id="physics-pause-button" type="button">Isini gizle</button>
+                </div>
+                <p class="physics-hint" id="physics-status">
+                  Arac kutusundan bir nesne secip bos sahneye yerlestir. Sonra nesneleri surukleyerek
+                  duzenegi tamamla.
+                </p>
+              </article>
+            </aside>
+
+            <div class="physics-stage">
+              <div class="physics-stage-toolbar">
+                <div class="physics-legend" id="physics-legend"></div>
+                <div class="status-pill" id="physics-scene-label"><span class="status-dot"></span> Aktif modul: Optik</div>
+              </div>
+
+              <div class="physics-canvas-shell">
+                <canvas id="physics-canvas" width="960" height="560" aria-label="Fizik simulasyon sahasi"></canvas>
+                <div class="physics-empty-state" id="physics-empty-state">
+                  Arac kutusundan bir fizik araci sec. Sahneye yerlestir, surukle ve kendi
+                  laboratuvar duzenegini olustur.
+                </div>
+              </div>
+
+              <div class="physics-readout-grid">
+                <article class="physics-readout">
+                  <span>Sahne Ozeti</span>
+                  <strong id="physics-readout-primary">0 nesne</strong>
+                </article>
+                <article class="physics-readout">
+                  <span>Simulasyon</span>
+                  <strong id="physics-readout-secondary">Hazir</strong>
+                </article>
+                <article class="physics-readout">
+                  <span>Detay</span>
+                  <strong id="physics-readout-tertiary">Bos calisma alani</strong>
+                </article>
+              </div>
+
+              <div class="physics-object-list" id="physics-object-list"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1524,7 +1924,1090 @@
       refresh();
     });
 
+    const PHYSICS_STORAGE_KEY = 'fizik-lab-demo-state-v1';
+    const physicsToolCatalog = {
+      optics: [
+        { type: 'laser', label: 'Lazer', description: 'Tek bir isik kaynagi ekler.' },
+        { type: 'mirror', label: 'Ayna', description: 'Isini yansitan duz ayna.' },
+        { type: 'lens', label: 'Mercek', description: 'Isini odaga dogru buker.' }
+      ],
+      mechanics: [
+        { type: 'block', label: 'Cisim', description: 'Kuvvet uygulanabilen hareketli blok.' },
+        { type: 'force', label: 'Kuvvet Oku', description: 'Bir cisme etki eden kuvvet vektoru.' }
+      ]
+    };
+
+    const physicsDefaultState = {
+      scene: 'optics',
+      opticsLive: true,
+      running: false,
+      notice: '',
+      optics: { items: [] },
+      mechanics: { items: [] }
+    };
+
+    const physicsCanvas = document.getElementById('physics-canvas');
+    const physicsCtx = physicsCanvas ? physicsCanvas.getContext('2d') : null;
+    const physicsViewport = { width: 960, height: 560 };
+    let physicsState = loadPhysicsState();
+    let physicsSelectedId = null;
+    let physicsDrag = null;
+    let physicsAnimationFrame = null;
+    let physicsLastTick = 0;
+
+    function loadPhysicsState() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(PHYSICS_STORAGE_KEY));
+        return normalizePhysicsState(raw);
+      } catch {
+        return structuredClone(physicsDefaultState);
+      }
+    }
+
+    function normalizePhysicsState(raw) {
+      if (!raw || typeof raw !== 'object') {
+        return structuredClone(physicsDefaultState);
+      }
+
+      return {
+        scene: raw.scene === 'mechanics' ? 'mechanics' : 'optics',
+        opticsLive: raw.opticsLive !== false,
+        running: false,
+        notice: typeof raw.notice === 'string' ? raw.notice : '',
+        optics: { items: Array.isArray(raw.optics?.items) ? raw.optics.items : [] },
+        mechanics: { items: Array.isArray(raw.mechanics?.items) ? raw.mechanics.items : [] }
+      };
+    }
+
+    function savePhysicsState() {
+      localStorage.setItem(PHYSICS_STORAGE_KEY, JSON.stringify(physicsState));
+    }
+
+    function currentPhysicsItems() {
+      return physicsState[physicsState.scene].items;
+    }
+
+    function findPhysicsItemById(id) {
+      return currentPhysicsItems().find((item) => item.id === id);
+    }
+
+    function ensurePhysicsSelection() {
+      if (!findPhysicsItemById(physicsSelectedId)) {
+        physicsSelectedId = currentPhysicsItems()[0]?.id || null;
+      }
+    }
+
+    function makePhysicsId(prefix) {
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function degToRad(degrees) {
+      return (degrees * Math.PI) / 180;
+    }
+
+    function normalizeVector(vector) {
+      const length = Math.hypot(vector.x, vector.y) || 1;
+      return { x: vector.x / length, y: vector.y / length };
+    }
+
+    function dotProduct(a, b) {
+      return a.x * b.x + a.y * b.y;
+    }
+
+    function crossProduct(a, b) {
+      return a.x * b.y - a.y * b.x;
+    }
+
+    function distanceToSegment(point, start, end) {
+      const lineX = end.x - start.x;
+      const lineY = end.y - start.y;
+      const lengthSquared = lineX * lineX + lineY * lineY;
+      if (!lengthSquared) {
+        return Math.hypot(point.x - start.x, point.y - start.y);
+      }
+
+      const t = clamp(
+        ((point.x - start.x) * lineX + (point.y - start.y) * lineY) / lengthSquared,
+        0,
+        1
+      );
+
+      const projection = {
+        x: start.x + lineX * t,
+        y: start.y + lineY * t
+      };
+
+      return Math.hypot(point.x - projection.x, point.y - projection.y);
+    }
+
+    function pointInsideBlock(point, block, padding = 0) {
+      return (
+        point.x >= block.x - block.width / 2 - padding &&
+        point.x <= block.x + block.width / 2 + padding &&
+        point.y >= block.y - block.height / 2 - padding &&
+        point.y <= block.y + block.height / 2 + padding
+      );
+    }
+
+    function getMirrorEndpoints(item) {
+      const angle = degToRad(item.angle);
+      const half = item.length / 2;
+      return {
+        start: { x: item.x - Math.cos(angle) * half, y: item.y - Math.sin(angle) * half },
+        end: { x: item.x + Math.cos(angle) * half, y: item.y + Math.sin(angle) * half }
+      };
+    }
+
+    function getForceEnd(item) {
+      return { x: item.x + item.dx, y: item.y + item.dy };
+    }
+
+    function createPhysicsItem(type) {
+      const count = currentPhysicsItems().length;
+      const offset = count * 28;
+
+      if (type === 'laser') {
+        return { id: makePhysicsId('laser'), type, x: 120 + offset, y: 260, angle: -8 };
+      }
+
+      if (type === 'mirror') {
+        return { id: makePhysicsId('mirror'), type, x: 410 + offset, y: 260, angle: -35, length: 140 };
+      }
+
+      if (type === 'lens') {
+        return { id: makePhysicsId('lens'), type, x: 620, y: 280 + offset * 0.2, height: 180, focalLength: 120 };
+      }
+
+      if (type === 'block') {
+        return {
+          id: makePhysicsId('block'),
+          type,
+          x: 280 + offset,
+          y: 280,
+          width: 86,
+          height: 48,
+          mass: 4,
+          vx: 0,
+          vy: 0
+        };
+      }
+
+      return {
+        id: makePhysicsId('force'),
+        type,
+        x: 230 + offset,
+        y: 250 + offset * 0.1,
+        dx: 88,
+        dy: -18
+      };
+    }
+
+    function constrainPhysicsItem(item) {
+      const width = physicsViewport.width || 960;
+      const height = physicsViewport.height || 560;
+
+      if (item.type === 'laser') {
+        item.x = clamp(Number(item.x) || 0, 20, width - 20);
+        item.y = clamp(Number(item.y) || 0, 20, height - 20);
+        item.angle = clamp(Number(item.angle) || 0, -180, 180);
+      }
+
+      if (item.type === 'mirror') {
+        item.length = clamp(Number(item.length) || 120, 60, 240);
+        item.x = clamp(Number(item.x) || 0, 30, width - 30);
+        item.y = clamp(Number(item.y) || 0, 30, height - 30);
+        item.angle = clamp(Number(item.angle) || 0, -180, 180);
+      }
+
+      if (item.type === 'lens') {
+        item.height = clamp(Number(item.height) || 160, 80, 280);
+        item.focalLength = clamp(Number(item.focalLength) || 120, 40, 240);
+        item.x = clamp(Number(item.x) || 0, 50, width - 50);
+        item.y = clamp(Number(item.y) || 0, item.height / 2 + 20, height - item.height / 2 - 20);
+      }
+
+      if (item.type === 'block') {
+        item.width = clamp(Number(item.width) || 86, 60, 140);
+        item.height = clamp(Number(item.height) || 48, 36, 100);
+        item.mass = clamp(Number(item.mass) || 1, 1, 12);
+        item.vx = clamp(Number(item.vx) || 0, -18, 18);
+        item.vy = clamp(Number(item.vy) || 0, -18, 18);
+        item.x = clamp(Number(item.x) || 0, item.width / 2, width - item.width / 2);
+        item.y = clamp(Number(item.y) || 0, item.height / 2, height - item.height / 2);
+      }
+
+      if (item.type === 'force') {
+        item.x = clamp(Number(item.x) || 0, 20, width - 20);
+        item.y = clamp(Number(item.y) || 0, 20, height - 20);
+        item.dx = clamp(Number(item.dx) || 0, -180, 180);
+        item.dy = clamp(Number(item.dy) || 0, -180, 180);
+      }
+    }
+
+    function getPhysicsItemTitle(item) {
+      if (item.type === 'laser') return 'Lazer kaynagi';
+      if (item.type === 'mirror') return 'Ayna';
+      if (item.type === 'lens') return 'Mercek';
+      if (item.type === 'block') return 'Cisim';
+      return 'Kuvvet oku';
+    }
+
+    function getPhysicsItemMeta(item) {
+      if (item.type === 'laser') return `${Math.round(item.angle)} derece`;
+      if (item.type === 'mirror') return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px`;
+      if (item.type === 'lens') return `${Math.round(item.focalLength)} px odak`;
+      if (item.type === 'block') return `${item.mass} kg • hiz ${item.vx.toFixed(1)}, ${item.vy.toFixed(1)}`;
+      return `${Math.round(Math.hypot(item.dx, item.dy))} N yaklasik`;
+    }
+
+    function renderPhysicsToolbox() {
+      const toolbox = document.getElementById('physics-toolbox');
+      toolbox.innerHTML = physicsToolCatalog[physicsState.scene]
+        .map((item) => `
+          <button class="tool-button" type="button" data-physics-add="${item.type}">
+            <strong>${item.label}</strong>
+            <small>${item.description}</small>
+          </button>
+        `)
+        .join('');
+    }
+
+    function renderPhysicsLegend() {
+      const legend = document.getElementById('physics-legend');
+      if (physicsState.scene === 'optics') {
+        legend.innerHTML = `
+          <span class="legend-chip"><span class="legend-dot optics-ray"></span>Lazer izi</span>
+          <span class="legend-chip"><span class="legend-dot"></span>Ayna yuzeyi</span>
+          <span class="legend-chip"><span class="legend-dot optics-lens"></span>Mercek odagi</span>
+        `;
+      } else {
+        legend.innerHTML = `
+          <span class="legend-chip"><span class="legend-dot mechanics-block"></span>Hareketli cisim</span>
+          <span class="legend-chip"><span class="legend-dot mechanics-force"></span>Kuvvet vektoru</span>
+          <span class="legend-chip"><span class="legend-dot"></span>Secili nesne cercevesi</span>
+        `;
+      }
+    }
+
+    function renderPhysicsButtons() {
+      const runButton = document.getElementById('physics-run-button');
+      const pauseButton = document.getElementById('physics-pause-button');
+      runButton.textContent = physicsState.scene === 'optics' ? 'Isin yolunu hesapla' : 'Simulasyonu baslat';
+      pauseButton.textContent = physicsState.scene === 'optics' ? 'Isini gizle' : 'Duraklat';
+    }
+
+    function renderPhysicsObjectList() {
+      const list = document.getElementById('physics-object-list');
+      const items = currentPhysicsItems();
+
+      if (!items.length) {
+        list.innerHTML = '<div class="physics-object-item"><strong>Henuz nesne yok</strong><small>Arac kutusundan bir arac secerek ilk duzenegi kurabilirsin.</small></div>';
+        return;
+      }
+
+      list.innerHTML = items
+        .map((item) => `
+          <button
+            class="physics-object-item ${item.id === physicsSelectedId ? 'active' : ''}"
+            type="button"
+            data-physics-select="${item.id}"
+          >
+            <strong>${getPhysicsItemTitle(item)}</strong>
+            <small>${getPhysicsItemMeta(item)}</small>
+          </button>
+        `)
+        .join('');
+    }
+
+    function numberField(label, prop, value, min, max, step = 1, full = false) {
+      return `
+        <div class="inspector-field ${full ? 'full' : ''}">
+          <label>${label}</label>
+          <input
+            data-physics-prop="${prop}"
+            type="number"
+            value="${Number(value).toFixed(step < 1 ? 1 : 0)}"
+            min="${min}"
+            max="${max}"
+            step="${step}"
+          />
+        </div>
+      `;
+    }
+
+    function renderPhysicsInspector() {
+      const container = document.getElementById('physics-inspector');
+      const item = findPhysicsItemById(physicsSelectedId);
+
+      if (!item) {
+        container.innerHTML = `
+          <div class="physics-meta">
+            Sahne uzerinden bir nesne secildiginde burada konum, aci, odak, kutle veya kuvvet
+            gibi degerleri degistirebilirsin.
+          </div>
+        `;
+        return;
+      }
+
+      const fields = [
+        numberField('Konum X', 'x', item.x, 0, physicsViewport.width, 1),
+        numberField('Konum Y', 'y', item.y, 0, physicsViewport.height, 1)
+      ];
+
+      if (item.type === 'laser') {
+        fields.push(numberField('Aci', 'angle', item.angle, -180, 180, 1, true));
+      }
+
+      if (item.type === 'mirror') {
+        fields.push(numberField('Aci', 'angle', item.angle, -180, 180, 1));
+        fields.push(numberField('Uzunluk', 'length', item.length, 60, 240, 1));
+      }
+
+      if (item.type === 'lens') {
+        fields.push(numberField('Yukseklik', 'height', item.height, 80, 280, 1));
+        fields.push(numberField('Odak Uzakligi', 'focalLength', item.focalLength, 40, 240, 1));
+      }
+
+      if (item.type === 'block') {
+        fields.push(numberField('Kutle', 'mass', item.mass, 1, 12, 1));
+        fields.push(numberField('Hiz X', 'vx', item.vx, -18, 18, 0.1));
+        fields.push(numberField('Hiz Y', 'vy', item.vy, -18, 18, 0.1));
+      }
+
+      if (item.type === 'force') {
+        fields.push(numberField('Kuvvet X', 'dx', item.dx, -180, 180, 1));
+        fields.push(numberField('Kuvvet Y', 'dy', item.dy, -180, 180, 1));
+      }
+
+      container.innerHTML = `
+        <div>
+          <strong>${getPhysicsItemTitle(item)}</strong>
+          <div class="physics-meta">${getPhysicsItemMeta(item)}</div>
+        </div>
+        <div class="physics-inspector-grid">
+          ${fields.join('')}
+        </div>
+        <div class="physics-actions">
+          ${item.type === 'block' ? '<button class="mini-button" type="button" data-physics-action="reset-velocity">Hizi sifirla</button>' : ''}
+          <button class="mini-button" type="button" data-physics-action="delete">Secili nesneyi sil</button>
+        </div>
+      `;
+    }
+
+    function resizePhysicsCanvas() {
+      if (!physicsCanvas || !physicsCtx) return;
+
+      const rect = physicsCanvas.getBoundingClientRect();
+      const width = Math.round(rect.width || 960);
+      const height = Math.round(rect.height || 560);
+      const ratio = window.devicePixelRatio || 1;
+
+      if (physicsCanvas.width !== width * ratio || physicsCanvas.height !== height * ratio) {
+        physicsCanvas.width = width * ratio;
+        physicsCanvas.height = height * ratio;
+      }
+
+      physicsViewport.width = width;
+      physicsViewport.height = height;
+      physicsCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function drawPhysicsGrid() {
+      physicsCtx.clearRect(0, 0, physicsViewport.width, physicsViewport.height);
+      physicsCtx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      physicsCtx.fillRect(0, 0, physicsViewport.width, physicsViewport.height);
+
+      for (let x = 0; x <= physicsViewport.width; x += 40) {
+        physicsCtx.strokeStyle = x % 120 === 0 ? 'rgba(31, 41, 55, 0.08)' : 'rgba(31, 41, 55, 0.04)';
+        physicsCtx.beginPath();
+        physicsCtx.moveTo(x, 0);
+        physicsCtx.lineTo(x, physicsViewport.height);
+        physicsCtx.stroke();
+      }
+
+      for (let y = 0; y <= physicsViewport.height; y += 40) {
+        physicsCtx.strokeStyle = y % 120 === 0 ? 'rgba(31, 41, 55, 0.08)' : 'rgba(31, 41, 55, 0.04)';
+        physicsCtx.beginPath();
+        physicsCtx.moveTo(0, y);
+        physicsCtx.lineTo(physicsViewport.width, y);
+        physicsCtx.stroke();
+      }
+    }
+
+    function raySegmentIntersection(origin, direction, start, end) {
+      const segment = { x: end.x - start.x, y: end.y - start.y };
+      const denominator = crossProduct(direction, segment);
+      if (Math.abs(denominator) < 0.0001) return null;
+
+      const between = { x: start.x - origin.x, y: start.y - origin.y };
+      const rayDistance = crossProduct(between, segment) / denominator;
+      const segmentDistance = crossProduct(between, direction) / denominator;
+
+      if (rayDistance <= 0.01 || segmentDistance < 0 || segmentDistance > 1) {
+        return null;
+      }
+
+      return {
+        t: rayDistance,
+        point: {
+          x: origin.x + direction.x * rayDistance,
+          y: origin.y + direction.y * rayDistance
+        }
+      };
+    }
+
+    function extendRayToBounds(origin, direction) {
+      const candidates = [];
+
+      if (direction.x > 0) candidates.push((physicsViewport.width - origin.x) / direction.x);
+      if (direction.x < 0) candidates.push((0 - origin.x) / direction.x);
+      if (direction.y > 0) candidates.push((physicsViewport.height - origin.y) / direction.y);
+      if (direction.y < 0) candidates.push((0 - origin.y) / direction.y);
+
+      const distance = Math.min(...candidates.filter((value) => value > 0.01));
+      return {
+        x: origin.x + direction.x * distance,
+        y: origin.y + direction.y * distance
+      };
+    }
+
+    function reflectDirection(direction, mirror) {
+      const surface = normalizeVector({
+        x: mirror.end.x - mirror.start.x,
+        y: mirror.end.y - mirror.start.y
+      });
+      let normal = { x: -surface.y, y: surface.x };
+      if (dotProduct(direction, normal) > 0) {
+        normal = { x: -normal.x, y: -normal.y };
+      }
+
+      return normalizeVector({
+        x: direction.x - 2 * dotProduct(direction, normal) * normal.x,
+        y: direction.y - 2 * dotProduct(direction, normal) * normal.y
+      });
+    }
+
+    function getClosestOpticsHit(origin, direction) {
+      let closest = null;
+
+      currentPhysicsItems().forEach((item) => {
+        if (item.type === 'mirror') {
+          const mirror = getMirrorEndpoints(item);
+          const hit = raySegmentIntersection(origin, direction, mirror.start, mirror.end);
+          if (hit && (!closest || hit.t < closest.t)) {
+            closest = {
+              t: hit.t,
+              item,
+              point: hit.point,
+              nextDirection: reflectDirection(direction, mirror)
+            };
+          }
+        }
+
+        if (item.type === 'lens' && Math.abs(direction.x) > 0.0001) {
+          const t = (item.x - origin.x) / direction.x;
+          if (t <= 0.01) return;
+
+          const hitY = origin.y + direction.y * t;
+          const top = item.y - item.height / 2;
+          const bottom = item.y + item.height / 2;
+
+          if (hitY >= top && hitY <= bottom && (!closest || t < closest.t)) {
+            const focus = {
+              x: item.x + (direction.x >= 0 ? item.focalLength : -item.focalLength),
+              y: item.y
+            };
+
+            closest = {
+              t,
+              item,
+              point: { x: item.x, y: hitY },
+              nextDirection:
+                Math.abs(hitY - item.y) < 8
+                  ? { x: direction.x, y: direction.y }
+                  : normalizeVector({ x: focus.x - item.x, y: focus.y - hitY })
+            };
+          }
+        }
+      });
+
+      return closest;
+    }
+
+    function buildOpticsTrace() {
+      const lasers = currentPhysicsItems().filter((item) => item.type === 'laser');
+      const segments = [];
+      let interactions = 0;
+
+      if (!physicsState.opticsLive || !lasers.length) {
+        return { segments, interactions };
+      }
+
+      lasers.forEach((laser) => {
+        let origin = { x: laser.x, y: laser.y };
+        let direction = normalizeVector({
+          x: Math.cos(degToRad(laser.angle)),
+          y: Math.sin(degToRad(laser.angle))
+        });
+
+        for (let index = 0; index < 10; index += 1) {
+          const hit = getClosestOpticsHit(origin, direction);
+
+          if (!hit) {
+            segments.push({ from: { ...origin }, to: extendRayToBounds(origin, direction), kind: 'free' });
+            break;
+          }
+
+          segments.push({ from: { ...origin }, to: { ...hit.point }, kind: hit.item.type });
+          interactions += 1;
+          origin = {
+            x: hit.point.x + hit.nextDirection.x * 0.8,
+            y: hit.point.y + hit.nextDirection.y * 0.8
+          };
+          direction = hit.nextDirection;
+        }
+      });
+
+      return { segments, interactions };
+    }
+
+    function drawArrow(start, end, color, width = 3) {
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
+      const headLength = 12;
+
+      physicsCtx.strokeStyle = color;
+      physicsCtx.fillStyle = color;
+      physicsCtx.lineWidth = width;
+      physicsCtx.beginPath();
+      physicsCtx.moveTo(start.x, start.y);
+      physicsCtx.lineTo(end.x, end.y);
+      physicsCtx.stroke();
+
+      physicsCtx.beginPath();
+      physicsCtx.moveTo(end.x, end.y);
+      physicsCtx.lineTo(end.x - headLength * Math.cos(angle - Math.PI / 6), end.y - headLength * Math.sin(angle - Math.PI / 6));
+      physicsCtx.lineTo(end.x - headLength * Math.cos(angle + Math.PI / 6), end.y - headLength * Math.sin(angle + Math.PI / 6));
+      physicsCtx.closePath();
+      physicsCtx.fill();
+    }
+
+    function drawOpticsScene(trace) {
+      currentPhysicsItems().forEach((item) => {
+        const isSelected = item.id === physicsSelectedId;
+
+        if (item.type === 'mirror') {
+          const mirror = getMirrorEndpoints(item);
+          physicsCtx.strokeStyle = isSelected ? '#b85c38' : '#7a4d3c';
+          physicsCtx.lineWidth = isSelected ? 8 : 6;
+          physicsCtx.lineCap = 'round';
+          physicsCtx.beginPath();
+          physicsCtx.moveTo(mirror.start.x, mirror.start.y);
+          physicsCtx.lineTo(mirror.end.x, mirror.end.y);
+          physicsCtx.stroke();
+        }
+
+        if (item.type === 'lens') {
+          physicsCtx.strokeStyle = isSelected ? '#1f6f8b' : '#3c8dac';
+          physicsCtx.lineWidth = isSelected ? 8 : 6;
+          physicsCtx.beginPath();
+          physicsCtx.moveTo(item.x, item.y - item.height / 2);
+          physicsCtx.lineTo(item.x, item.y + item.height / 2);
+          physicsCtx.stroke();
+
+          physicsCtx.setLineDash([6, 6]);
+          physicsCtx.strokeStyle = 'rgba(60, 141, 172, 0.35)';
+          physicsCtx.beginPath();
+          physicsCtx.moveTo(item.x - item.focalLength, item.y - 24);
+          physicsCtx.lineTo(item.x - item.focalLength, item.y + 24);
+          physicsCtx.moveTo(item.x + item.focalLength, item.y - 24);
+          physicsCtx.lineTo(item.x + item.focalLength, item.y + 24);
+          physicsCtx.stroke();
+          physicsCtx.setLineDash([]);
+        }
+
+        if (item.type === 'laser') {
+          const beam = {
+            x: item.x + Math.cos(degToRad(item.angle)) * 28,
+            y: item.y + Math.sin(degToRad(item.angle)) * 28
+          };
+
+          physicsCtx.fillStyle = isSelected ? '#c64a40' : '#8f4327';
+          physicsCtx.beginPath();
+          physicsCtx.arc(item.x, item.y, 16, 0, Math.PI * 2);
+          physicsCtx.fill();
+          drawArrow({ x: item.x, y: item.y }, beam, '#ffe4de', 2);
+        }
+      });
+
+      physicsCtx.save();
+      physicsCtx.shadowColor = 'rgba(240, 91, 79, 0.45)';
+      physicsCtx.shadowBlur = 16;
+      trace.segments.forEach((segment) => {
+        physicsCtx.strokeStyle = segment.kind === 'lens' ? '#f59e0b' : '#ff5d5d';
+        physicsCtx.lineWidth = 3;
+        physicsCtx.beginPath();
+        physicsCtx.moveTo(segment.from.x, segment.from.y);
+        physicsCtx.lineTo(segment.to.x, segment.to.y);
+        physicsCtx.stroke();
+      });
+      physicsCtx.restore();
+    }
+
+    function getMechanicsDataForBlock(block) {
+      const linkedForces = currentPhysicsItems().filter(
+        (item) => item.type === 'force' && pointInsideBlock({ x: item.x, y: item.y }, block, 12)
+      );
+
+      const total = linkedForces.reduce(
+        (sum, force) => ({ x: sum.x + force.dx, y: sum.y + force.dy }),
+        { x: 0, y: 0 }
+      );
+
+      return {
+        total,
+        linkedForces,
+        magnitude: Math.hypot(total.x, total.y)
+      };
+    }
+
+    function drawMechanicsScene() {
+      physicsCtx.strokeStyle = 'rgba(31, 41, 55, 0.12)';
+      physicsCtx.lineWidth = 2;
+      physicsCtx.beginPath();
+      physicsCtx.moveTo(0, physicsViewport.height - 24);
+      physicsCtx.lineTo(physicsViewport.width, physicsViewport.height - 24);
+      physicsCtx.stroke();
+
+      currentPhysicsItems().forEach((item) => {
+        const isSelected = item.id === physicsSelectedId;
+
+        if (item.type === 'force') {
+          const end = getForceEnd(item);
+          drawArrow({ x: item.x, y: item.y }, end, isSelected ? '#b85c38' : '#d97706', isSelected ? 4 : 3);
+          physicsCtx.fillStyle = '#7a4d3c';
+          physicsCtx.beginPath();
+          physicsCtx.arc(item.x, item.y, 6, 0, Math.PI * 2);
+          physicsCtx.fill();
+        }
+
+        if (item.type === 'block') {
+          physicsCtx.fillStyle = isSelected ? '#6c9487' : '#53786e';
+          physicsCtx.fillRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
+          physicsCtx.strokeStyle = isSelected ? '#b85c38' : 'rgba(31, 41, 55, 0.14)';
+          physicsCtx.lineWidth = isSelected ? 4 : 2;
+          physicsCtx.strokeRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
+
+          physicsCtx.fillStyle = '#fff7f1';
+          physicsCtx.font = 'bold 14px Georgia';
+          physicsCtx.textAlign = 'center';
+          physicsCtx.fillText(`${item.mass} kg`, item.x, item.y + 5);
+
+          if (isSelected) {
+            const mechanics = getMechanicsDataForBlock(item);
+            const end = {
+              x: item.x + mechanics.total.x * 0.55,
+              y: item.y + mechanics.total.y * 0.55
+            };
+
+            if (mechanics.magnitude > 1) {
+              drawArrow({ x: item.x, y: item.y }, end, '#ef4444', 3);
+            }
+          }
+        }
+      });
+    }
+
+    function renderPhysicsReadouts(trace) {
+      const items = currentPhysicsItems();
+      const primary = document.getElementById('physics-readout-primary');
+      const secondary = document.getElementById('physics-readout-secondary');
+      const tertiary = document.getElementById('physics-readout-tertiary');
+
+      if (!items.length) {
+        primary.textContent = '0 nesne';
+        secondary.textContent = 'Hazir';
+        tertiary.textContent = 'Bos calisma alani';
+        return;
+      }
+
+      if (physicsState.scene === 'optics') {
+        primary.textContent = `${items.length} nesne`;
+        secondary.textContent = physicsState.opticsLive ? `${trace.interactions} etkilesim` : 'Isin kapali';
+        tertiary.textContent =
+          items.some((item) => item.type === 'laser')
+            ? `${trace.segments.length} isik parcasi izlendi`
+            : 'Lazer kaynagi bekleniyor';
+        return;
+      }
+
+      const blocks = items.filter((item) => item.type === 'block');
+      const forces = items.filter((item) => item.type === 'force');
+      const selected = findPhysicsItemById(physicsSelectedId);
+      const selectedBlock = selected?.type === 'block' ? selected : blocks[0];
+      const mechanics = selectedBlock ? getMechanicsDataForBlock(selectedBlock) : null;
+
+      primary.textContent = `${blocks.length} cisim, ${forces.length} kuvvet`;
+      secondary.textContent = physicsState.running ? 'Hareket ediyor' : 'Beklemede';
+      tertiary.textContent = mechanics ? `${Math.round(mechanics.magnitude)} N net kuvvet` : 'Cisim sec';
+    }
+
+    function renderPhysicsStage() {
+      if (!physicsCanvas || !physicsCtx) return;
+
+      resizePhysicsCanvas();
+      currentPhysicsItems().forEach((item) => constrainPhysicsItem(item));
+      drawPhysicsGrid();
+
+      const trace = physicsState.scene === 'optics' ? buildOpticsTrace() : { segments: [], interactions: 0 };
+      if (physicsState.scene === 'optics') {
+        drawOpticsScene(trace);
+      } else {
+        drawMechanicsScene();
+      }
+
+      renderPhysicsReadouts(trace);
+    }
+
+    function renderPhysicsUI() {
+      ensurePhysicsSelection();
+      renderPhysicsToolbox();
+      renderPhysicsLegend();
+      renderPhysicsButtons();
+      renderPhysicsInspector();
+      renderPhysicsObjectList();
+      renderPhysicsStage();
+
+      document.querySelectorAll('[data-physics-scene]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.physicsScene === physicsState.scene);
+      });
+
+      document.getElementById('physics-scene-label').innerHTML =
+        `<span class="status-dot"></span> Aktif modul: ${physicsState.scene === 'optics' ? 'Optik' : 'Mekanik'}`;
+
+      document.getElementById('physics-empty-state').style.display =
+        currentPhysicsItems().length ? 'none' : 'block';
+
+      document.getElementById('physics-status').textContent =
+        physicsState.notice ||
+        (physicsState.scene === 'optics'
+          ? 'Lazer, ayna ve mercek ekleyerek kendi optik duzenegini kur.'
+          : 'Cisim ve kuvvet oku ekleyip kuvvetin harekete etkisini izle.');
+    }
+
+    function addPhysicsItem(type) {
+      const item = createPhysicsItem(type);
+      currentPhysicsItems().push(item);
+      physicsSelectedId = item.id;
+      physicsState.notice = `${getPhysicsItemTitle(item)} sahneye eklendi.`;
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function clearPhysicsScene() {
+      physicsState.running = false;
+      physicsLastTick = 0;
+      physicsState[physicsState.scene].items = [];
+      physicsSelectedId = null;
+      physicsState.notice = 'Sahne temizlendi. Yeni bir duzenek kurabilirsin.';
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function loadPhysicsSample() {
+      physicsState.running = false;
+      physicsLastTick = 0;
+
+      if (physicsState.scene === 'optics') {
+        physicsState.optics.items = [
+          { id: makePhysicsId('laser'), type: 'laser', x: 118, y: 336, angle: -12 },
+          { id: makePhysicsId('mirror'), type: 'mirror', x: 422, y: 264, angle: -42, length: 150 },
+          { id: makePhysicsId('lens'), type: 'lens', x: 668, y: 250, height: 190, focalLength: 132 }
+        ];
+        physicsSelectedId = physicsState.optics.items[0].id;
+        physicsState.opticsLive = true;
+        physicsState.notice = 'Ornek optik duzenek yuklendi. Nesneleri surukleyerek farkli sonuclari dene.';
+      } else {
+        physicsState.mechanics.items = [
+          { id: makePhysicsId('block'), type: 'block', x: 332, y: 284, width: 92, height: 50, mass: 4, vx: 0, vy: 0 },
+          { id: makePhysicsId('force'), type: 'force', x: 320, y: 286, dx: 112, dy: -12 },
+          { id: makePhysicsId('force'), type: 'force', x: 312, y: 304, dx: 0, dy: 82 }
+        ];
+        physicsSelectedId = physicsState.mechanics.items[0].id;
+        physicsState.notice = 'Ornek mekanik duzenek yuklendi. Kuvvetleri degistirip simulasyonu baslat.';
+      }
+
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function setPhysicsScene(scene) {
+      if (scene === physicsState.scene) return;
+
+      physicsState.scene = scene;
+      physicsState.running = false;
+      physicsLastTick = 0;
+      physicsState.notice = scene === 'optics' ? 'Optik sahne aktif.' : 'Mekanik sahne aktif.';
+      ensurePhysicsSelection();
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function togglePhysicsRun() {
+      if (physicsState.scene === 'optics') {
+        physicsState.opticsLive = true;
+        physicsState.notice = 'Isin yolu hesaplandi ve sahneye cizildi.';
+        savePhysicsState();
+        renderPhysicsUI();
+        return;
+      }
+
+      if (!currentPhysicsItems().some((item) => item.type === 'block')) {
+        physicsState.notice = 'Simulasyon icin once bir cisim eklemelisin.';
+        renderPhysicsUI();
+        return;
+      }
+
+      physicsState.running = true;
+      physicsLastTick = 0;
+      physicsState.notice = 'Mekanik simulasyon basladi.';
+      savePhysicsState();
+      renderPhysicsUI();
+      if (!physicsAnimationFrame) {
+        physicsAnimationFrame = requestAnimationFrame(runMechanicsLoop);
+      }
+    }
+
+    function pausePhysicsRun() {
+      if (physicsState.scene === 'optics') {
+        physicsState.opticsLive = false;
+        physicsState.notice = 'Isin izi gizlendi.';
+      } else {
+        physicsState.running = false;
+        physicsLastTick = 0;
+        physicsState.notice = 'Mekanik simulasyon duraklatildi.';
+      }
+
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function stepMechanics(timestamp) {
+      if (!physicsLastTick) {
+        physicsLastTick = timestamp;
+      }
+
+      const delta = Math.min((timestamp - physicsLastTick) / 16.666, 2);
+      physicsLastTick = timestamp;
+
+      currentPhysicsItems().forEach((item) => {
+        if (item.type !== 'block') return;
+
+        const mechanics = getMechanicsDataForBlock(item);
+        item.vx = (item.vx + (mechanics.total.x / (item.mass * 140)) * delta) * 0.995;
+        item.vy = (item.vy + (mechanics.total.y / (item.mass * 140)) * delta) * 0.995;
+        item.x += item.vx * delta * 4;
+        item.y += item.vy * delta * 4;
+
+        const halfWidth = item.width / 2;
+        const halfHeight = item.height / 2;
+
+        if (item.x < halfWidth) {
+          item.x = halfWidth;
+          item.vx *= -0.25;
+        }
+
+        if (item.x > physicsViewport.width - halfWidth) {
+          item.x = physicsViewport.width - halfWidth;
+          item.vx *= -0.25;
+        }
+
+        if (item.y < halfHeight) {
+          item.y = halfHeight;
+          item.vy *= -0.25;
+        }
+
+        if (item.y > physicsViewport.height - halfHeight - 24) {
+          item.y = physicsViewport.height - halfHeight - 24;
+          item.vy *= -0.3;
+          item.vx *= 0.98;
+        }
+      });
+    }
+
+    function runMechanicsLoop(timestamp) {
+      if (!(physicsState.scene === 'mechanics' && physicsState.running)) {
+        physicsAnimationFrame = null;
+        renderPhysicsUI();
+        return;
+      }
+
+      stepMechanics(timestamp);
+      renderPhysicsUI();
+      physicsAnimationFrame = requestAnimationFrame(runMechanicsLoop);
+    }
+
+    function getCanvasPoint(event) {
+      const rect = physicsCanvas.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * physicsViewport.width,
+        y: ((event.clientY - rect.top) / rect.height) * physicsViewport.height
+      };
+    }
+
+    function hitPhysicsItem(point) {
+      const items = [...currentPhysicsItems()].reverse();
+
+      return items.find((item) => {
+        if (item.type === 'laser') {
+          return Math.hypot(point.x - item.x, point.y - item.y) <= 20;
+        }
+
+        if (item.type === 'mirror') {
+          const mirror = getMirrorEndpoints(item);
+          return distanceToSegment(point, mirror.start, mirror.end) <= 12;
+        }
+
+        if (item.type === 'lens') {
+          return (
+            Math.abs(point.x - item.x) <= 12 &&
+            point.y >= item.y - item.height / 2 &&
+            point.y <= item.y + item.height / 2
+          );
+        }
+
+        if (item.type === 'block') {
+          return pointInsideBlock(point, item);
+        }
+
+        const forceEnd = getForceEnd(item);
+        return (
+          distanceToSegment(point, { x: item.x, y: item.y }, forceEnd) <= 12 ||
+          Math.hypot(point.x - item.x, point.y - item.y) <= 10
+        );
+      }) || null;
+    }
+
+    function initPhysicsCanvasEvents() {
+      if (!physicsCanvas) return;
+
+      physicsCanvas.addEventListener('pointerdown', (event) => {
+        const point = getCanvasPoint(event);
+        const hit = hitPhysicsItem(point);
+        physicsSelectedId = hit?.id || null;
+
+        if (hit && !(physicsState.scene === 'mechanics' && physicsState.running)) {
+          physicsDrag = {
+            id: hit.id,
+            offsetX: point.x - hit.x,
+            offsetY: point.y - hit.y
+          };
+          physicsCanvas.setPointerCapture(event.pointerId);
+        }
+
+        physicsState.notice = hit ? `${getPhysicsItemTitle(hit)} secildi.` : 'Secim kaldirildi.';
+        renderPhysicsUI();
+      });
+
+      physicsCanvas.addEventListener('pointermove', (event) => {
+        if (!physicsDrag) return;
+
+        const item = findPhysicsItemById(physicsDrag.id);
+        if (!item) return;
+
+        const point = getCanvasPoint(event);
+        item.x = point.x - physicsDrag.offsetX;
+        item.y = point.y - physicsDrag.offsetY;
+        constrainPhysicsItem(item);
+        renderPhysicsUI();
+      });
+
+      const releaseDrag = () => {
+        if (!physicsDrag) return;
+        physicsDrag = null;
+        savePhysicsState();
+      };
+
+      physicsCanvas.addEventListener('pointerup', releaseDrag);
+      physicsCanvas.addEventListener('pointercancel', releaseDrag);
+      physicsCanvas.addEventListener('pointerleave', releaseDrag);
+    }
+
+    function initPhysicsLab() {
+      if (!physicsCanvas || !physicsCtx) return;
+
+      ensurePhysicsSelection();
+      renderPhysicsUI();
+      initPhysicsCanvasEvents();
+
+      window.addEventListener('resize', renderPhysicsUI);
+
+      document.querySelectorAll('[data-physics-scene]').forEach((button) => {
+        button.addEventListener('click', () => setPhysicsScene(button.dataset.physicsScene));
+      });
+
+      document.getElementById('physics-toolbox').addEventListener('click', (event) => {
+        const target = event.target.closest('[data-physics-add]');
+        if (!target) return;
+        addPhysicsItem(target.dataset.physicsAdd);
+      });
+
+      document.getElementById('physics-object-list').addEventListener('click', (event) => {
+        const target = event.target.closest('[data-physics-select]');
+        if (!target) return;
+        physicsSelectedId = target.dataset.physicsSelect;
+        physicsState.notice = `${getPhysicsItemTitle(findPhysicsItemById(physicsSelectedId))} secildi.`;
+        renderPhysicsUI();
+      });
+
+      document.getElementById('physics-inspector').addEventListener('input', (event) => {
+        const target = event.target.closest('[data-physics-prop]');
+        if (!target) return;
+
+        const item = findPhysicsItemById(physicsSelectedId);
+        if (!item) return;
+
+        item[target.dataset.physicsProp] = Number(target.value);
+        constrainPhysicsItem(item);
+        physicsState.notice = `${getPhysicsItemTitle(item)} guncellendi.`;
+        savePhysicsState();
+        renderPhysicsUI();
+      });
+
+      document.getElementById('physics-inspector').addEventListener('click', (event) => {
+        const target = event.target.closest('[data-physics-action]');
+        if (!target) return;
+
+        const item = findPhysicsItemById(physicsSelectedId);
+        if (!item) return;
+
+        if (target.dataset.physicsAction === 'delete') {
+          physicsState[physicsState.scene].items = currentPhysicsItems().filter((entry) => entry.id !== item.id);
+          physicsSelectedId = null;
+          physicsState.notice = `${getPhysicsItemTitle(item)} silindi.`;
+        }
+
+        if (target.dataset.physicsAction === 'reset-velocity') {
+          item.vx = 0;
+          item.vy = 0;
+          physicsState.notice = 'Cismin hizi sifirlandi.';
+        }
+
+        savePhysicsState();
+        renderPhysicsUI();
+      });
+
+      document.getElementById('physics-sample-button').addEventListener('click', loadPhysicsSample);
+      document.getElementById('physics-clear-button').addEventListener('click', clearPhysicsScene);
+      document.getElementById('physics-run-button').addEventListener('click', togglePhysicsRun);
+      document.getElementById('physics-pause-button').addEventListener('click', pausePhysicsRun);
+    }
+
     refresh();
+    initPhysicsLab();
   </script>
 </body>
 </html>
