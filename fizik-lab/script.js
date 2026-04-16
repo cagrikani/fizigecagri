@@ -4,6 +4,9 @@ const toolCatalog = {
   optics: [
     { type: "laser", label: "Lazer", description: "Tek bir isik kaynagi ekler." },
     { type: "optical-object", label: "Cisim", description: "Goruntusu olusan ok seklinde cisim ekler." },
+    { type: "depth-tank", label: "Gorunur Derinlik", description: "Iki ortamdaki cismin gorunur derinligini gosterir." },
+    { type: "fiber", label: "Fiber Optik", description: "Tam yansima ile isigi ileten fiber kablo ekler." },
+    { type: "prism", label: "Prizma", description: "Kirilan ve ayrisan isigi gosterir." },
     { type: "plane-mirror", label: "Duz Ayna", description: "Standart dogrusal yansima yapar." },
     { type: "concave-mirror", label: "Cukur Ayna", description: "Isini odaga toplayan icbukey ayna." },
     { type: "convex-mirror", label: "Tumsek Ayna", description: "Isini dagitan disbukey ayna." },
@@ -219,6 +222,63 @@ function isLens(item) {
   return item.type === "convex-lens" || item.type === "concave-lens";
 }
 
+function isDepthTank(item) {
+  return item.type === "depth-tank";
+}
+
+function isFiber(item) {
+  return item.type === "fiber";
+}
+
+function isPrism(item) {
+  return item.type === "prism";
+}
+
+function prismVertices(item) {
+  const half = item.size / 2;
+  return [
+    fromLocal({ x: -half, y: half * 0.86 }, item),
+    fromLocal({ x: 0, y: -half }, item),
+    fromLocal({ x: half, y: half * 0.86 }, item)
+  ];
+}
+
+function pointInPolygon(point, polygon) {
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index, index += 1) {
+    const a = polygon[index];
+    const b = polygon[previous];
+    const intersects =
+      a.y > point.y !== b.y > point.y &&
+      point.x < ((b.x - a.x) * (point.y - a.y)) / ((b.y - a.y) || 0.0001) + a.x;
+
+    if (intersects) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
+}
+
+function depthTankBounds(item) {
+  return {
+    left: item.x - item.width / 2,
+    right: item.x + item.width / 2,
+    top: item.y - item.height / 2,
+    bottom: item.y + item.height / 2,
+    interfaceY: item.y - item.height / 2 + item.interfaceLevel
+  };
+}
+
+function fiberBounds(item) {
+  return {
+    left: item.x - item.length / 2,
+    right: item.x + item.length / 2,
+    top: item.y - item.height / 2,
+    bottom: item.y + item.height / 2
+  };
+}
+
 function forceEnd(item) {
   return { x: item.x + item.dx, y: item.y + item.dy };
 }
@@ -337,6 +397,36 @@ function makeItem(type) {
     return { id: uid("object"), type, x: 250 + offset, y: 300, height: 120 };
   }
 
+  if (type === "depth-tank") {
+    return {
+      id: uid("tank"),
+      type,
+      x: 320 + offset,
+      y: 320,
+      width: 220,
+      height: 220,
+      interfaceLevel: 90,
+      topIndex: 1,
+      bottomIndex: 1.33
+    };
+  }
+
+  if (type === "fiber") {
+    return {
+      id: uid("fiber"),
+      type,
+      x: 540 + offset,
+      y: 220,
+      length: 240,
+      height: 58,
+      bounces: 5
+    };
+  }
+
+  if (type === "prism") {
+    return { id: uid("prism"), type, x: 700, y: 240, angle: 0, size: 130, dispersion: 18 };
+  }
+
   if (type === "plane-mirror") {
     return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: -35, length: 140, radius: 0 };
   }
@@ -393,6 +483,32 @@ function constrainItem(item) {
     item.height = clamp(Number(item.height) || 120, 50, 220);
   }
 
+  if (isDepthTank(item)) {
+    item.x = clamp(Number(item.x) || 0, 80, width - 80);
+    item.y = clamp(Number(item.y) || 0, 80, height - 80);
+    item.width = clamp(Number(item.width) || 220, 140, 340);
+    item.height = clamp(Number(item.height) || 220, 140, 320);
+    item.interfaceLevel = clamp(Number(item.interfaceLevel) || 90, 40, item.height - 40);
+    item.topIndex = clamp(Number(item.topIndex) || 1, 1, 2);
+    item.bottomIndex = clamp(Number(item.bottomIndex) || 1.33, 1, 2.4);
+  }
+
+  if (isFiber(item)) {
+    item.x = clamp(Number(item.x) || 0, 100, width - 100);
+    item.y = clamp(Number(item.y) || 0, 40, height - 40);
+    item.length = clamp(Number(item.length) || 240, 120, 360);
+    item.height = clamp(Number(item.height) || 58, 26, 120);
+    item.bounces = clamp(Math.round(Number(item.bounces) || 5), 2, 10);
+  }
+
+  if (isPrism(item)) {
+    item.x = clamp(Number(item.x) || 0, 80, width - 80);
+    item.y = clamp(Number(item.y) || 0, 80, height - 80);
+    item.angle = clamp(Number(item.angle) || 0, -180, 180);
+    item.size = clamp(Number(item.size) || 130, 70, 180);
+    item.dispersion = clamp(Number(item.dispersion) || 18, 6, 36);
+  }
+
   if (isMirror(item)) {
     item.x = clamp(Number(item.x) || 0, 30, width - 30);
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
@@ -434,6 +550,9 @@ function constrainItem(item) {
 function itemTitle(item) {
   if (item.type === "laser") return "Lazer kaynagi";
   if (item.type === "optical-object") return "Optik cisim";
+  if (item.type === "depth-tank") return "Gorunur derinlik kabi";
+  if (item.type === "fiber") return "Fiber optik kablo";
+  if (item.type === "prism") return "Prizma";
   if (item.type === "plane-mirror") return "Duz ayna";
   if (item.type === "concave-mirror") return "Cukur ayna";
   if (item.type === "convex-mirror") return "Tumsek ayna";
@@ -446,6 +565,11 @@ function itemTitle(item) {
 function itemMeta(item) {
   if (item.type === "laser") return `${Math.round(item.angle)} derece aci`;
   if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
+  if (item.type === "depth-tank") {
+    return `n1 ${item.topIndex.toFixed(2)} • n2 ${item.bottomIndex.toFixed(2)} • ${Math.round(item.height)} px`;
+  }
+  if (item.type === "fiber") return `${Math.round(item.length)} px • ${item.bounces} ic yansima`;
+  if (item.type === "prism") return `${Math.round(item.size)} px • dagilim ${Math.round(item.dispersion)} derece`;
   if (isMirror(item)) {
     const radiusText = item.type === "plane-mirror" ? "duz yuzey" : `R ${Math.round(item.radius)}`;
     return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px • ${radiusText}`;
@@ -482,6 +606,7 @@ function renderLegend() {
       <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
       <span class="legend-chip lens">Gercek gorunumlu mercek</span>
       <span class="legend-chip block">Cisim ve goruntu oku</span>
+      <span class="legend-chip force">Prizma, fiber ve iki ortam</span>
     `;
     return;
   }
@@ -536,6 +661,26 @@ function renderInspector() {
 
   if (item.type === "optical-object") {
     fields.push(numberField("Boy", "height", item.height, 50, 220, 1, true));
+  }
+
+  if (isDepthTank(item)) {
+    fields.push(numberField("Genislik", "width", item.width, 140, 340, 1));
+    fields.push(numberField("Yukseklik", "height", item.height, 140, 320, 1));
+    fields.push(numberField("Ara Yuzey", "interfaceLevel", item.interfaceLevel, 40, item.height - 40, 1));
+    fields.push(numberField("Ust Ortam n", "topIndex", item.topIndex, 1, 2, 0.01));
+    fields.push(numberField("Alt Ortam n", "bottomIndex", item.bottomIndex, 1, 2.4, 0.01));
+  }
+
+  if (isFiber(item)) {
+    fields.push(numberField("Uzunluk", "length", item.length, 120, 360, 1));
+    fields.push(numberField("Cap", "height", item.height, 26, 120, 1));
+    fields.push(numberField("Yansima", "bounces", item.bounces, 2, 10, 1));
+  }
+
+  if (isPrism(item)) {
+    fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1));
+    fields.push(numberField("Boyut", "size", item.size, 70, 180, 1));
+    fields.push(numberField("Dagilim", "dispersion", item.dispersion, 6, 36, 1));
   }
 
   if (isMirror(item)) {
@@ -719,10 +864,142 @@ function reflectFromTangent(direction, tangent) {
   });
 }
 
+function apparentDepthForTank(tank, objectItem) {
+  const bounds = depthTankBounds(tank);
+  const insideX = objectItem.x >= bounds.left + 8 && objectItem.x <= bounds.right - 8;
+  const inLowerMedium = objectItem.y >= bounds.interfaceY && objectItem.y <= bounds.bottom - 8;
+
+  if (!insideX || !inLowerMedium) {
+    return null;
+  }
+
+  const realDepth = objectItem.y - bounds.interfaceY;
+  const apparentDepth = realDepth * (tank.topIndex / tank.bottomIndex);
+
+  return {
+    base: { x: objectItem.x, y: bounds.interfaceY + apparentDepth },
+    realDepth,
+    apparentDepth,
+    interfaceY: bounds.interfaceY
+  };
+}
+
+function buildFiberGuide(item, hitPoint, direction) {
+  const bounds = fiberBounds(item);
+  const travelingRight = direction.x >= 0;
+  const exitX = travelingRight ? bounds.right : bounds.left;
+  const startX = hitPoint.x;
+  const usableHeight = item.height / 2 - 6;
+  const segments = [];
+  let current = { x: startX, y: clamp(hitPoint.y, bounds.top + 6, bounds.bottom - 6) };
+  let targetY = item.y - usableHeight;
+  const stepX = (exitX - startX) / (item.bounces + 1);
+
+  for (let bounce = 0; bounce < item.bounces; bounce += 1) {
+    const next = { x: startX + stepX * (bounce + 1), y: targetY };
+    segments.push({ from: { ...current }, to: next, kind: "fiber", color: "#6ee7ff" });
+    current = next;
+    targetY = targetY < item.y ? item.y + usableHeight : item.y - usableHeight;
+  }
+
+  const exitPoint = { x: exitX, y: item.y };
+  segments.push({ from: { ...current }, to: exitPoint, kind: "fiber", color: "#6ee7ff" });
+  return { segments, exitPoint, nextDirection: normalizeVector({ x: travelingRight ? 1 : -1, y: 0 }) };
+}
+
+function buildPrismDispersion(item, entryPoint, direction) {
+  const vertices = prismVertices(item);
+  const edges = [
+    [vertices[0], vertices[1]],
+    [vertices[1], vertices[2]],
+    [vertices[2], vertices[0]]
+  ];
+
+  let exitHit = null;
+  edges.forEach(([start, end]) => {
+    const hit = raySegmentIntersection(
+      { x: entryPoint.x + direction.x * 1.2, y: entryPoint.y + direction.y * 1.2 },
+      direction,
+      start,
+      end
+    );
+
+    if (hit && (!exitHit || hit.t < exitHit.t)) {
+      exitHit = hit;
+    }
+  });
+
+  const exitPoint = exitHit?.point || fromLocal({ x: item.size / 2, y: item.size * 0.12 }, item);
+  const centerDirection = normalizeVector(rotateLocalPoint({ x: 1, y: 0.22 }, degToRad(item.angle)));
+  const spread = item.dispersion / 180 * Math.PI;
+  const colors = ["#ff6b6b", "#ffd166", "#6ee7ff"];
+  const outgoing = colors.map((color, index) => {
+    const delta = (index - 1) * spread;
+    const rayDir = normalizeVector(rotateLocalPoint(centerDirection, delta));
+    return {
+      from: exitPoint,
+      to: {
+        x: exitPoint.x + rayDir.x * 170,
+        y: exitPoint.y + rayDir.y * 170
+      },
+      kind: "prism",
+      color
+    };
+  });
+
+  return {
+    insideSegments: [{ from: entryPoint, to: exitPoint, kind: "prism", color: "#f3f0ff" }],
+    outgoing
+  };
+}
+
 function closestOpticsHit(origin, direction) {
   let closest = null;
 
   currentItems().forEach((item) => {
+    if (isFiber(item) && Math.abs(direction.x) > 0.0001) {
+      const bounds = fiberBounds(item);
+      const faceX = direction.x >= 0 ? bounds.left : bounds.right;
+      const t = (faceX - origin.x) / direction.x;
+
+      if (t > 0.01) {
+        const hitY = origin.y + direction.y * t;
+        if (hitY >= bounds.top && hitY <= bounds.bottom && (!closest || t < closest.t)) {
+          const guide = buildFiberGuide(item, { x: faceX, y: hitY }, direction);
+          closest = {
+            t,
+            item,
+            point: { x: faceX, y: hitY },
+            nextDirection: guide.nextDirection,
+            exitPoint: guide.exitPoint,
+            extraSegments: guide.segments
+          };
+        }
+      }
+    }
+
+    if (isPrism(item)) {
+      const vertices = prismVertices(item);
+      for (let index = 0; index < vertices.length; index += 1) {
+        const start = vertices[index];
+        const end = vertices[(index + 1) % vertices.length];
+        const hit = raySegmentIntersection(origin, direction, start, end);
+
+        if (hit && (!closest || hit.t < closest.t)) {
+          const insideDirection = normalizeVector(rotateLocalPoint({ x: 1, y: 0.02 }, degToRad(item.angle)));
+          const prismRays = buildPrismDispersion(item, hit.point, insideDirection);
+          closest = {
+            t: hit.t,
+            item,
+            point: hit.point,
+            nextDirection: insideDirection,
+            stop: true,
+            extraSegments: [...prismRays.insideSegments, ...prismRays.outgoing]
+          };
+        }
+      }
+    }
+
     if (isMirror(item)) {
       const points = mirrorPolyline(item);
 
@@ -801,10 +1078,16 @@ function buildOpticsTrace() {
       }
 
       segments.push({ from: { ...origin }, to: { ...hit.point }, kind: hit.item.type });
+      if (Array.isArray(hit.extraSegments)) {
+        segments.push(...hit.extraSegments);
+      }
       interactions += 1;
+      if (hit.stop) {
+        break;
+      }
       origin = {
-        x: hit.point.x + hit.nextDirection.x * 0.8,
-        y: hit.point.y + hit.nextDirection.y * 0.8
+        x: (hit.exitPoint?.x ?? hit.point.x) + hit.nextDirection.x * 0.8,
+        y: (hit.exitPoint?.y ?? hit.point.y) + hit.nextDirection.y * 0.8
       };
       direction = hit.nextDirection;
     }
@@ -872,6 +1155,96 @@ function drawAxisAndMarkers(item) {
 }
 
 function drawOptics(trace) {
+  const drawDepthTank = (item, isSelected) => {
+    const bounds = depthTankBounds(item);
+    const radius = 22;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(bounds.left + radius, bounds.top);
+    ctx.lineTo(bounds.right - radius, bounds.top);
+    ctx.quadraticCurveTo(bounds.right, bounds.top, bounds.right, bounds.top + radius);
+    ctx.lineTo(bounds.right, bounds.bottom - radius);
+    ctx.quadraticCurveTo(bounds.right, bounds.bottom, bounds.right - radius, bounds.bottom);
+    ctx.lineTo(bounds.left + radius, bounds.bottom);
+    ctx.quadraticCurveTo(bounds.left, bounds.bottom, bounds.left, bounds.bottom - radius);
+    ctx.lineTo(bounds.left, bounds.top + radius);
+    ctx.quadraticCurveTo(bounds.left, bounds.top, bounds.left + radius, bounds.top);
+    ctx.closePath();
+
+    ctx.fillStyle = "rgba(209, 240, 255, 0.08)";
+    ctx.strokeStyle = isSelected ? "#c8f0ff" : "rgba(200, 240, 255, 0.48)";
+    ctx.lineWidth = isSelected ? 4 : 3;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(214, 233, 255, 0.1)";
+    ctx.fillRect(bounds.left + 2, bounds.top + 2, item.width - 4, item.interfaceY - bounds.top - 2);
+    ctx.fillStyle = "rgba(89, 179, 255, 0.18)";
+    ctx.fillRect(bounds.left + 2, bounds.interfaceY, item.width - 4, bounds.bottom - bounds.interfaceY - 2);
+
+    ctx.setLineDash([10, 6]);
+    ctx.strokeStyle = "rgba(229, 236, 255, 0.65)";
+    ctx.beginPath();
+    ctx.moveTo(bounds.left + 8, bounds.interfaceY);
+    ctx.lineTo(bounds.right - 8, bounds.interfaceY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = "rgba(239, 244, 255, 0.9)";
+    ctx.font = "600 12px Space Grotesk";
+    ctx.textAlign = "left";
+    ctx.fillText(`n=${item.topIndex.toFixed(2)}`, bounds.left + 12, bounds.top + 22);
+    ctx.fillText(`n=${item.bottomIndex.toFixed(2)}`, bounds.left + 12, bounds.interfaceY + 22);
+    ctx.restore();
+  };
+
+  const drawFiber = (item, isSelected) => {
+    const bounds = fiberBounds(item);
+    const radius = item.height / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(bounds.left + radius, bounds.top);
+    ctx.lineTo(bounds.right - radius, bounds.top);
+    ctx.arc(bounds.right - radius, item.y, radius, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(bounds.left + radius, bounds.bottom);
+    ctx.arc(bounds.left + radius, item.y, radius, Math.PI / 2, (Math.PI * 3) / 2);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(126, 231, 255, 0.18)";
+    ctx.strokeStyle = isSelected ? "#c4fbff" : "#78ebff";
+    ctx.lineWidth = isSelected ? 4 : 3;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.beginPath();
+    ctx.moveTo(bounds.left + 8, item.y);
+    ctx.lineTo(bounds.right - 8, item.y);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawPrism = (item, isSelected) => {
+    const vertices = prismVertices(item);
+    ctx.save();
+    ctx.beginPath();
+    vertices.forEach((point, index) => {
+      if (index === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.closePath();
+    const gradient = ctx.createLinearGradient(vertices[0].x, vertices[0].y, vertices[2].x, vertices[2].y);
+    gradient.addColorStop(0, "rgba(179, 169, 255, 0.14)");
+    gradient.addColorStop(0.5, "rgba(220, 235, 255, 0.2)");
+    gradient.addColorStop(1, "rgba(132, 225, 255, 0.14)");
+    ctx.fillStyle = gradient;
+    ctx.strokeStyle = isSelected ? "#f4ecff" : "rgba(212, 224, 255, 0.88)";
+    ctx.lineWidth = isSelected ? 4 : 3;
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  };
+
   const drawLensBody = (item, isSelected) => {
     const top = item.y - item.height / 2;
     const bottom = item.y + item.height / 2;
@@ -983,6 +1356,18 @@ function drawOptics(trace) {
       ctx.fillRect(item.x - 12, item.y - 8, 24, 8);
     }
 
+    if (isDepthTank(item)) {
+      drawDepthTank(item, isSelected);
+    }
+
+    if (isFiber(item)) {
+      drawFiber(item, isSelected);
+    }
+
+    if (isPrism(item)) {
+      drawPrism(item, isSelected);
+    }
+
     if (isMirror(item)) {
       drawAxisAndMarkers(item);
       drawMirrorBody(item, isSelected);
@@ -1014,11 +1399,42 @@ function drawOptics(trace) {
     });
   });
 
+  currentItems().forEach((item) => {
+    if (!isDepthTank(item)) {
+      return;
+    }
+
+    opticalObjects.forEach((objectItem) => {
+      const apparent = apparentDepthForTank(item, objectItem);
+      if (!apparent) {
+        return;
+      }
+
+      ctx.save();
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+      ctx.beginPath();
+      ctx.moveTo(objectItem.x + 18, apparent.interfaceY);
+      ctx.lineTo(objectItem.x + 18, objectItem.y);
+      ctx.moveTo(objectItem.x - 18, apparent.interfaceY);
+      ctx.lineTo(objectItem.x - 18, apparent.base.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawVerticalObject(apparent.base, objectItem.height, "rgba(255, 209, 102, 0.85)", true);
+      ctx.fillStyle = "rgba(239, 244, 255, 0.88)";
+      ctx.font = "600 12px Space Grotesk";
+      ctx.textAlign = "left";
+      ctx.fillText(`gercek ${Math.round(apparent.realDepth)} px`, objectItem.x + 24, objectItem.y - 10);
+      ctx.fillText(`gorunur ${Math.round(apparent.apparentDepth)} px`, objectItem.x + 24, apparent.base.y - 10);
+      ctx.restore();
+    });
+  });
+
   ctx.save();
   ctx.shadowColor = "rgba(255, 107, 107, 0.6)";
   ctx.shadowBlur = 14;
   trace.segments.forEach((segment) => {
-    ctx.strokeStyle = isLens(segment.kind ? { type: segment.kind } : {}) ? "#ffb454" : "#ff6b6b";
+    ctx.strokeStyle = segment.color || (isLens(segment.kind ? { type: segment.kind } : {}) ? "#ffb454" : "#ff6b6b");
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(segment.from.x, segment.from.y);
@@ -1155,7 +1571,7 @@ function renderUI() {
   document.getElementById("status-text").textContent =
     state.notice ||
     (state.scene === "optics"
-      ? "Cisim, asal eksen, odak ve goruntuyu ayna-mercek duzeneklerinde incele."
+      ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
       : "Cisim ve kuvvet oku ekleyip net kuvvetin harekete etkisini izle.");
 
   document.getElementById("run-scene-button").textContent =
@@ -1189,6 +1605,9 @@ function loadSample() {
     state.optics.items = [
       { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
       { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
+      { id: uid("tank"), type: "depth-tank", x: 280, y: 320, width: 220, height: 220, interfaceLevel: 92, topIndex: 1, bottomIndex: 1.33 },
+      { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
+      { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16 },
       { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
       { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
       { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
@@ -1335,6 +1754,20 @@ function hitItem(point) {
 
     if (item.type === "optical-object") {
       return Math.abs(point.x - item.x) <= 16 && point.y >= item.y - item.height - 12 && point.y <= item.y + 10;
+    }
+
+    if (isDepthTank(item)) {
+      const bounds = depthTankBounds(item);
+      return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom;
+    }
+
+    if (isFiber(item)) {
+      const bounds = fiberBounds(item);
+      return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom;
+    }
+
+    if (isPrism(item)) {
+      return pointInPolygon(point, prismVertices(item));
     }
 
     if (isMirror(item)) {
