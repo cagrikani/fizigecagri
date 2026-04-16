@@ -68,12 +68,12 @@ function normalizeState(raw) {
     });
 
   return {
-    scene: raw.scene === "mechanics" ? "mechanics" : "optics",
+    scene: "optics",
     opticsVisible: raw.opticsVisible !== false,
     running: false,
     notice: typeof raw.notice === "string" ? raw.notice : "",
     optics: { items: Array.isArray(raw.optics?.items) ? normalizeItems(raw.optics.items) : [] },
-    mechanics: { items: Array.isArray(raw.mechanics?.items) ? raw.mechanics.items : [] }
+    mechanics: { items: [] }
   };
 }
 
@@ -82,7 +82,7 @@ function saveState() {
 }
 
 function currentItems() {
-  return state[state.scene].items;
+  return state.optics.items;
 }
 
 function selectedItem() {
@@ -659,22 +659,12 @@ function renderToolGrid() {
 
 function renderLegend() {
   const legend = document.getElementById("legend");
-
-  if (state.scene === "optics") {
-    legend.innerHTML = `
-      <span class="legend-chip laser">Beyaz isik</span>
-      <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
-      <span class="legend-chip lens">Gercek gorunumlu mercek</span>
-      <span class="legend-chip block">Cisim, goz ve goruntu</span>
-      <span class="legend-chip force">Prizma, fiber ve iki ortam</span>
-    `;
-    return;
-  }
-
   legend.innerHTML = `
-    <span class="legend-chip block">Hareketli cisim</span>
-    <span class="legend-chip force">Kuvvet vektoru</span>
-    <span class="legend-chip">Secili nesne</span>
+    <span class="legend-chip laser">Beyaz isik</span>
+    <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
+    <span class="legend-chip lens">Gercek gorunumlu mercek</span>
+    <span class="legend-chip block">Cisim, goz ve goruntu</span>
+    <span class="legend-chip force">Prizma, fiber ve iki ortam</span>
   `;
 }
 
@@ -1807,40 +1797,21 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
     return;
   }
 
-  if (state.scene === "optics") {
-    primary.textContent = `${items.length} nesne`;
-    secondary.textContent = state.opticsVisible ? `${trace.interactions} etkilesim` : "Isin gizli";
-    tertiary.textContent = items.some((item) => item.type === "laser")
-      ? `${trace.segments.length} isik parcasi izlendi`
-      : "Lazer kaynagi bekleniyor";
-    sceneState.textContent = state.opticsVisible ? "Isin gosteriliyor" : "Hazir";
-    return;
-  }
-
-  const blocks = items.filter((item) => item.type === "block");
-  const forces = items.filter((item) => item.type === "force");
-  const block = selectedItem()?.type === "block" ? selectedItem() : blocks[0];
-  const mechanics = block ? mechanicsForces(block) : null;
-
-  primary.textContent = `${blocks.length} cisim, ${forces.length} kuvvet`;
-  secondary.textContent = state.running ? "Hareket ediyor" : "Beklemede";
-  tertiary.textContent = mechanics ? `${Math.round(mechanics.magnitude)} N net kuvvet` : "Cisim sec";
-  sceneState.textContent = state.running ? "Simulasyon acik" : "Hazir";
+  primary.textContent = `${items.length} nesne`;
+  secondary.textContent = state.opticsVisible ? `${trace.interactions} etkilesim` : "Isin gizli";
+  tertiary.textContent = items.some((item) => item.type === "laser")
+    ? `${trace.segments.length} isik parcasi izlendi`
+    : "Lazer kaynagi bekleniyor";
+  sceneState.textContent = state.opticsVisible ? "Isin gosteriliyor" : "Hazir";
 }
 
 function renderScene() {
   resizeCanvas();
   currentItems().forEach((item) => constrainItem(item));
   drawBackground();
-
-  if (state.scene === "optics") {
-    const trace = buildOpticsTrace();
-    drawOptics(trace);
-    renderSummaries(trace);
-  } else {
-    drawMechanics();
-    renderSummaries();
-  }
+  const trace = buildOpticsTrace();
+  drawOptics(trace);
+  renderSummaries(trace);
 }
 
 function renderUI() {
@@ -1851,20 +1822,12 @@ function renderUI() {
   renderObjectList();
   renderScene();
 
-  document.querySelectorAll("[data-scene-button]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.sceneButton === state.scene);
-  });
-
-  document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Mekanik"}`;
+  document.getElementById("scene-label").textContent = "Aktif modul: Optik";
   document.getElementById("empty-note").style.display = currentItems().length ? "none" : "block";
   document.getElementById("status-text").textContent =
     state.notice ||
-    (state.scene === "optics"
-      ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
-      : "Cisim ve kuvvet oku ekleyip net kuvvetin harekete etkisini izle.");
-
-  document.getElementById("run-scene-button").textContent =
-    state.scene === "optics" ? "Isin yolunu hesapla" : "Simulasyonu calistir";
+    "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele.";
+  document.getElementById("run-scene-button").textContent = "Isin yolunu hesapla";
 }
 
 function addItem(type) {
@@ -1879,7 +1842,7 @@ function addItem(type) {
 function clearScene() {
   state.running = false;
   lastTick = 0;
-  state[state.scene].items = [];
+  state.optics.items = [];
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
   saveState();
@@ -1889,85 +1852,40 @@ function clearScene() {
 function loadSample() {
   state.running = false;
   lastTick = 0;
-
-  if (state.scene === "optics") {
-    state.optics.items = [
-      { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
-      { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
-      { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 18 },
-      { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
-      { id: uid("tank"), type: "depth-tank", x: 280, y: 320, width: 220, height: 220, interfaceLevel: 92, topIndex: 1, bottomIndex: 1.33 },
-      { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
-      { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16, index: 1.52 },
-      { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
-      { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
-      { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
-    ];
-    selectedId = state.optics.items[0].id;
-    state.opticsVisible = true;
-    state.notice = "Ornek optik duzenek yuklendi.";
-  } else {
-    state.mechanics.items = [
-      { id: uid("block"), type: "block", x: 360, y: 330, width: 96, height: 54, mass: 4, vx: 0, vy: 0 },
-      { id: uid("force"), type: "force", x: 346, y: 320, dx: 120, dy: -16 },
-      { id: uid("force"), type: "force", x: 340, y: 340, dx: 0, dy: 86 }
-    ];
-    selectedId = state.mechanics.items[0].id;
-    state.notice = "Ornek mekanik duzenek yuklendi.";
-  }
+  state.optics.items = [
+    { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
+    { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
+    { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 18 },
+    { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
+    { id: uid("tank"), type: "depth-tank", x: 280, y: 320, width: 220, height: 220, interfaceLevel: 92, topIndex: 1, bottomIndex: 1.33 },
+    { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
+    { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16, index: 1.52 },
+    { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
+    { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
+    { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
+  ];
+  selectedId = state.optics.items[0].id;
+  state.opticsVisible = true;
+  state.notice = "Ornek optik duzenek yuklendi.";
 
   saveState();
   renderUI();
 }
 
 function setScene(scene) {
-  if (scene === state.scene) return;
-
-  state.scene = scene;
-  state.running = false;
-  lastTick = 0;
-  state.notice = scene === "optics" ? "Optik sahne aktif." : "Mekanik sahne aktif.";
-  ensureSelection();
-  saveState();
-  renderUI();
+  state.scene = "optics";
 }
 
 function runScene() {
-  if (state.scene === "optics") {
-    state.opticsVisible = true;
-    state.notice = "Isin yolu hesaplandi ve cizildi.";
-    saveState();
-    renderUI();
-    return;
-  }
-
-  if (!currentItems().some((item) => item.type === "block")) {
-    state.notice = "Mekanik simulasyon icin once bir cisim ekle.";
-    renderUI();
-    return;
-  }
-
-  state.running = true;
-  lastTick = 0;
-  state.notice = "Mekanik simulasyon basladi.";
+  state.opticsVisible = true;
+  state.notice = "Isin yolu hesaplandi ve cizildi.";
   saveState();
   renderUI();
-
-  if (!animationFrame) {
-    animationFrame = requestAnimationFrame(runMechanicsLoop);
-  }
 }
 
 function pauseScene() {
-  if (state.scene === "optics") {
-    state.opticsVisible = false;
-    state.notice = "Isin izi gizlendi.";
-  } else {
-    state.running = false;
-    lastTick = 0;
-    state.notice = "Mekanik simulasyon duraklatildi.";
-  }
-
+  state.opticsVisible = false;
+  state.notice = "Isin izi gizlendi.";
   saveState();
   renderUI();
 }
@@ -2107,7 +2025,7 @@ function initCanvasInteractions() {
     const hit = hitItem(point);
     selectedId = hit?.id || null;
 
-    if (hit && !(state.scene === "mechanics" && state.running)) {
+    if (hit) {
       dragState = {
         id: hit.id,
         offsetX: point.x - hit.x,
@@ -2147,10 +2065,6 @@ function initCanvasInteractions() {
 function initEvents() {
   window.addEventListener("resize", renderUI);
   initCanvasInteractions();
-
-  document.querySelectorAll("[data-scene-button]").forEach((button) => {
-    button.addEventListener("click", () => setScene(button.dataset.sceneButton));
-  });
 
   document.getElementById("tool-grid").addEventListener("click", (event) => {
     const button = event.target.closest("[data-add]");

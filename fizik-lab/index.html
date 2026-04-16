@@ -6,7 +6,7 @@
   <title>Fizik Lab</title>
   <meta
     name="description"
-    content="Optik ve mekanik deneylerinin bos bir sahnede tasarlanabildigi etkilesimli fizik laboratuvari."
+    content="Optik deneylerinin bos bir sahnede tasarlanabildigi etkilesimli fizik laboratuvari."
   />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,12 +23,12 @@
         <span class="eyebrow">Bagimsiz proje</span>
         <h1>Fizik Lab</h1>
         <p class="hero-text">
-          Kullanici bos bir sahnede kendi duzenegini kurar. Optikte lazer, ayna
-          ve mercek; mekanikte cisim ve kuvvet araclari ile temel fizik
+          Kullanici bos bir sahnede kendi duzenegini kurar. Lazer, ayna,
+          mercek, prizma, fiber ve gorunur derinlik araclari ile optik
           simulasyonlari tasarlanabilir.
         </p>
         <div class="hero-actions">
-          <button class="primary-button" id="run-scene-button" type="button">Simulasyonu calistir</button>
+          <button class="primary-button" id="run-scene-button" type="button">Isin yolunu hesapla</button>
           <button class="secondary-button" id="load-sample-button" type="button">Ornek duzenek yukle</button>
         </div>
       </div>
@@ -39,8 +39,8 @@
           <strong>Bos sahne + arac kutusu</strong>
         </div>
         <div class="hero-stat">
-          <span>Moduller</span>
-          <strong>Optik ve Mekanik</strong>
+          <span>Modul</span>
+          <strong>Optik</strong>
         </div>
         <div class="hero-stat">
           <span>Etkilesim</span>
@@ -53,19 +53,8 @@
       <aside class="sidebar">
         <section class="panel">
           <div class="panel-head">
-            <h2>Modul</h2>
-            <p>Her modul kendi bos deney sahnesiyle acilir.</p>
-          </div>
-          <div class="scene-switch" aria-label="Modul secimi">
-            <button class="scene-button active" data-scene-button="optics" type="button">Optik</button>
-            <button class="scene-button" data-scene-button="mechanics" type="button">Mekanik</button>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
             <h2>Arac Kutusu</h2>
-            <p>Secilen modula gore sahneye yeni fizik nesneleri eklenir.</p>
+            <p>Optik sahneye yeni fizik nesneleri eklenir.</p>
           </div>
           <div class="tool-grid" id="tool-grid"></div>
           <div class="inline-actions">
@@ -77,7 +66,7 @@
         <section class="panel">
           <div class="panel-head">
             <h2>Secili Nesne</h2>
-            <p>Konum, aci, kutle ve kuvvet gibi degerleri buradan degistir.</p>
+            <p>Konum, aci, boyut ve optik degerleri buradan degistir.</p>
           </div>
           <div id="inspector"></div>
         </section>
