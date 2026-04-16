@@ -4,6 +4,8 @@ const toolCatalog = {
   optics: [
     { type: "laser", label: "Lazer", description: "Tek bir isik kaynagi ekler." },
     { type: "optical-object", label: "Cisim", description: "Goruntusu olusan ok seklinde cisim ekler." },
+    { type: "round-object", label: "Yuvarlak Cisim", description: "Goz ve aynada kullanilabilen yuvarlak cisim ekler." },
+    { type: "eye", label: "Goz", description: "Aynada ve ortamda gorulen noktayi izleyen goz ekler." },
     { type: "depth-tank", label: "Gorunur Derinlik", description: "Iki ortamdaki cismin gorunur derinligini gosterir." },
     { type: "fiber", label: "Fiber Optik", description: "Tam yansima ile isigi ileten fiber kablo ekler." },
     { type: "prism", label: "Prizma", description: "Kirilan ve ayrisan isigi gosterir." },
@@ -226,6 +228,14 @@ function isDepthTank(item) {
   return item.type === "depth-tank";
 }
 
+function isEye(item) {
+  return item.type === "eye";
+}
+
+function isRoundObject(item) {
+  return item.type === "round-object";
+}
+
 function isFiber(item) {
   return item.type === "fiber";
 }
@@ -397,6 +407,14 @@ function makeItem(type) {
     return { id: uid("object"), type, x: 250 + offset, y: 300, height: 120 };
   }
 
+  if (type === "round-object") {
+    return { id: uid("round"), type, x: 240 + offset, y: 300, radius: 26 };
+  }
+
+  if (type === "eye") {
+    return { id: uid("eye"), type, x: 150 + offset, y: 220, angle: 0 };
+  }
+
   if (type === "depth-tank") {
     return {
       id: uid("tank"),
@@ -424,7 +442,7 @@ function makeItem(type) {
   }
 
   if (type === "prism") {
-    return { id: uid("prism"), type, x: 700, y: 240, angle: 0, size: 130, dispersion: 18 };
+    return { id: uid("prism"), type, x: 700, y: 240, angle: 0, size: 130, dispersion: 18, index: 1.52 };
   }
 
   if (type === "plane-mirror") {
@@ -483,6 +501,18 @@ function constrainItem(item) {
     item.height = clamp(Number(item.height) || 120, 50, 220);
   }
 
+  if (isRoundObject(item)) {
+    item.x = clamp(Number(item.x) || 0, 30, width - 30);
+    item.y = clamp(Number(item.y) || 0, 30, height - 30);
+    item.radius = clamp(Number(item.radius) || 26, 12, 48);
+  }
+
+  if (isEye(item)) {
+    item.x = clamp(Number(item.x) || 0, 26, width - 26);
+    item.y = clamp(Number(item.y) || 0, 26, height - 26);
+    item.angle = clamp(Number(item.angle) || 0, -180, 180);
+  }
+
   if (isDepthTank(item)) {
     item.x = clamp(Number(item.x) || 0, 80, width - 80);
     item.y = clamp(Number(item.y) || 0, 80, height - 80);
@@ -507,6 +537,7 @@ function constrainItem(item) {
     item.angle = clamp(Number(item.angle) || 0, -180, 180);
     item.size = clamp(Number(item.size) || 130, 70, 180);
     item.dispersion = clamp(Number(item.dispersion) || 18, 6, 36);
+    item.index = clamp(Number(item.index) || 1.52, 1.1, 2.2);
   }
 
   if (isMirror(item)) {
@@ -550,6 +581,8 @@ function constrainItem(item) {
 function itemTitle(item) {
   if (item.type === "laser") return "Lazer kaynagi";
   if (item.type === "optical-object") return "Optik cisim";
+  if (item.type === "round-object") return "Yuvarlak cisim";
+  if (item.type === "eye") return "Goz";
   if (item.type === "depth-tank") return "Gorunur derinlik kabi";
   if (item.type === "fiber") return "Fiber optik kablo";
   if (item.type === "prism") return "Prizma";
@@ -565,11 +598,15 @@ function itemTitle(item) {
 function itemMeta(item) {
   if (item.type === "laser") return `${Math.round(item.angle)} derece aci`;
   if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
+  if (item.type === "round-object") return `${Math.round(item.radius)} px yaricap`;
+  if (item.type === "eye") return `${Math.round(item.angle)} derece bakis`;
   if (item.type === "depth-tank") {
     return `n1 ${item.topIndex.toFixed(2)} • n2 ${item.bottomIndex.toFixed(2)} • ${Math.round(item.height)} px`;
   }
   if (item.type === "fiber") return `${Math.round(item.length)} px • ${item.bounces} ic yansima`;
-  if (item.type === "prism") return `${Math.round(item.size)} px • dagilim ${Math.round(item.dispersion)} derece`;
+  if (item.type === "prism") {
+    return `${Math.round(item.size)} px • dagilim ${Math.round(item.dispersion)} derece • n ${item.index.toFixed(2)}`;
+  }
   if (isMirror(item)) {
     const radiusText = item.type === "plane-mirror" ? "duz yuzey" : `R ${Math.round(item.radius)}`;
     return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px • ${radiusText}`;
@@ -602,10 +639,10 @@ function renderLegend() {
 
   if (state.scene === "optics") {
     legend.innerHTML = `
-      <span class="legend-chip laser">Lazer izi</span>
+      <span class="legend-chip laser">Beyaz isik</span>
       <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
       <span class="legend-chip lens">Gercek gorunumlu mercek</span>
-      <span class="legend-chip block">Cisim ve goruntu oku</span>
+      <span class="legend-chip block">Cisim, goz ve goruntu</span>
       <span class="legend-chip force">Prizma, fiber ve iki ortam</span>
     `;
     return;
@@ -663,6 +700,14 @@ function renderInspector() {
     fields.push(numberField("Boy", "height", item.height, 50, 220, 1, true));
   }
 
+  if (isRoundObject(item)) {
+    fields.push(numberField("Yaricap", "radius", item.radius, 12, 48, 1, true));
+  }
+
+  if (isEye(item)) {
+    fields.push(numberField("Bakis Acisi", "angle", item.angle, -180, 180, 1, true));
+  }
+
   if (isDepthTank(item)) {
     fields.push(numberField("Genislik", "width", item.width, 140, 340, 1));
     fields.push(numberField("Yukseklik", "height", item.height, 140, 320, 1));
@@ -681,6 +726,7 @@ function renderInspector() {
     fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1));
     fields.push(numberField("Boyut", "size", item.size, 70, 180, 1));
     fields.push(numberField("Dagilim", "dispersion", item.dispersion, 6, 36, 1));
+    fields.push(numberField("Kiricilik", "index", item.index || 1.52, 1.1, 2.2, 0.01));
   }
 
   if (isMirror(item)) {
@@ -884,6 +930,58 @@ function apparentDepthForTank(tank, objectItem) {
   };
 }
 
+function apparentViewForEye(tank, eye, objectItem) {
+  const bounds = depthTankBounds(tank);
+  const eyeInside = eye.x >= bounds.left && eye.x <= bounds.right && eye.y <= bounds.interfaceY - 6;
+  const objectInside = objectItem.x >= bounds.left && objectItem.x <= bounds.right && objectItem.y >= bounds.interfaceY + 6;
+
+  if (!eyeInside || !objectInside) {
+    return null;
+  }
+
+  const eyeDepth = bounds.interfaceY - eye.y;
+  const realDepth = objectItem.y - bounds.interfaceY;
+  const apparentDepth = realDepth * (tank.topIndex / tank.bottomIndex);
+  const interfaceBias = eyeDepth / (eyeDepth + realDepth * (tank.topIndex / tank.bottomIndex) + 0.001);
+  const interfaceX = eye.x + (objectItem.x - eye.x) * interfaceBias;
+  const apparentX = eye.x + ((interfaceX - eye.x) * (eyeDepth + apparentDepth)) / Math.max(eyeDepth, 1);
+
+  return {
+    eye,
+    interfacePoint: { x: interfaceX, y: bounds.interfaceY },
+    apparentPoint: { x: apparentX, y: bounds.interfaceY + apparentDepth },
+    realPoint: { x: objectItem.x, y: objectItem.y },
+    apparentDepth,
+    realDepth
+  };
+}
+
+function planeMirrorViewForEye(mirror, eye, objectItem) {
+  if (mirror.type !== "plane-mirror") {
+    return null;
+  }
+
+  const eyeLocal = toLocal(eye, mirror);
+  const objectLocal = toLocal(objectItem, mirror);
+
+  if (eyeLocal.x >= -4 || objectLocal.x >= -4) {
+    return null;
+  }
+
+  const imageLocal = { x: -objectLocal.x, y: objectLocal.y };
+  const ratio = -eyeLocal.x / (imageLocal.x - eyeLocal.x);
+  const hitY = eyeLocal.y + (imageLocal.y - eyeLocal.y) * ratio;
+
+  if (ratio <= 0 || ratio >= 1 || Math.abs(hitY) > mirror.length / 2) {
+    return null;
+  }
+
+  return {
+    imagePoint: fromLocal(imageLocal, mirror),
+    hitPoint: fromLocal({ x: 0, y: hitY }, mirror)
+  };
+}
+
 function buildFiberGuide(item, hitPoint, direction) {
   const bounds = fiberBounds(item);
   const travelingRight = direction.x >= 0;
@@ -929,12 +1027,21 @@ function buildPrismDispersion(item, entryPoint, direction) {
     }
   });
 
-  const exitPoint = exitHit?.point || fromLocal({ x: item.size / 2, y: item.size * 0.12 }, item);
-  const centerDirection = normalizeVector(rotateLocalPoint({ x: 1, y: 0.22 }, degToRad(item.angle)));
+  const criticalAngle = Math.asin(1 / Math.max(item.index || 1.52, 1.0001));
+  const localDirection = rotateLocalPoint(direction, -degToRad(item.angle));
+  const incidenceAngle = Math.abs(Math.atan2(localDirection.y, localDirection.x));
+  const totalInternalReflection = incidenceAngle > criticalAngle * 0.92;
+  const reflectionPoint = fromLocal({ x: item.size * 0.05, y: -item.size * 0.08 }, item);
+  const exitPoint = totalInternalReflection
+    ? fromLocal({ x: item.size * 0.18, y: item.size * 0.34 }, item)
+    : exitHit?.point || fromLocal({ x: item.size / 2, y: item.size * 0.12 }, item);
+  const centerDirection = totalInternalReflection
+    ? normalizeVector(rotateLocalPoint({ x: 0.9, y: 0.55 }, degToRad(item.angle)))
+    : normalizeVector(rotateLocalPoint({ x: 1, y: 0.22 }, degToRad(item.angle)));
   const spread = item.dispersion / 180 * Math.PI;
-  const colors = ["#ff6b6b", "#ffd166", "#6ee7ff"];
+  const colors = ["#ff3b30", "#ff7a00", "#ffd60a", "#34c759", "#32ade6", "#5856d6", "#bf5af2"];
   const outgoing = colors.map((color, index) => {
-    const delta = (index - 1) * spread;
+    const delta = (index - (colors.length - 1) / 2) * (spread / 3);
     const rayDir = normalizeVector(rotateLocalPoint(centerDirection, delta));
     return {
       from: exitPoint,
@@ -948,8 +1055,15 @@ function buildPrismDispersion(item, entryPoint, direction) {
   });
 
   return {
-    insideSegments: [{ from: entryPoint, to: exitPoint, kind: "prism", color: "#f3f0ff" }],
-    outgoing
+    insideSegments: totalInternalReflection
+      ? [
+          { from: entryPoint, to: reflectionPoint, kind: "prism", color: "#ffffff" },
+          { from: reflectionPoint, to: exitPoint, kind: "prism", color: "#f3f0ff" }
+        ]
+      : [{ from: entryPoint, to: exitPoint, kind: "prism", color: "#ffffff" }],
+    outgoing,
+    totalInternalReflection,
+    criticalAngle
   };
 }
 
@@ -1155,6 +1269,48 @@ function drawAxisAndMarkers(item) {
 }
 
 function drawOptics(trace) {
+  const drawEye = (item, isSelected) => {
+    ctx.save();
+    ctx.translate(item.x, item.y);
+    ctx.rotate(degToRad(item.angle));
+    ctx.fillStyle = isSelected ? "#fff1a6" : "#f7f1cf";
+    ctx.strokeStyle = isSelected ? "#ffe082" : "#d9d4b4";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 18, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#1f2937";
+    ctx.beginPath();
+    ctx.arc(4, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 226, 130, 0.75)";
+    ctx.setLineDash([6, 5]);
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(48, 0);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  };
+
+  const drawRoundObject = (item, color, alpha = 1, dashed = false) => {
+    ctx.save();
+    if (dashed) {
+      ctx.setLineDash([7, 5]);
+    }
+    ctx.fillStyle = color.replace("rgb", "rgba").includes("rgba") ? color : color;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "rgba(239, 244, 255, 0.85)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  };
+
   const drawDepthTank = (item, isSelected) => {
     const bounds = depthTankBounds(item);
     const radius = 22;
@@ -1242,6 +1398,12 @@ function drawOptics(trace) {
     ctx.lineWidth = isSelected ? 4 : 3;
     ctx.fill();
     ctx.stroke();
+
+    const criticalAngle = Math.asin(1 / Math.max(item.index || 1.52, 1.0001)) * (180 / Math.PI);
+    ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+    ctx.font = "600 12px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText(`sinir ${criticalAngle.toFixed(1)} derece`, item.x, item.y + item.size * 0.72);
     ctx.restore();
   };
 
@@ -1333,6 +1495,8 @@ function drawOptics(trace) {
   };
 
   const opticalObjects = currentItems().filter((item) => item.type === "optical-object");
+  const roundObjects = currentItems().filter((item) => isRoundObject(item));
+  const eyes = currentItems().filter((item) => isEye(item));
 
   currentItems().forEach((item) => {
     const isSelected = item.id === selectedId;
@@ -1343,17 +1507,25 @@ function drawOptics(trace) {
         y: item.y + Math.sin(degToRad(item.angle)) * 28
       };
 
-      ctx.fillStyle = isSelected ? "#ff7d7d" : "#ff6b6b";
+      ctx.fillStyle = isSelected ? "#ffffff" : "#f5f7ff";
       ctx.beginPath();
       ctx.arc(item.x, item.y, 16, 0, Math.PI * 2);
       ctx.fill();
-      drawArrow({ x: item.x, y: item.y }, beamEnd, "#ffe8e8", 2);
+      drawArrow({ x: item.x, y: item.y }, beamEnd, "#ffffff", 2);
     }
 
     if (item.type === "optical-object") {
       drawVerticalObject({ x: item.x, y: item.y }, item.height, isSelected ? "#8ef6d7" : "#7bd389");
       ctx.fillStyle = "rgba(123, 211, 137, 0.18)";
       ctx.fillRect(item.x - 12, item.y - 8, 24, 8);
+    }
+
+    if (isRoundObject(item)) {
+      drawRoundObject(item, isSelected ? "rgba(142, 246, 215, 0.92)" : "rgba(123, 211, 137, 0.82)");
+    }
+
+    if (isEye(item)) {
+      drawEye(item, isSelected);
     }
 
     if (isDepthTank(item)) {
@@ -1400,6 +1572,41 @@ function drawOptics(trace) {
   });
 
   currentItems().forEach((item) => {
+    if (item.type !== "plane-mirror") {
+      return;
+    }
+
+    eyes.forEach((eye) => {
+      roundObjects.forEach((roundObject) => {
+        const view = planeMirrorViewForEye(item, eye, roundObject);
+        if (!view) {
+          return;
+        }
+
+        ctx.save();
+        ctx.setLineDash([6, 5]);
+        ctx.strokeStyle = "rgba(255, 241, 166, 0.75)";
+        ctx.beginPath();
+        ctx.moveTo(eye.x, eye.y);
+        ctx.lineTo(view.hitPoint.x, view.hitPoint.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(view.hitPoint.x, view.hitPoint.y);
+        ctx.lineTo(view.imagePoint.x, view.imagePoint.y);
+        ctx.stroke();
+        ctx.restore();
+
+        drawRoundObject(
+          { x: view.imagePoint.x, y: view.imagePoint.y, radius: roundObject.radius },
+          "rgba(255, 209, 102, 0.78)",
+          0.9,
+          true
+        );
+      });
+    });
+  });
+
+  currentItems().forEach((item) => {
     if (!isDepthTank(item)) {
       return;
     }
@@ -1430,11 +1637,47 @@ function drawOptics(trace) {
     });
   });
 
+  currentItems().forEach((item) => {
+    if (!isDepthTank(item)) {
+      return;
+    }
+
+    eyes.forEach((eye) => {
+      roundObjects.forEach((roundObject) => {
+        const view = apparentViewForEye(item, eye, roundObject);
+        if (!view) {
+          return;
+        }
+
+        ctx.save();
+        ctx.setLineDash([6, 5]);
+        ctx.strokeStyle = "rgba(255, 241, 166, 0.82)";
+        ctx.beginPath();
+        ctx.moveTo(eye.x, eye.y);
+        ctx.lineTo(view.interfacePoint.x, view.interfacePoint.y);
+        ctx.lineTo(view.apparentPoint.x, view.apparentPoint.y);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = "rgba(255, 209, 102, 0.95)";
+        ctx.beginPath();
+        ctx.arc(view.apparentPoint.x, view.apparentPoint.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(239, 244, 255, 0.88)";
+        ctx.font = "600 12px Space Grotesk";
+        ctx.textAlign = "left";
+        ctx.fillText("gozun gordugu nokta", view.apparentPoint.x + 10, view.apparentPoint.y - 10);
+      });
+    });
+  });
+
   ctx.save();
   ctx.shadowColor = "rgba(255, 107, 107, 0.6)";
   ctx.shadowBlur = 14;
   trace.segments.forEach((segment) => {
-    ctx.strokeStyle = segment.color || (isLens(segment.kind ? { type: segment.kind } : {}) ? "#ffb454" : "#ff6b6b");
+    ctx.strokeStyle =
+      segment.color ||
+      (segment.kind === "free" ? "#ffffff" : isLens(segment.kind ? { type: segment.kind } : {}) ? "#ffb454" : "#ff6b6b");
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(segment.from.x, segment.from.y);
@@ -1605,9 +1848,11 @@ function loadSample() {
     state.optics.items = [
       { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
       { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
+      { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 22 },
+      { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
       { id: uid("tank"), type: "depth-tank", x: 280, y: 320, width: 220, height: 220, interfaceLevel: 92, topIndex: 1, bottomIndex: 1.33 },
       { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
-      { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16 },
+      { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16, index: 1.52 },
       { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
       { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
       { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
@@ -1754,6 +1999,14 @@ function hitItem(point) {
 
     if (item.type === "optical-object") {
       return Math.abs(point.x - item.x) <= 16 && point.y >= item.y - item.height - 12 && point.y <= item.y + 10;
+    }
+
+    if (isRoundObject(item)) {
+      return Math.hypot(point.x - item.x, point.y - item.y) <= item.radius + 4;
+    }
+
+    if (isEye(item)) {
+      return Math.hypot(point.x - item.x, point.y - item.y) <= 22;
     }
 
     if (isDepthTank(item)) {
