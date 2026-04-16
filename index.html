@@ -1,0 +1,2963 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benim Portfoyum</title>
+  <meta
+    name="description"
+    content="Projelerimi, hedeflerimi ve uzerinde calistigim alanlari tanitan kisisel portfoy sayfasi."
+  />
+  <style>
+    :root {
+      --bg: #f7f1e8;
+      --bg-accent: #d8e4dc;
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --card: rgba(255, 252, 246, 0.72);
+      --line: rgba(31, 41, 55, 0.12);
+      --primary: #b85c38;
+      --primary-dark: #8f4327;
+      --shadow: 0 24px 80px rgba(50, 44, 37, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(184, 92, 56, 0.16), transparent 32%),
+        radial-gradient(circle at right 20%, rgba(83, 120, 110, 0.18), transparent 24%),
+        linear-gradient(135deg, var(--bg), #eef2ec 55%, #e3edf0);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 72px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 0 24px;
+    }
+
+    .brand {
+      font-size: 1rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 28px;
+      align-items: stretch;
+      padding-top: 18px;
+    }
+
+    .panel,
+    .feature-card,
+    .project,
+    .note,
+    .app-shell,
+    .kanban-card,
+    .timeline-card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .panel {
+      border-radius: 32px;
+      padding: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -60px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(184, 92, 56, 0.18), transparent 70%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 8px rgba(184, 92, 56, 0.12);
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 6vw, 5.6rem);
+      line-height: 0.94;
+      margin: 22px 0 18px;
+      max-width: 10ch;
+    }
+
+    .lead {
+      max-width: 54ch;
+      color: var(--muted);
+      font-size: 1.08rem;
+      line-height: 1.8;
+      margin: 0 0 28px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .button,
+    .button-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 20px;
+      border-radius: 999px;
+      font-size: 0.96rem;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .button {
+      background: var(--primary);
+      color: #fff7f1;
+    }
+
+    .button-secondary {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .button:hover,
+    .button-secondary:hover {
+      transform: translateY(-2px);
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .feature-card {
+      border-radius: 28px;
+      padding: 28px;
+    }
+
+    .feature-card small {
+      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 14px;
+    }
+
+    .feature-card h2 {
+      margin: 0 0 12px;
+      font-size: 1.7rem;
+    }
+
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .section {
+      padding-top: 28px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    .section-header h3 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    .section-header p {
+      margin: 0;
+      max-width: 48ch;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .project {
+      display: block;
+      border-radius: 26px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .project::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(255,255,255,0.22), transparent 50%);
+      pointer-events: none;
+    }
+
+    .project span {
+      display: inline-block;
+      margin-bottom: 18px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .project h4 {
+      margin: 0 0 10px;
+      font-size: 1.35rem;
+    }
+
+    .project p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .project:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 34px 90px rgba(50, 44, 37, 0.18);
+    }
+
+    .project-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .app-shell {
+      border-radius: 34px;
+      padding: 28px;
+      margin-top: 22px;
+    }
+
+    .demo-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 22px 0 18px;
+    }
+
+    .demo-tab {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .demo-tab.active {
+      background: var(--primary);
+      color: #fff7f1;
+      border-color: transparent;
+    }
+
+    .demo-screen {
+      display: none;
+    }
+
+    .demo-screen.active {
+      display: block;
+    }
+
+    .admin-layout,
+    .user-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .demo-panel {
+      border-radius: 26px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.44);
+      border: 1px solid var(--line);
+    }
+
+    .demo-panel h5 {
+      margin: 0 0 14px;
+      font-size: 1.1rem;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .task-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 20px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+      font: inherit;
+      color: inherit;
+    }
+
+    .task-item:hover,
+    .task-item.active {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(50, 44, 37, 0.12);
+      border-color: rgba(184, 92, 56, 0.32);
+    }
+
+    .task-item strong,
+    .detail-card strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .task-meta,
+    .detail-card p,
+    .detail-card li,
+    .upload-box p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .task-meta {
+      font-size: 0.95rem;
+    }
+
+    .detail-card {
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    .upload-box {
+      border: 1px dashed rgba(184, 92, 56, 0.4);
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .upload-box input {
+      width: 100%;
+      margin: 14px 0 10px;
+    }
+
+    .upload-status {
+      min-height: 24px;
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .demo-note {
+      margin: 18px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .auth-switch,
+    .toolbar-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--ink);
+    }
+
+    .field textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .pill-list,
+    .storage-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pill-item,
+    .storage-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid var(--line);
+    }
+
+    .pill-item span,
+    .storage-item small {
+      color: var(--muted);
+    }
+
+    .storage-item {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .app-title h4 {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+    }
+
+    .app-title p,
+    .metric-label,
+    .metric-value,
+    .kanban-card p,
+    .timeline-card p {
+      color: var(--muted);
+    }
+
+    .app-title p {
+      margin: 0;
+      line-height: 1.7;
+      max-width: 55ch;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.72);
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4f8f68;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      border-radius: 24px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid var(--line);
+    }
+
+    .metric-label {
+      display: block;
+      font-size: 0.84rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: 2rem;
+      color: var(--ink);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .kanban {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .kanban-column h5,
+    .timeline-card h5 {
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+
+    .kanban-column h5 {
+      color: var(--muted);
+    }
+
+    .kanban-card,
+    .timeline-card {
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 12px;
+    }
+
+    .kanban-card strong,
+    .timeline-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .mini-tag {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(184, 92, 56, 0.12);
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .timeline-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .note {
+      border-radius: 28px;
+      padding: 28px;
+    }
+
+    .note h4 {
+      margin: 0 0 12px;
+      font-size: 1.45rem;
+    }
+
+    .note p,
+    .note li {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .note ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .physics-shell {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .physics-sidebar {
+      display: grid;
+      gap: 16px;
+    }
+
+    .physics-card,
+    .physics-readout,
+    .physics-object-item {
+      border-radius: 24px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.54);
+      border: 1px solid var(--line);
+    }
+
+    .physics-card h5,
+    .physics-readout strong {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .physics-hint,
+    .physics-meta,
+    .physics-readout span,
+    .physics-object-item small {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .physics-hint {
+      margin: 10px 0 0;
+      font-size: 0.95rem;
+    }
+
+    .mode-switch,
+    .physics-actions,
+    .physics-legend,
+    .physics-stage-toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .mode-switch {
+      margin-top: 16px;
+    }
+
+    .mode-button,
+    .tool-button,
+    .mini-button,
+    .physics-object-item {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: inherit;
+      font: inherit;
+    }
+
+    .mode-button,
+    .mini-button {
+      border-radius: 999px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .mode-button.active,
+    .tool-button:hover,
+    .mini-button:hover,
+    .physics-object-item.active {
+      background: rgba(184, 92, 56, 0.12);
+      border-color: rgba(184, 92, 56, 0.28);
+    }
+
+    .mode-button.active {
+      color: var(--primary-dark);
+    }
+
+    .physics-tool-grid,
+    .physics-readout-grid,
+    .physics-object-list,
+    .physics-inspector-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .physics-tool-grid,
+    .physics-readout-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tool-button {
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      padding: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .tool-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(50, 44, 37, 0.12);
+    }
+
+    .tool-button strong {
+      font-size: 0.96rem;
+    }
+
+    .tool-button small {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .physics-stage {
+      display: grid;
+      gap: 14px;
+    }
+
+    .physics-stage-toolbar {
+      justify-content: space-between;
+    }
+
+    .physics-canvas-shell {
+      position: relative;
+      border-radius: 30px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at top left, rgba(184, 92, 56, 0.12), transparent 30%),
+        radial-gradient(circle at right bottom, rgba(83, 120, 110, 0.16), transparent 26%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(241, 244, 240, 0.86));
+      min-height: 560px;
+    }
+
+    #physics-canvas {
+      display: block;
+      width: 100%;
+      height: 560px;
+      touch-action: none;
+    }
+
+    .physics-empty-state {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      max-width: 280px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      line-height: 1.7;
+      pointer-events: none;
+    }
+
+    .physics-readout {
+      padding: 18px;
+    }
+
+    .physics-readout span {
+      display: block;
+      font-size: 0.84rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .legend-dot.optics-ray {
+      background: #f05b4f;
+    }
+
+    .legend-dot.optics-lens {
+      background: #3c8dac;
+    }
+
+    .legend-dot.mechanics-force {
+      background: #d97706;
+    }
+
+    .legend-dot.mechanics-block {
+      background: #53786e;
+    }
+
+    .physics-inspector {
+      display: grid;
+      gap: 14px;
+    }
+
+    .physics-inspector-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inspector-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .inspector-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .inspector-field label {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .inspector-field input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 11px 12px;
+      font: inherit;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+    }
+
+    .physics-object-list {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .physics-object-item {
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .physics-object-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 38px rgba(50, 44, 37, 0.12);
+    }
+
+    .physics-object-item strong {
+      font-size: 0.96rem;
+    }
+
+    .cta {
+      margin-top: 28px;
+      border-radius: 34px;
+      padding: 34px;
+      background: linear-gradient(135deg, rgba(184, 92, 56, 0.92), rgba(101, 72, 58, 0.95));
+      color: #fff7f1;
+      box-shadow: 0 30px 90px rgba(111, 59, 40, 0.25);
+    }
+
+    .cta h3 {
+      margin: 0 0 12px;
+      font-size: 2rem;
+    }
+
+    .cta p {
+      margin: 0 0 20px;
+      max-width: 56ch;
+      line-height: 1.8;
+      color: rgba(255, 247, 241, 0.86);
+    }
+
+    .cta .button-secondary {
+      border-color: rgba(255, 247, 241, 0.3);
+      color: #fff7f1;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-top: 26px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    @media (max-width: 920px) {
+      .hero,
+      .projects,
+      .about-grid,
+      .workspace,
+      .metric-grid,
+      .physics-shell,
+      .physics-readout-grid,
+      .admin-layout,
+      .user-layout,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kanban {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        padding: 32px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 20px, 1120px);
+        padding-bottom: 48px;
+      }
+
+      .topbar,
+      .section-header,
+      footer,
+      .actions {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        gap: 10px 14px;
+      }
+
+      .physics-tool-grid,
+      .physics-inspector-grid,
+      .physics-object-list {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        max-width: 11ch;
+      }
+
+      .panel,
+      .feature-card,
+      .project,
+      .note,
+      .cta,
+      .app-shell,
+      .kanban-card,
+      .timeline-card {
+        border-radius: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#ana-sayfa">Benim Portfoyum</a>
+      <nav class="nav">
+        <a href="#projeler">Projeler</a>
+        <a href="#fizik-lab">Fizik Lab</a>
+        <a href="#hakkimda">Hakkimda</a>
+        <a href="#iletisim">Iletisim</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="ana-sayfa">
+        <article class="panel">
+          <div class="eyebrow">Yayinda olan kisisel sayfa</div>
+          <h1>Fikirleri gercek urunlere donusturuyorum.</h1>
+          <p class="lead">
+            Bu alan benim dijital vitrinim. Burada uzerinde calistigim projeleri,
+            ogrendigim seyleri ve zamanla buyutecegim isleri paylasiyorum.
+          </p>
+          <div class="actions">
+            <a class="button" href="https://appeals-pace-eight-rendered.trycloudflare.com/login" target="_blank" rel="noreferrer">Is Takibi Sistemine Gir</a>
+            <a class="button-secondary" href="#fizik-lab">Fizik laboratuvarini ac</a>
+            <a class="button-secondary" href="#is-takibi">Is takibi demosunu gor</a>
+          </div>
+        </article>
+
+        <div class="stack">
+          <aside class="feature-card">
+            <small>Odak</small>
+            <h2>Basit, temiz ve guven veren deneyimler</h2>
+            <p>
+              Hedefim sadece bir sayfa yayina almak degil; ziyaret eden kisiye
+              net bir izlenim birakan, profesyonel gorunen bir alan olusturmak.
+            </p>
+          </aside>
+          <aside class="feature-card">
+            <small>Su an</small>
+            <h2>Ilk canli sitem aktif durumda</h2>
+            <p>
+              Bu sayfa zamanla portfoy, blog, hizmet tanitim alani veya proje
+              vitrini olarak gelisecek. Altyapi hazir, sira icerigi buyutmekte.
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section" id="projeler">
+        <div class="section-header">
+          <h3>Secili Projeler</h3>
+          <p>
+            Buradaki kartlari kendi gercek calismalarina gore daha sonra kolayca
+            degistirebilirsin. Simdilik sayfayi dolu ve guven verici gosteren bir iskelet hazir.
+          </p>
+        </div>
+        <div class="projects">
+          <a class="project" href="https://appeals-pace-eight-rendered.trycloudflare.com/login" target="_blank" rel="noreferrer">
+            <span>Urun</span>
+            <h4>PDF Inceleme Akis Sistemi</h4>
+            <p>
+              Yonetici kullanici ekler, PDF gorevleri atar ve tum teslimleri tek panelden izler.
+            </p>
+            <span class="project-link">Canli sisteme gir</span>
+          </a>
+
+          <a class="project" href="#is-takibi">
+            <span>Akis</span>
+            <h4>Gorev Ata, Incele, Tekrar Yukle</h4>
+            <p>
+              Her kullanici sadece kendi gorevlerini gorur; dosyayi indirir, inceler ve yeni surumu geri yollar.
+            </p>
+            <span class="project-link">Sureci incele</span>
+          </a>
+
+          <a class="project" href="#is-takibi">
+            <span>Yonetim</span>
+            <h4>Deadline ve Teslim Takibi</h4>
+            <p>
+              Son tarih, geciken dosyalar, bekleyen incelemeler ve tamamlanan isler ayni yerde gorunur.
+            </p>
+            <span class="project-link">Paneli gor</span>
+          </a>
+
+          <a class="project" href="./fizik-lab/index.html">
+            <span>Egitim</span>
+            <h4>Fizik Sanal Laboratuvari</h4>
+            <p>
+              Kullanici bos bir sahnede ayna, mercek, lazer, cisim ve kuvvet araclariyla kendi deneyini kurar.
+            </p>
+            <span class="project-link">Uygulamayi ac</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="is-takibi">
+        <div class="section-header">
+          <h3>One Cikan Proje: Is Takibi</h3>
+          <p>
+            Bu proje, PDF tabanli gorevlerin kullanicilar arasinda planli bicimde
+            dagitilmasi icin tasarlandi. Yonetici dosya yollar, teslim tarihini koyar
+            ve kullanicilar inceledikleri dosyalari sisteme yeniden yukler.
+          </p>
+        </div>
+        <div class="actions" style="margin-bottom: 18px;">
+          <a class="button" href="https://appeals-pace-eight-rendered.trycloudflare.com/login" target="_blank" rel="noreferrer">Canli Uygulamayi Ac</a>
+          <span class="status-pill"><span class="status-dot"></span> Gecici erisim linki aktif</span>
+        </div>
+        <div class="about-grid">
+          <article class="note">
+            <h4>Proje ne yapiyor?</h4>
+            <p>
+              Is Takibi, belge inceleme surecini daginik mesajlardan alip tek bir
+              panele toplar. Kullanici olusturma, gorev atama, son tarih belirleme
+              ve PDF teslimlerini duzenli sekilde izleme mantigiyla calisir.
+            </p>
+          </article>
+
+          <article class="note">
+            <h4>Temel moduller</h4>
+            <ul>
+              <li>Kullanici ekleme ve rol yonetimi</li>
+              <li>PDF gorevi olusturma ve atama</li>
+              <li>Son tarih ve durum takibi</li>
+              <li>Incelenen dosyayi yeniden yukleme</li>
+              <li>Tek panelden tum teslimleri izleme</li>
+            </ul>
+          </article>
+        </div>
+        <div class="projects">
+          <article class="project">
+            <span>Yonetici</span>
+            <h4>Kullanici ve PDF Dagitimi</h4>
+            <p>
+              Yonetici tarafinda yeni kullanici eklenir, dosya yuklenir ve gorev ilgili
+              kisiye ya da ekibe atanir.
+            </p>
+            <span class="project-link">Atama paneli</span>
+          </article>
+
+          <article class="project">
+            <span>Kullanici</span>
+            <h4>Incele ve Teslim Et</h4>
+            <p>
+              Kullanici sadece kendi gorevini gorur, dosyayi indirir, inceleme yapar
+              ve yeni PDF surumunu sisteme geri yukler.
+            </p>
+            <span class="project-link">Teslim akisi</span>
+          </article>
+
+          <article class="project">
+            <span>Takip</span>
+            <h4>Durum ve Gecikme Kontrolu</h4>
+            <p>
+              Kim teslim etti, kim gecikti, hangi dosya bekliyor gibi tum cevaplar
+              yonetici panelinde gorunur.
+            </p>
+            <span class="project-link">Takip ekrani</span>
+          </article>
+        </div>
+        <div class="app-shell">
+          <div class="app-header">
+            <div class="app-title">
+              <h4>Is Takibi Panel Gorunumu</h4>
+              <p>
+                Asagidaki kisim, projenin sayfa icinde kodlanmis tanitim demosu.
+                Gercek uygulama mantigini anlatan bir panel duzeni gibi tasarlandi.
+              </p>
+            </div>
+            <div class="status-pill"><span class="status-dot"></span> Demo akisi hazir</div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric">
+              <span class="metric-label">Aktif Gorev</span>
+              <p class="metric-value">12</p>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Bekleyen Inceleme</span>
+              <p class="metric-value">4</p>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Bugun Teslim</span>
+              <p class="metric-value">3</p>
+            </article>
+            <article class="metric">
+              <span class="metric-label">Tamamlanan</span>
+              <p class="metric-value">27</p>
+            </article>
+          </div>
+
+          <div class="workspace">
+            <div class="kanban">
+              <div class="kanban-column">
+                <h5>Hazirlanan Gorevler</h5>
+                <article class="kanban-card">
+                  <strong>Matematik AYT Deneme 02</strong>
+                  <p>Kaynak PDF yuklendi. Inceleme icin 3 kullaniciya atandi.</p>
+                  <span class="mini-tag">Son tarih: 18 Nisan</span>
+                </article>
+                <article class="kanban-card">
+                  <strong>TYT Fizik Kontrol Dosyasi</strong>
+                  <p>Yonetici ilk surumu sisteme ekledi ve gorev acildi.</p>
+                  <span class="mini-tag">Durum: Dagitildi</span>
+                </article>
+              </div>
+
+              <div class="kanban-column">
+                <h5>Inceleme Asamasi</h5>
+                <article class="kanban-card">
+                  <strong>Paragraf Soru Seti</strong>
+                  <p>Kullanici dosyayi indirdi, inceleme notlarini son surume isliyor.</p>
+                  <span class="mini-tag">2 dosya bekleniyor</span>
+                </article>
+                <article class="kanban-card">
+                  <strong>Geometri PDF Revizyonu</strong>
+                  <p>Bir kullanici yeniden yukledi, iki kisi daha teslim edecek.</p>
+                  <span class="mini-tag">Teslim: Bugun</span>
+                </article>
+              </div>
+
+              <div class="kanban-column">
+                <h5>Tamamlananlar</h5>
+                <article class="kanban-card">
+                  <strong>Kimya Kazanim Kontrolu</strong>
+                  <p>Butun incelemeler tamamlandi ve son PDF sisteme kaydedildi.</p>
+                  <span class="mini-tag">Arsivlendi</span>
+                </article>
+                <article class="kanban-card">
+                  <strong>Tarih Deneme Geri Bildirimi</strong>
+                  <p>Yonetici tum teslimleri onayladi ve surec kapatildi.</p>
+                  <span class="mini-tag">Kapandi</span>
+                </article>
+              </div>
+            </div>
+
+            <aside class="timeline-card">
+              <h5>Bugunku Akis</h5>
+              <div class="timeline-list">
+                <div>
+                  <strong>09:10</strong>
+                  <p>Yonetici yeni PDF yukledi ve 5 kullaniciya atama yapti.</p>
+                </div>
+                <div>
+                  <strong>11:25</strong>
+                  <p>Iki kullanici inceleme dosyasini sisteme geri yukledi.</p>
+                </div>
+                <div>
+                  <strong>14:40</strong>
+                  <p>Bir gorev son tarihe yaklastigi icin panelde uyari olustu.</p>
+                </div>
+                <div>
+                  <strong>16:05</strong>
+                  <p>Koordinator tamamlanan dosyalari tek ekranda kontrol etti.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <p class="demo-note">
+            Bu demo kayitlari tarayicinda saklar. Yuklenen PDF'ler ayni cihaz ve ayni tarayicida
+            kalici gorunur; paylasimli sunucu depolamasi icin daha sonra backend gerekir.
+          </p>
+
+          <div class="toolbar-row" style="margin-top: 20px;">
+            <div class="auth-switch" aria-label="Rol secici">
+              <button class="demo-tab active" type="button" data-screen="admin-screen">Yonetici Ekrani</button>
+              <button class="demo-tab" type="button" data-screen="user-screen">Kullanici Ekrani</button>
+            </div>
+            <div class="status-pill"><span class="status-dot"></span><span id="active-role-label">Aktif rol: Yonetici</span></div>
+          </div>
+
+          <section class="demo-screen active" id="admin-screen">
+            <div class="admin-layout">
+              <article class="demo-panel">
+                <h5>Kullanici Ekle</h5>
+                <form id="user-form">
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="user-name">Ad Soyad</label>
+                      <input id="user-name" name="name" type="text" placeholder="Ornek: Ayse Yilmaz" required />
+                    </div>
+                    <div class="field">
+                      <label for="user-role">Rol</label>
+                      <select id="user-role" name="role">
+                        <option value="Reviewer">Reviewer</option>
+                        <option value="Editor">Editor</option>
+                        <option value="Coordinator">Coordinator</option>
+                      </select>
+                    </div>
+                    <div class="field full">
+                      <button class="button" type="submit">Kullaniciyi Ekle</button>
+                    </div>
+                  </div>
+                </form>
+                <div class="pill-list" id="user-list"></div>
+              </article>
+
+              <article class="demo-panel">
+                <h5>Gorev ve PDF Olustur</h5>
+                <form id="task-form">
+                  <div class="form-grid">
+                    <div class="field">
+                      <label for="task-title-input">Gorev Basligi</label>
+                      <input id="task-title-input" name="title" type="text" placeholder="Ornek: AYT Matematik PDF Kontrolu" required />
+                    </div>
+                    <div class="field">
+                      <label for="task-deadline-input">Son Tarih</label>
+                      <input id="task-deadline-input" name="deadline" type="date" required />
+                    </div>
+                    <div class="field full">
+                      <label for="task-description-input">Aciklama</label>
+                      <textarea id="task-description-input" name="description" placeholder="Kullanicilarin bu PDF ile ne yapacagini yaz."></textarea>
+                    </div>
+                    <div class="field">
+                      <label for="task-assignee-input">Atanan Kullanici</label>
+                      <select id="task-assignee-input" name="assignee"></select>
+                    </div>
+                    <div class="field">
+                      <label for="task-pdf-input">Kaynak PDF</label>
+                      <input id="task-pdf-input" name="file" type="file" accept=".pdf" required />
+                    </div>
+                    <div class="field full">
+                      <button class="button" type="submit">Gorevi Olustur</button>
+                    </div>
+                  </div>
+                </form>
+                <div class="upload-status" id="task-form-status"></div>
+              </article>
+            </div>
+
+            <div class="admin-layout" style="margin-top: 18px;">
+              <article class="demo-panel">
+                <h5>Yonetici Gorev Dagitimi</h5>
+                <div class="task-list" id="admin-task-list">
+                </div>
+              </article>
+
+              <article class="demo-panel">
+                <h5>Secilen Gorev Detayi</h5>
+                <div class="detail-card">
+                  <strong id="admin-task-title">AYT Matematik PDF Kontrolu</strong>
+                  <p id="admin-task-description">Kaynak dosya yuklendi. Kullanici listesi olusturuldu ve sistem tarafindan son tarih ile birlikte dagitim yapildi.</p>
+                </div>
+                <div class="detail-card">
+                  <strong>Atanan Kullanicilar</strong>
+                  <ul id="admin-task-users">
+                    <li>Ayse Yilmaz • PDF'i indirdi</li>
+                    <li>Mehmet Kaya • Incelemeye basladi</li>
+                    <li>Zeynep Demir • Teslim bekleniyor</li>
+                  </ul>
+                </div>
+                <div class="detail-card">
+                  <strong>Beklenen Cikti</strong>
+                  <p id="admin-task-output">Incelenmis PDF ve varsa not dokumani sisteme yeniden yuklenecek.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="demo-screen" id="user-screen">
+            <div class="user-layout">
+              <article class="demo-panel">
+                <h5>Kullanici Gorevlerim</h5>
+                <div class="field">
+                  <label for="demo-user-select">Kullanici Sec</label>
+                  <select id="demo-user-select"></select>
+                </div>
+                <div class="task-list" id="user-task-list"></div>
+              </article>
+
+              <article class="demo-panel">
+                <h5>Kullanici Islem Alani</h5>
+                <div class="detail-card">
+                  <strong id="user-task-title">AYT Matematik PDF Kontrolu</strong>
+                  <p id="user-task-description">Sisteme yuklenen kaynak PDF'i indir, incele ve guncellenmis surumu geri yukle.</p>
+                </div>
+                <div class="detail-card">
+                  <strong>Gorev Adimlari</strong>
+                  <ul id="user-task-steps">
+                    <li>1. Kaynak PDF'i indir</li>
+                    <li>2. Inceleme ve duzeltmeleri yap</li>
+                    <li>3. Yeni PDF surumunu yukle</li>
+                  </ul>
+                </div>
+                <div class="upload-box">
+                  <strong>Incelenmis Dosyayi Yukle</strong>
+                  <p>Secilen PDF ayni tarayicida saklanir ve teslim edilmis olarak gorev kartina yansir.</p>
+                  <input id="demo-upload" type="file" accept=".pdf" />
+                  <button class="button" id="demo-upload-button" type="button">Teslim Et</button>
+                  <div class="upload-status" id="demo-upload-status"></div>
+                </div>
+                <div class="detail-card" style="margin-top: 14px;">
+                  <strong>Kaydedilen PDF'ler</strong>
+                  <div class="storage-list" id="stored-files-list"></div>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="section" id="fizik-lab">
+        <div class="section-header">
+          <h3>Yeni Proje: Fizik Sanal Laboratuvari</h3>
+          <p>
+            Bu proje portfoy icinde tanitiliyor, ancak uygulamanin kendisi ayri bir sayfada calisiyor.
+            Boylece ana site sade kaliyor; fizik laboratuvari ise kendi tam ekran deney alaninda aciliyor.
+          </p>
+        </div>
+
+        <div class="about-grid">
+          <article class="note">
+            <h4>Optik araclari</h4>
+            <p>
+              Lazer, ayna ve mercek nesneleri bos sahneye eklenir. Kullanici bu nesneleri
+              surukleyip yerlestirir ve isigin yansima ya da odaklanma davranisini gozlemler.
+            </p>
+          </article>
+
+          <article class="note">
+            <h4>Mekanik modul</h4>
+            <p>
+              Cisim ve kuvvet oklarini ekleyip net kuvvetin harekete etkisini incelemek mumkundur.
+              Kutle, hiz ve kuvvet degerleri panelden degistirilebilir.
+            </p>
+          </article>
+        </div>
+
+        <div class="app-shell">
+          <div class="app-header">
+            <div class="app-title">
+              <h4>Bagimsiz Uygulama Olarak Hazirlandi</h4>
+              <p>
+                Uygulama artik bu portfoy sayfasina gomulu bir demo degil. Ayrica `benim-site/fizik-lab`
+                altinda ayri proje olarak bulunuyor ve butonla dogrudan aciliyor.
+              </p>
+            </div>
+            <div class="status-pill"><span class="status-dot"></span> Ayri uygulama sayfasi hazir</div>
+          </div>
+
+          <div class="about-grid">
+            <article class="note">
+              <h4>Uygulamada neler var?</h4>
+              <ul>
+                <li>Bos sahneyle baslayan duzenek olusturma</li>
+                <li>Optik ve mekanik modul secimi</li>
+                <li>Suruklenebilir fizik nesneleri</li>
+                <li>Secili nesne icin sayisal ayar paneli</li>
+                <li>Ornek duzenek ve simulasyon kontrolleri</li>
+              </ul>
+            </article>
+
+            <article class="note">
+              <h4>Nasil aciliyor?</h4>
+              <p>
+                Asagidaki buton portfoy icinden cikmadan bu projenin kendi sayfasina gider.
+                Orada uygulama tam alan calisir ve fizik araclariyla dogrudan etkilesime gecilir.
+              </p>
+              <div class="actions" style="margin-top: 18px;">
+                <a class="button" href="./fizik-lab/index.html">Fizik uygulamasini ac</a>
+                <a class="button-secondary" href="./fizik-lab/index.html" target="_blank" rel="noreferrer">Yeni sekmede ac</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="hakkimda">
+        <div class="section-header">
+          <h3>Hakkimda</h3>
+          <p>
+            Bu bolume zamanla kendi hikayeni, deneyimlerini ve hedeflerini ekleyebiliriz.
+            Simdilik profesyonel bir ilk izlenim olusturan temel yapiyi yerlestirdim.
+          </p>
+        </div>
+        <div class="about-grid">
+          <article class="note">
+            <h4>Ne yapiyorum?</h4>
+            <p>
+              Dijital dunyada kendi yerimi kurmaya calisiyorum. Yeni seyler ogreniyor,
+              projeler uretiyor ve internet uzerinden gorunur bir kimlik insa ediyorum.
+            </p>
+          </article>
+
+          <article class="note">
+            <h4>Neler eklenebilir?</h4>
+            <ul>
+              <li>Gercek adin ve kisa tanitimin</li>
+              <li>Yeteneklerin veya ilgi alanlarin</li>
+              <li>GitHub, Instagram, LinkedIn baglantilari</li>
+              <li>Yaptigin projeler ve ekran goruntuleri</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="cta" id="iletisim">
+        <h3>Bir sonraki adim: burayi tamamen sana gore ozellestirelim.</h3>
+        <p>
+          Istersen bir sonraki asamada bu sayfaya gercek adini, kendi metinlerini,
+          sosyal medya baglantilarini ve proje bolumlerini ekleyebilirim. Sonra sadece
+          GitHub'a gonderip siteni otomatik guncelleriz.
+        </p>
+        <div class="actions">
+          <a class="button-secondary" href="mailto:ornek@mail.com">E-posta alani ekle</a>
+          <a class="button-secondary" href="https://github.com/" target="_blank" rel="noreferrer">GitHub baglantisi ekle</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Benim Portfoyum</span>
+      <span>Cloudflare Pages uzerinde yayinda</span>
+    </footer>
+  </div>
+  <script>
+    const STORAGE_KEY = 'is-takibi-demo-state-v2';
+
+    const defaultState = {
+      users: [
+        { id: 'u1', name: 'Ayse Yilmaz', role: 'Reviewer' },
+        { id: 'u2', name: 'Mehmet Kaya', role: 'Reviewer' },
+        { id: 'u3', name: 'Zeynep Demir', role: 'Coordinator' }
+      ],
+      tasks: [
+        {
+          id: 't1',
+          title: 'AYT Matematik PDF Kontrolu',
+          description: 'Kaynak dosya yuklendi. Kullanici listesi olusturuldu ve sistem tarafindan son tarih ile birlikte dagitim yapildi.',
+          deadline: '2026-04-18',
+          assigneeId: 'u1',
+          sourceFileName: 'ayt-matematik-kontrol.pdf',
+          reviewFileName: '',
+          status: 'Incelemede'
+        },
+        {
+          id: 't2',
+          title: 'TYT Fizik Revizyon Paketi',
+          description: 'Revizyon icin kaynak PDF dagitildi. Inceleme notlari bekleniyor.',
+          deadline: '2026-04-20',
+          assigneeId: 'u2',
+          sourceFileName: 'tyt-fizik-revizyon.pdf',
+          reviewFileName: '',
+          status: 'Dagitildi'
+        },
+        {
+          id: 't3',
+          title: 'Paragraf Deneme Son Okuma',
+          description: 'Butun dosyalar geri geldi. Son kontrol asamasi devam ediyor.',
+          deadline: '2026-04-16',
+          assigneeId: 'u3',
+          sourceFileName: 'paragraf-son-okuma.pdf',
+          reviewFileName: 'paragraf-son-okuma-sonsurum.pdf',
+          status: 'Kontrolde'
+        }
+      ],
+      uploads: []
+    };
+
+    let state = loadState();
+    let selectedTaskId = state.tasks[0]?.id || null;
+    let activeUserId = state.users[0]?.id || null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : structuredClone(defaultState);
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function findUser(id) {
+      return state.users.find((user) => user.id === id);
+    }
+
+    function findTask(id) {
+      return state.tasks.find((task) => task.id === id);
+    }
+
+    const tabs = document.querySelectorAll('.demo-tab');
+    const screens = document.querySelectorAll('.demo-screen');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.classList.remove('active'));
+        screens.forEach((screen) => screen.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.screen).classList.add('active');
+        document.getElementById('active-role-label').textContent =
+          tab.dataset.screen === 'admin-screen' ? 'Aktif rol: Yonetici' : 'Aktif rol: Kullanici';
+      });
+    });
+
+    function renderUsers() {
+      const list = document.getElementById('user-list');
+      const assigneeSelect = document.getElementById('task-assignee-input');
+      const demoUserSelect = document.getElementById('demo-user-select');
+
+      list.innerHTML = state.users
+        .map((user) => `
+          <div class="pill-item">
+            <strong>${user.name}</strong>
+            <span>${user.role}</span>
+          </div>
+        `)
+        .join('');
+
+      const options = state.users
+        .map((user) => `<option value="${user.id}">${user.name} • ${user.role}</option>`)
+        .join('');
+
+      assigneeSelect.innerHTML = options;
+      demoUserSelect.innerHTML = options;
+
+      if (!activeUserId || !findUser(activeUserId)) {
+        activeUserId = state.users[0]?.id || null;
+      }
+
+      assigneeSelect.value = state.users[0]?.id || '';
+      demoUserSelect.value = activeUserId || '';
+    }
+
+    function renderAdminTasks() {
+      const list = document.getElementById('admin-task-list');
+      list.innerHTML = state.tasks
+        .map((task) => {
+          const assignee = findUser(task.assigneeId);
+          return `
+            <button class="task-item ${task.id === selectedTaskId ? 'active' : ''}" type="button" data-admin-task-id="${task.id}">
+              <strong>${task.title}</strong>
+              <div class="task-meta">${assignee ? assignee.name : 'Atanmadi'} • Son tarih ${task.deadline} • Durum: ${task.status}</div>
+            </button>
+          `;
+        })
+        .join('');
+
+      document.querySelectorAll('[data-admin-task-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedTaskId = button.dataset.adminTaskId;
+          renderAdminTasks();
+          renderTaskDetail();
+        });
+      });
+    }
+
+    function renderTaskDetail() {
+      const task = findTask(selectedTaskId) || state.tasks[0];
+      if (!task) {
+        return;
+      }
+      selectedTaskId = task.id;
+      const assignee = findUser(task.assigneeId);
+      const upload = state.uploads.find((item) => item.taskId === task.id);
+      document.getElementById('admin-task-title').textContent = task.title;
+      document.getElementById('admin-task-description').textContent = task.description;
+      document.getElementById('admin-task-output').textContent =
+        upload
+          ? `Incelenmis dosya kaydedildi: ${upload.name}`
+          : 'Incelenmis PDF ve varsa not dokumani sisteme yeniden yuklenecek.';
+      document.getElementById('admin-task-users').innerHTML = `
+        <li>${assignee ? assignee.name : 'Atanmadi'} • ${task.status}</li>
+        <li>Kaynak PDF • ${task.sourceFileName}</li>
+        <li>Yeniden yuklenen dosya • ${upload ? upload.name : 'Henuz yok'}</li>
+      `;
+    }
+
+    function renderUserTasks() {
+      const list = document.getElementById('user-task-list');
+      const tasks = state.tasks.filter((task) => task.assigneeId === activeUserId);
+      if (!tasks.length) {
+        list.innerHTML = '<div class="detail-card"><strong>Gorev bulunamadi</strong><p>Bu kullaniciya henuz gorev atanmamis.</p></div>';
+        document.getElementById('user-task-title').textContent = 'Gorev yok';
+        document.getElementById('user-task-description').textContent = 'Yonetici tarafinda yeni bir gorev olusturuldugunda burada gorunecek.';
+        document.getElementById('user-task-steps').innerHTML = '<li>1. Yonetici gorev atayacak</li><li>2. PDF sisteme dusecek</li><li>3. Kullanici teslim yapabilecek</li>';
+        return;
+      }
+
+      if (!tasks.find((task) => task.id === selectedTaskId)) {
+        selectedTaskId = tasks[0].id;
+      }
+
+      list.innerHTML = tasks
+        .map((task) => `
+          <button class="task-item ${task.id === selectedTaskId ? 'active' : ''}" type="button" data-user-task-id="${task.id}">
+            <strong>${task.title}</strong>
+            <div class="task-meta">Son tarih ${task.deadline} • Kaynak: ${task.sourceFileName} • Durum: ${task.status}</div>
+          </button>
+        `)
+        .join('');
+
+      document.querySelectorAll('[data-user-task-id]').forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedTaskId = button.dataset.userTaskId;
+          renderUserTasks();
+          renderUserTaskDetail();
+        });
+      });
+
+      renderUserTaskDetail();
+    }
+
+    function renderUserTaskDetail() {
+      const task = findTask(selectedTaskId);
+      const upload = state.uploads.find((item) => item.taskId === selectedTaskId);
+      if (!task) return;
+      document.getElementById('user-task-title').textContent = task.title;
+      document.getElementById('user-task-description').textContent =
+        `${task.description} Kaynak PDF: ${task.sourceFileName}`;
+      document.getElementById('user-task-steps').innerHTML = `
+        <li>1. Kaynak PDF'i incele</li>
+        <li>2. Duzenlenmis surumu hazirla</li>
+        <li>3. PDF'i sisteme yeniden yukle</li>
+        <li>4. Durum guncellemesini panelden takip et</li>
+      `;
+      document.getElementById('demo-upload-status').textContent =
+        upload ? `Kayitli teslim bulundu: ${upload.name}` : '';
+      renderStoredFiles();
+    }
+
+    function renderStoredFiles() {
+      const list = document.getElementById('stored-files-list');
+      const uploads = state.uploads.filter((item) => item.userId === activeUserId);
+      if (!uploads.length) {
+        list.innerHTML = '<div class="storage-item"><strong>Henuz kayitli PDF yok</strong><small>Ilk teslimden sonra burada listelenecek.</small></div>';
+        return;
+      }
+      list.innerHTML = uploads
+        .map((item) => `
+          <div class="storage-item">
+            <strong>${item.name}</strong>
+            <small>Gorev: ${findTask(item.taskId)?.title || 'Bilinmiyor'}</small>
+            <small>Kayit zamani: ${item.savedAt}</small>
+            ${item.dataUrl ? `<a class="project-link" href="${item.dataUrl}" download="${item.name}">PDF'i indir</a>` : ''}
+          </div>
+        `)
+        .join('');
+    }
+
+    function renderMetrics() {
+      document.querySelectorAll('.metric-value')[0].textContent = String(state.tasks.length);
+      document.querySelectorAll('.metric-value')[1].textContent = String(state.tasks.filter((task) => task.status === 'Incelemede').length);
+      document.querySelectorAll('.metric-value')[2].textContent = String(state.tasks.filter((task) => task.deadline === '2026-04-18').length);
+      document.querySelectorAll('.metric-value')[3].textContent = String(state.tasks.filter((task) => task.reviewFileName).length);
+    }
+
+    function refresh() {
+      saveState();
+      renderUsers();
+      renderAdminTasks();
+      renderTaskDetail();
+      renderUserTasks();
+      renderStoredFiles();
+      renderMetrics();
+    }
+
+    document.getElementById('user-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      state.users.push({
+        id: `u${Date.now()}`,
+        name: form.get('name').toString().trim(),
+        role: form.get('role').toString()
+      });
+      event.currentTarget.reset();
+      refresh();
+    });
+
+    document.getElementById('task-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formEl = event.currentTarget;
+      const form = new FormData(formEl);
+      const file = document.getElementById('task-pdf-input').files[0];
+      const status = document.getElementById('task-form-status');
+      if (!file) {
+        status.textContent = 'Kaynak PDF secmelisin.';
+        return;
+      }
+      const task = {
+        id: `t${Date.now()}`,
+        title: form.get('title').toString().trim(),
+        description: form.get('description').toString().trim() || 'Yeni gorev acildi.',
+        deadline: form.get('deadline').toString(),
+        assigneeId: form.get('assignee').toString(),
+        sourceFileName: file.name,
+        reviewFileName: '',
+        status: 'Dagitildi'
+      };
+      state.tasks.unshift(task);
+      selectedTaskId = task.id;
+      status.textContent = `${task.title} olusturuldu ve ${findUser(task.assigneeId)?.name || 'kullaniciya'} atandi.`;
+      formEl.reset();
+      refresh();
+    });
+
+    document.getElementById('demo-user-select').addEventListener('change', (event) => {
+      activeUserId = event.target.value;
+      renderUserTasks();
+      renderStoredFiles();
+    });
+
+    document.getElementById('demo-upload-button').addEventListener('click', async () => {
+      const input = document.getElementById('demo-upload');
+      const status = document.getElementById('demo-upload-status');
+      const task = findTask(selectedTaskId);
+      if (!input.files.length) {
+        status.textContent = 'Once bir PDF secmelisin.';
+        return;
+      }
+      if (!task) {
+        status.textContent = 'Once bir gorev sec.';
+        return;
+      }
+      const file = input.files[0];
+      const savedAt = new Date().toLocaleString('tr-TR');
+      status.textContent = 'PDF tarayicida kaydediliyor...';
+      let dataUrl = '';
+      try {
+        dataUrl = await readFileAsDataUrl(file);
+      } catch (error) {
+        status.textContent = 'PDF okunurken hata oldu.';
+        return;
+      }
+      state.uploads = state.uploads.filter((item) => !(item.taskId === task.id && item.userId === activeUserId));
+      state.uploads.unshift({
+        id: `f${Date.now()}`,
+        taskId: task.id,
+        userId: activeUserId,
+        name: file.name,
+        savedAt,
+        dataUrl
+      });
+      task.reviewFileName = file.name;
+      task.status = 'Teslim Edildi';
+      input.value = '';
+      status.textContent = `${file.name} kaydedildi ve teslim edildi olarak isaretlendi.`;
+      refresh();
+    });
+
+    const PHYSICS_STORAGE_KEY = 'fizik-lab-demo-state-v1';
+    const physicsToolCatalog = {
+      optics: [
+        { type: 'laser', label: 'Lazer', description: 'Tek bir isik kaynagi ekler.' },
+        { type: 'mirror', label: 'Ayna', description: 'Isini yansitan duz ayna.' },
+        { type: 'lens', label: 'Mercek', description: 'Isini odaga dogru buker.' }
+      ],
+      mechanics: [
+        { type: 'block', label: 'Cisim', description: 'Kuvvet uygulanabilen hareketli blok.' },
+        { type: 'force', label: 'Kuvvet Oku', description: 'Bir cisme etki eden kuvvet vektoru.' }
+      ]
+    };
+
+    const physicsDefaultState = {
+      scene: 'optics',
+      opticsLive: true,
+      running: false,
+      notice: '',
+      optics: { items: [] },
+      mechanics: { items: [] }
+    };
+
+    const physicsCanvas = document.getElementById('physics-canvas');
+    const physicsCtx = physicsCanvas ? physicsCanvas.getContext('2d') : null;
+    const physicsViewport = { width: 960, height: 560 };
+    let physicsState = loadPhysicsState();
+    let physicsSelectedId = null;
+    let physicsDrag = null;
+    let physicsAnimationFrame = null;
+    let physicsLastTick = 0;
+
+    function loadPhysicsState() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(PHYSICS_STORAGE_KEY));
+        return normalizePhysicsState(raw);
+      } catch {
+        return structuredClone(physicsDefaultState);
+      }
+    }
+
+    function normalizePhysicsState(raw) {
+      if (!raw || typeof raw !== 'object') {
+        return structuredClone(physicsDefaultState);
+      }
+
+      return {
+        scene: raw.scene === 'mechanics' ? 'mechanics' : 'optics',
+        opticsLive: raw.opticsLive !== false,
+        running: false,
+        notice: typeof raw.notice === 'string' ? raw.notice : '',
+        optics: { items: Array.isArray(raw.optics?.items) ? raw.optics.items : [] },
+        mechanics: { items: Array.isArray(raw.mechanics?.items) ? raw.mechanics.items : [] }
+      };
+    }
+
+    function savePhysicsState() {
+      localStorage.setItem(PHYSICS_STORAGE_KEY, JSON.stringify(physicsState));
+    }
+
+    function currentPhysicsItems() {
+      return physicsState[physicsState.scene].items;
+    }
+
+    function findPhysicsItemById(id) {
+      return currentPhysicsItems().find((item) => item.id === id);
+    }
+
+    function ensurePhysicsSelection() {
+      if (!findPhysicsItemById(physicsSelectedId)) {
+        physicsSelectedId = currentPhysicsItems()[0]?.id || null;
+      }
+    }
+
+    function makePhysicsId(prefix) {
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function degToRad(degrees) {
+      return (degrees * Math.PI) / 180;
+    }
+
+    function normalizeVector(vector) {
+      const length = Math.hypot(vector.x, vector.y) || 1;
+      return { x: vector.x / length, y: vector.y / length };
+    }
+
+    function dotProduct(a, b) {
+      return a.x * b.x + a.y * b.y;
+    }
+
+    function crossProduct(a, b) {
+      return a.x * b.y - a.y * b.x;
+    }
+
+    function distanceToSegment(point, start, end) {
+      const lineX = end.x - start.x;
+      const lineY = end.y - start.y;
+      const lengthSquared = lineX * lineX + lineY * lineY;
+      if (!lengthSquared) {
+        return Math.hypot(point.x - start.x, point.y - start.y);
+      }
+
+      const t = clamp(
+        ((point.x - start.x) * lineX + (point.y - start.y) * lineY) / lengthSquared,
+        0,
+        1
+      );
+
+      const projection = {
+        x: start.x + lineX * t,
+        y: start.y + lineY * t
+      };
+
+      return Math.hypot(point.x - projection.x, point.y - projection.y);
+    }
+
+    function pointInsideBlock(point, block, padding = 0) {
+      return (
+        point.x >= block.x - block.width / 2 - padding &&
+        point.x <= block.x + block.width / 2 + padding &&
+        point.y >= block.y - block.height / 2 - padding &&
+        point.y <= block.y + block.height / 2 + padding
+      );
+    }
+
+    function getMirrorEndpoints(item) {
+      const angle = degToRad(item.angle);
+      const half = item.length / 2;
+      return {
+        start: { x: item.x - Math.cos(angle) * half, y: item.y - Math.sin(angle) * half },
+        end: { x: item.x + Math.cos(angle) * half, y: item.y + Math.sin(angle) * half }
+      };
+    }
+
+    function getForceEnd(item) {
+      return { x: item.x + item.dx, y: item.y + item.dy };
+    }
+
+    function createPhysicsItem(type) {
+      const count = currentPhysicsItems().length;
+      const offset = count * 28;
+
+      if (type === 'laser') {
+        return { id: makePhysicsId('laser'), type, x: 120 + offset, y: 260, angle: -8 };
+      }
+
+      if (type === 'mirror') {
+        return { id: makePhysicsId('mirror'), type, x: 410 + offset, y: 260, angle: -35, length: 140 };
+      }
+
+      if (type === 'lens') {
+        return { id: makePhysicsId('lens'), type, x: 620, y: 280 + offset * 0.2, height: 180, focalLength: 120 };
+      }
+
+      if (type === 'block') {
+        return {
+          id: makePhysicsId('block'),
+          type,
+          x: 280 + offset,
+          y: 280,
+          width: 86,
+          height: 48,
+          mass: 4,
+          vx: 0,
+          vy: 0
+        };
+      }
+
+      return {
+        id: makePhysicsId('force'),
+        type,
+        x: 230 + offset,
+        y: 250 + offset * 0.1,
+        dx: 88,
+        dy: -18
+      };
+    }
+
+    function constrainPhysicsItem(item) {
+      const width = physicsViewport.width || 960;
+      const height = physicsViewport.height || 560;
+
+      if (item.type === 'laser') {
+        item.x = clamp(Number(item.x) || 0, 20, width - 20);
+        item.y = clamp(Number(item.y) || 0, 20, height - 20);
+        item.angle = clamp(Number(item.angle) || 0, -180, 180);
+      }
+
+      if (item.type === 'mirror') {
+        item.length = clamp(Number(item.length) || 120, 60, 240);
+        item.x = clamp(Number(item.x) || 0, 30, width - 30);
+        item.y = clamp(Number(item.y) || 0, 30, height - 30);
+        item.angle = clamp(Number(item.angle) || 0, -180, 180);
+      }
+
+      if (item.type === 'lens') {
+        item.height = clamp(Number(item.height) || 160, 80, 280);
+        item.focalLength = clamp(Number(item.focalLength) || 120, 40, 240);
+        item.x = clamp(Number(item.x) || 0, 50, width - 50);
+        item.y = clamp(Number(item.y) || 0, item.height / 2 + 20, height - item.height / 2 - 20);
+      }
+
+      if (item.type === 'block') {
+        item.width = clamp(Number(item.width) || 86, 60, 140);
+        item.height = clamp(Number(item.height) || 48, 36, 100);
+        item.mass = clamp(Number(item.mass) || 1, 1, 12);
+        item.vx = clamp(Number(item.vx) || 0, -18, 18);
+        item.vy = clamp(Number(item.vy) || 0, -18, 18);
+        item.x = clamp(Number(item.x) || 0, item.width / 2, width - item.width / 2);
+        item.y = clamp(Number(item.y) || 0, item.height / 2, height - item.height / 2);
+      }
+
+      if (item.type === 'force') {
+        item.x = clamp(Number(item.x) || 0, 20, width - 20);
+        item.y = clamp(Number(item.y) || 0, 20, height - 20);
+        item.dx = clamp(Number(item.dx) || 0, -180, 180);
+        item.dy = clamp(Number(item.dy) || 0, -180, 180);
+      }
+    }
+
+    function getPhysicsItemTitle(item) {
+      if (item.type === 'laser') return 'Lazer kaynagi';
+      if (item.type === 'mirror') return 'Ayna';
+      if (item.type === 'lens') return 'Mercek';
+      if (item.type === 'block') return 'Cisim';
+      return 'Kuvvet oku';
+    }
+
+    function getPhysicsItemMeta(item) {
+      if (item.type === 'laser') return `${Math.round(item.angle)} derece`;
+      if (item.type === 'mirror') return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px`;
+      if (item.type === 'lens') return `${Math.round(item.focalLength)} px odak`;
+      if (item.type === 'block') return `${item.mass} kg • hiz ${item.vx.toFixed(1)}, ${item.vy.toFixed(1)}`;
+      return `${Math.round(Math.hypot(item.dx, item.dy))} N yaklasik`;
+    }
+
+    function renderPhysicsToolbox() {
+      const toolbox = document.getElementById('physics-toolbox');
+      toolbox.innerHTML = physicsToolCatalog[physicsState.scene]
+        .map((item) => `
+          <button class="tool-button" type="button" data-physics-add="${item.type}">
+            <strong>${item.label}</strong>
+            <small>${item.description}</small>
+          </button>
+        `)
+        .join('');
+    }
+
+    function renderPhysicsLegend() {
+      const legend = document.getElementById('physics-legend');
+      if (physicsState.scene === 'optics') {
+        legend.innerHTML = `
+          <span class="legend-chip"><span class="legend-dot optics-ray"></span>Lazer izi</span>
+          <span class="legend-chip"><span class="legend-dot"></span>Ayna yuzeyi</span>
+          <span class="legend-chip"><span class="legend-dot optics-lens"></span>Mercek odagi</span>
+        `;
+      } else {
+        legend.innerHTML = `
+          <span class="legend-chip"><span class="legend-dot mechanics-block"></span>Hareketli cisim</span>
+          <span class="legend-chip"><span class="legend-dot mechanics-force"></span>Kuvvet vektoru</span>
+          <span class="legend-chip"><span class="legend-dot"></span>Secili nesne cercevesi</span>
+        `;
+      }
+    }
+
+    function renderPhysicsButtons() {
+      const runButton = document.getElementById('physics-run-button');
+      const pauseButton = document.getElementById('physics-pause-button');
+      runButton.textContent = physicsState.scene === 'optics' ? 'Isin yolunu hesapla' : 'Simulasyonu baslat';
+      pauseButton.textContent = physicsState.scene === 'optics' ? 'Isini gizle' : 'Duraklat';
+    }
+
+    function renderPhysicsObjectList() {
+      const list = document.getElementById('physics-object-list');
+      const items = currentPhysicsItems();
+
+      if (!items.length) {
+        list.innerHTML = '<div class="physics-object-item"><strong>Henuz nesne yok</strong><small>Arac kutusundan bir arac secerek ilk duzenegi kurabilirsin.</small></div>';
+        return;
+      }
+
+      list.innerHTML = items
+        .map((item) => `
+          <button
+            class="physics-object-item ${item.id === physicsSelectedId ? 'active' : ''}"
+            type="button"
+            data-physics-select="${item.id}"
+          >
+            <strong>${getPhysicsItemTitle(item)}</strong>
+            <small>${getPhysicsItemMeta(item)}</small>
+          </button>
+        `)
+        .join('');
+    }
+
+    function numberField(label, prop, value, min, max, step = 1, full = false) {
+      return `
+        <div class="inspector-field ${full ? 'full' : ''}">
+          <label>${label}</label>
+          <input
+            data-physics-prop="${prop}"
+            type="number"
+            value="${Number(value).toFixed(step < 1 ? 1 : 0)}"
+            min="${min}"
+            max="${max}"
+            step="${step}"
+          />
+        </div>
+      `;
+    }
+
+    function renderPhysicsInspector() {
+      const container = document.getElementById('physics-inspector');
+      const item = findPhysicsItemById(physicsSelectedId);
+
+      if (!item) {
+        container.innerHTML = `
+          <div class="physics-meta">
+            Sahne uzerinden bir nesne secildiginde burada konum, aci, odak, kutle veya kuvvet
+            gibi degerleri degistirebilirsin.
+          </div>
+        `;
+        return;
+      }
+
+      const fields = [
+        numberField('Konum X', 'x', item.x, 0, physicsViewport.width, 1),
+        numberField('Konum Y', 'y', item.y, 0, physicsViewport.height, 1)
+      ];
+
+      if (item.type === 'laser') {
+        fields.push(numberField('Aci', 'angle', item.angle, -180, 180, 1, true));
+      }
+
+      if (item.type === 'mirror') {
+        fields.push(numberField('Aci', 'angle', item.angle, -180, 180, 1));
+        fields.push(numberField('Uzunluk', 'length', item.length, 60, 240, 1));
+      }
+
+      if (item.type === 'lens') {
+        fields.push(numberField('Yukseklik', 'height', item.height, 80, 280, 1));
+        fields.push(numberField('Odak Uzakligi', 'focalLength', item.focalLength, 40, 240, 1));
+      }
+
+      if (item.type === 'block') {
+        fields.push(numberField('Kutle', 'mass', item.mass, 1, 12, 1));
+        fields.push(numberField('Hiz X', 'vx', item.vx, -18, 18, 0.1));
+        fields.push(numberField('Hiz Y', 'vy', item.vy, -18, 18, 0.1));
+      }
+
+      if (item.type === 'force') {
+        fields.push(numberField('Kuvvet X', 'dx', item.dx, -180, 180, 1));
+        fields.push(numberField('Kuvvet Y', 'dy', item.dy, -180, 180, 1));
+      }
+
+      container.innerHTML = `
+        <div>
+          <strong>${getPhysicsItemTitle(item)}</strong>
+          <div class="physics-meta">${getPhysicsItemMeta(item)}</div>
+        </div>
+        <div class="physics-inspector-grid">
+          ${fields.join('')}
+        </div>
+        <div class="physics-actions">
+          ${item.type === 'block' ? '<button class="mini-button" type="button" data-physics-action="reset-velocity">Hizi sifirla</button>' : ''}
+          <button class="mini-button" type="button" data-physics-action="delete">Secili nesneyi sil</button>
+        </div>
+      `;
+    }
+
+    function resizePhysicsCanvas() {
+      if (!physicsCanvas || !physicsCtx) return;
+
+      const rect = physicsCanvas.getBoundingClientRect();
+      const width = Math.round(rect.width || 960);
+      const height = Math.round(rect.height || 560);
+      const ratio = window.devicePixelRatio || 1;
+
+      if (physicsCanvas.width !== width * ratio || physicsCanvas.height !== height * ratio) {
+        physicsCanvas.width = width * ratio;
+        physicsCanvas.height = height * ratio;
+      }
+
+      physicsViewport.width = width;
+      physicsViewport.height = height;
+      physicsCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function drawPhysicsGrid() {
+      physicsCtx.clearRect(0, 0, physicsViewport.width, physicsViewport.height);
+      physicsCtx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      physicsCtx.fillRect(0, 0, physicsViewport.width, physicsViewport.height);
+
+      for (let x = 0; x <= physicsViewport.width; x += 40) {
+        physicsCtx.strokeStyle = x % 120 === 0 ? 'rgba(31, 41, 55, 0.08)' : 'rgba(31, 41, 55, 0.04)';
+        physicsCtx.beginPath();
+        physicsCtx.moveTo(x, 0);
+        physicsCtx.lineTo(x, physicsViewport.height);
+        physicsCtx.stroke();
+      }
+
+      for (let y = 0; y <= physicsViewport.height; y += 40) {
+        physicsCtx.strokeStyle = y % 120 === 0 ? 'rgba(31, 41, 55, 0.08)' : 'rgba(31, 41, 55, 0.04)';
+        physicsCtx.beginPath();
+        physicsCtx.moveTo(0, y);
+        physicsCtx.lineTo(physicsViewport.width, y);
+        physicsCtx.stroke();
+      }
+    }
+
+    function raySegmentIntersection(origin, direction, start, end) {
+      const segment = { x: end.x - start.x, y: end.y - start.y };
+      const denominator = crossProduct(direction, segment);
+      if (Math.abs(denominator) < 0.0001) return null;
+
+      const between = { x: start.x - origin.x, y: start.y - origin.y };
+      const rayDistance = crossProduct(between, segment) / denominator;
+      const segmentDistance = crossProduct(between, direction) / denominator;
+
+      if (rayDistance <= 0.01 || segmentDistance < 0 || segmentDistance > 1) {
+        return null;
+      }
+
+      return {
+        t: rayDistance,
+        point: {
+          x: origin.x + direction.x * rayDistance,
+          y: origin.y + direction.y * rayDistance
+        }
+      };
+    }
+
+    function extendRayToBounds(origin, direction) {
+      const candidates = [];
+
+      if (direction.x > 0) candidates.push((physicsViewport.width - origin.x) / direction.x);
+      if (direction.x < 0) candidates.push((0 - origin.x) / direction.x);
+      if (direction.y > 0) candidates.push((physicsViewport.height - origin.y) / direction.y);
+      if (direction.y < 0) candidates.push((0 - origin.y) / direction.y);
+
+      const distance = Math.min(...candidates.filter((value) => value > 0.01));
+      return {
+        x: origin.x + direction.x * distance,
+        y: origin.y + direction.y * distance
+      };
+    }
+
+    function reflectDirection(direction, mirror) {
+      const surface = normalizeVector({
+        x: mirror.end.x - mirror.start.x,
+        y: mirror.end.y - mirror.start.y
+      });
+      let normal = { x: -surface.y, y: surface.x };
+      if (dotProduct(direction, normal) > 0) {
+        normal = { x: -normal.x, y: -normal.y };
+      }
+
+      return normalizeVector({
+        x: direction.x - 2 * dotProduct(direction, normal) * normal.x,
+        y: direction.y - 2 * dotProduct(direction, normal) * normal.y
+      });
+    }
+
+    function getClosestOpticsHit(origin, direction) {
+      let closest = null;
+
+      currentPhysicsItems().forEach((item) => {
+        if (item.type === 'mirror') {
+          const mirror = getMirrorEndpoints(item);
+          const hit = raySegmentIntersection(origin, direction, mirror.start, mirror.end);
+          if (hit && (!closest || hit.t < closest.t)) {
+            closest = {
+              t: hit.t,
+              item,
+              point: hit.point,
+              nextDirection: reflectDirection(direction, mirror)
+            };
+          }
+        }
+
+        if (item.type === 'lens' && Math.abs(direction.x) > 0.0001) {
+          const t = (item.x - origin.x) / direction.x;
+          if (t <= 0.01) return;
+
+          const hitY = origin.y + direction.y * t;
+          const top = item.y - item.height / 2;
+          const bottom = item.y + item.height / 2;
+
+          if (hitY >= top && hitY <= bottom && (!closest || t < closest.t)) {
+            const focus = {
+              x: item.x + (direction.x >= 0 ? item.focalLength : -item.focalLength),
+              y: item.y
+            };
+
+            closest = {
+              t,
+              item,
+              point: { x: item.x, y: hitY },
+              nextDirection:
+                Math.abs(hitY - item.y) < 8
+                  ? { x: direction.x, y: direction.y }
+                  : normalizeVector({ x: focus.x - item.x, y: focus.y - hitY })
+            };
+          }
+        }
+      });
+
+      return closest;
+    }
+
+    function buildOpticsTrace() {
+      const lasers = currentPhysicsItems().filter((item) => item.type === 'laser');
+      const segments = [];
+      let interactions = 0;
+
+      if (!physicsState.opticsLive || !lasers.length) {
+        return { segments, interactions };
+      }
+
+      lasers.forEach((laser) => {
+        let origin = { x: laser.x, y: laser.y };
+        let direction = normalizeVector({
+          x: Math.cos(degToRad(laser.angle)),
+          y: Math.sin(degToRad(laser.angle))
+        });
+
+        for (let index = 0; index < 10; index += 1) {
+          const hit = getClosestOpticsHit(origin, direction);
+
+          if (!hit) {
+            segments.push({ from: { ...origin }, to: extendRayToBounds(origin, direction), kind: 'free' });
+            break;
+          }
+
+          segments.push({ from: { ...origin }, to: { ...hit.point }, kind: hit.item.type });
+          interactions += 1;
+          origin = {
+            x: hit.point.x + hit.nextDirection.x * 0.8,
+            y: hit.point.y + hit.nextDirection.y * 0.8
+          };
+          direction = hit.nextDirection;
+        }
+      });
+
+      return { segments, interactions };
+    }
+
+    function drawArrow(start, end, color, width = 3) {
+      const angle = Math.atan2(end.y - start.y, end.x - start.x);
+      const headLength = 12;
+
+      physicsCtx.strokeStyle = color;
+      physicsCtx.fillStyle = color;
+      physicsCtx.lineWidth = width;
+      physicsCtx.beginPath();
+      physicsCtx.moveTo(start.x, start.y);
+      physicsCtx.lineTo(end.x, end.y);
+      physicsCtx.stroke();
+
+      physicsCtx.beginPath();
+      physicsCtx.moveTo(end.x, end.y);
+      physicsCtx.lineTo(end.x - headLength * Math.cos(angle - Math.PI / 6), end.y - headLength * Math.sin(angle - Math.PI / 6));
+      physicsCtx.lineTo(end.x - headLength * Math.cos(angle + Math.PI / 6), end.y - headLength * Math.sin(angle + Math.PI / 6));
+      physicsCtx.closePath();
+      physicsCtx.fill();
+    }
+
+    function drawOpticsScene(trace) {
+      currentPhysicsItems().forEach((item) => {
+        const isSelected = item.id === physicsSelectedId;
+
+        if (item.type === 'mirror') {
+          const mirror = getMirrorEndpoints(item);
+          physicsCtx.strokeStyle = isSelected ? '#b85c38' : '#7a4d3c';
+          physicsCtx.lineWidth = isSelected ? 8 : 6;
+          physicsCtx.lineCap = 'round';
+          physicsCtx.beginPath();
+          physicsCtx.moveTo(mirror.start.x, mirror.start.y);
+          physicsCtx.lineTo(mirror.end.x, mirror.end.y);
+          physicsCtx.stroke();
+        }
+
+        if (item.type === 'lens') {
+          physicsCtx.strokeStyle = isSelected ? '#1f6f8b' : '#3c8dac';
+          physicsCtx.lineWidth = isSelected ? 8 : 6;
+          physicsCtx.beginPath();
+          physicsCtx.moveTo(item.x, item.y - item.height / 2);
+          physicsCtx.lineTo(item.x, item.y + item.height / 2);
+          physicsCtx.stroke();
+
+          physicsCtx.setLineDash([6, 6]);
+          physicsCtx.strokeStyle = 'rgba(60, 141, 172, 0.35)';
+          physicsCtx.beginPath();
+          physicsCtx.moveTo(item.x - item.focalLength, item.y - 24);
+          physicsCtx.lineTo(item.x - item.focalLength, item.y + 24);
+          physicsCtx.moveTo(item.x + item.focalLength, item.y - 24);
+          physicsCtx.lineTo(item.x + item.focalLength, item.y + 24);
+          physicsCtx.stroke();
+          physicsCtx.setLineDash([]);
+        }
+
+        if (item.type === 'laser') {
+          const beam = {
+            x: item.x + Math.cos(degToRad(item.angle)) * 28,
+            y: item.y + Math.sin(degToRad(item.angle)) * 28
+          };
+
+          physicsCtx.fillStyle = isSelected ? '#c64a40' : '#8f4327';
+          physicsCtx.beginPath();
+          physicsCtx.arc(item.x, item.y, 16, 0, Math.PI * 2);
+          physicsCtx.fill();
+          drawArrow({ x: item.x, y: item.y }, beam, '#ffe4de', 2);
+        }
+      });
+
+      physicsCtx.save();
+      physicsCtx.shadowColor = 'rgba(240, 91, 79, 0.45)';
+      physicsCtx.shadowBlur = 16;
+      trace.segments.forEach((segment) => {
+        physicsCtx.strokeStyle = segment.kind === 'lens' ? '#f59e0b' : '#ff5d5d';
+        physicsCtx.lineWidth = 3;
+        physicsCtx.beginPath();
+        physicsCtx.moveTo(segment.from.x, segment.from.y);
+        physicsCtx.lineTo(segment.to.x, segment.to.y);
+        physicsCtx.stroke();
+      });
+      physicsCtx.restore();
+    }
+
+    function getMechanicsDataForBlock(block) {
+      const linkedForces = currentPhysicsItems().filter(
+        (item) => item.type === 'force' && pointInsideBlock({ x: item.x, y: item.y }, block, 12)
+      );
+
+      const total = linkedForces.reduce(
+        (sum, force) => ({ x: sum.x + force.dx, y: sum.y + force.dy }),
+        { x: 0, y: 0 }
+      );
+
+      return {
+        total,
+        linkedForces,
+        magnitude: Math.hypot(total.x, total.y)
+      };
+    }
+
+    function drawMechanicsScene() {
+      physicsCtx.strokeStyle = 'rgba(31, 41, 55, 0.12)';
+      physicsCtx.lineWidth = 2;
+      physicsCtx.beginPath();
+      physicsCtx.moveTo(0, physicsViewport.height - 24);
+      physicsCtx.lineTo(physicsViewport.width, physicsViewport.height - 24);
+      physicsCtx.stroke();
+
+      currentPhysicsItems().forEach((item) => {
+        const isSelected = item.id === physicsSelectedId;
+
+        if (item.type === 'force') {
+          const end = getForceEnd(item);
+          drawArrow({ x: item.x, y: item.y }, end, isSelected ? '#b85c38' : '#d97706', isSelected ? 4 : 3);
+          physicsCtx.fillStyle = '#7a4d3c';
+          physicsCtx.beginPath();
+          physicsCtx.arc(item.x, item.y, 6, 0, Math.PI * 2);
+          physicsCtx.fill();
+        }
+
+        if (item.type === 'block') {
+          physicsCtx.fillStyle = isSelected ? '#6c9487' : '#53786e';
+          physicsCtx.fillRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
+          physicsCtx.strokeStyle = isSelected ? '#b85c38' : 'rgba(31, 41, 55, 0.14)';
+          physicsCtx.lineWidth = isSelected ? 4 : 2;
+          physicsCtx.strokeRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
+
+          physicsCtx.fillStyle = '#fff7f1';
+          physicsCtx.font = 'bold 14px Georgia';
+          physicsCtx.textAlign = 'center';
+          physicsCtx.fillText(`${item.mass} kg`, item.x, item.y + 5);
+
+          if (isSelected) {
+            const mechanics = getMechanicsDataForBlock(item);
+            const end = {
+              x: item.x + mechanics.total.x * 0.55,
+              y: item.y + mechanics.total.y * 0.55
+            };
+
+            if (mechanics.magnitude > 1) {
+              drawArrow({ x: item.x, y: item.y }, end, '#ef4444', 3);
+            }
+          }
+        }
+      });
+    }
+
+    function renderPhysicsReadouts(trace) {
+      const items = currentPhysicsItems();
+      const primary = document.getElementById('physics-readout-primary');
+      const secondary = document.getElementById('physics-readout-secondary');
+      const tertiary = document.getElementById('physics-readout-tertiary');
+
+      if (!items.length) {
+        primary.textContent = '0 nesne';
+        secondary.textContent = 'Hazir';
+        tertiary.textContent = 'Bos calisma alani';
+        return;
+      }
+
+      if (physicsState.scene === 'optics') {
+        primary.textContent = `${items.length} nesne`;
+        secondary.textContent = physicsState.opticsLive ? `${trace.interactions} etkilesim` : 'Isin kapali';
+        tertiary.textContent =
+          items.some((item) => item.type === 'laser')
+            ? `${trace.segments.length} isik parcasi izlendi`
+            : 'Lazer kaynagi bekleniyor';
+        return;
+      }
+
+      const blocks = items.filter((item) => item.type === 'block');
+      const forces = items.filter((item) => item.type === 'force');
+      const selected = findPhysicsItemById(physicsSelectedId);
+      const selectedBlock = selected?.type === 'block' ? selected : blocks[0];
+      const mechanics = selectedBlock ? getMechanicsDataForBlock(selectedBlock) : null;
+
+      primary.textContent = `${blocks.length} cisim, ${forces.length} kuvvet`;
+      secondary.textContent = physicsState.running ? 'Hareket ediyor' : 'Beklemede';
+      tertiary.textContent = mechanics ? `${Math.round(mechanics.magnitude)} N net kuvvet` : 'Cisim sec';
+    }
+
+    function renderPhysicsStage() {
+      if (!physicsCanvas || !physicsCtx) return;
+
+      resizePhysicsCanvas();
+      currentPhysicsItems().forEach((item) => constrainPhysicsItem(item));
+      drawPhysicsGrid();
+
+      const trace = physicsState.scene === 'optics' ? buildOpticsTrace() : { segments: [], interactions: 0 };
+      if (physicsState.scene === 'optics') {
+        drawOpticsScene(trace);
+      } else {
+        drawMechanicsScene();
+      }
+
+      renderPhysicsReadouts(trace);
+    }
+
+    function renderPhysicsUI() {
+      ensurePhysicsSelection();
+      renderPhysicsToolbox();
+      renderPhysicsLegend();
+      renderPhysicsButtons();
+      renderPhysicsInspector();
+      renderPhysicsObjectList();
+      renderPhysicsStage();
+
+      document.querySelectorAll('[data-physics-scene]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.physicsScene === physicsState.scene);
+      });
+
+      document.getElementById('physics-scene-label').innerHTML =
+        `<span class="status-dot"></span> Aktif modul: ${physicsState.scene === 'optics' ? 'Optik' : 'Mekanik'}`;
+
+      document.getElementById('physics-empty-state').style.display =
+        currentPhysicsItems().length ? 'none' : 'block';
+
+      document.getElementById('physics-status').textContent =
+        physicsState.notice ||
+        (physicsState.scene === 'optics'
+          ? 'Lazer, ayna ve mercek ekleyerek kendi optik duzenegini kur.'
+          : 'Cisim ve kuvvet oku ekleyip kuvvetin harekete etkisini izle.');
+    }
+
+    function addPhysicsItem(type) {
+      const item = createPhysicsItem(type);
+      currentPhysicsItems().push(item);
+      physicsSelectedId = item.id;
+      physicsState.notice = `${getPhysicsItemTitle(item)} sahneye eklendi.`;
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function clearPhysicsScene() {
+      physicsState.running = false;
+      physicsLastTick = 0;
+      physicsState[physicsState.scene].items = [];
+      physicsSelectedId = null;
+      physicsState.notice = 'Sahne temizlendi. Yeni bir duzenek kurabilirsin.';
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function loadPhysicsSample() {
+      physicsState.running = false;
+      physicsLastTick = 0;
+
+      if (physicsState.scene === 'optics') {
+        physicsState.optics.items = [
+          { id: makePhysicsId('laser'), type: 'laser', x: 118, y: 336, angle: -12 },
+          { id: makePhysicsId('mirror'), type: 'mirror', x: 422, y: 264, angle: -42, length: 150 },
+          { id: makePhysicsId('lens'), type: 'lens', x: 668, y: 250, height: 190, focalLength: 132 }
+        ];
+        physicsSelectedId = physicsState.optics.items[0].id;
+        physicsState.opticsLive = true;
+        physicsState.notice = 'Ornek optik duzenek yuklendi. Nesneleri surukleyerek farkli sonuclari dene.';
+      } else {
+        physicsState.mechanics.items = [
+          { id: makePhysicsId('block'), type: 'block', x: 332, y: 284, width: 92, height: 50, mass: 4, vx: 0, vy: 0 },
+          { id: makePhysicsId('force'), type: 'force', x: 320, y: 286, dx: 112, dy: -12 },
+          { id: makePhysicsId('force'), type: 'force', x: 312, y: 304, dx: 0, dy: 82 }
+        ];
+        physicsSelectedId = physicsState.mechanics.items[0].id;
+        physicsState.notice = 'Ornek mekanik duzenek yuklendi. Kuvvetleri degistirip simulasyonu baslat.';
+      }
+
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function setPhysicsScene(scene) {
+      if (scene === physicsState.scene) return;
+
+      physicsState.scene = scene;
+      physicsState.running = false;
+      physicsLastTick = 0;
+      physicsState.notice = scene === 'optics' ? 'Optik sahne aktif.' : 'Mekanik sahne aktif.';
+      ensurePhysicsSelection();
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function togglePhysicsRun() {
+      if (physicsState.scene === 'optics') {
+        physicsState.opticsLive = true;
+        physicsState.notice = 'Isin yolu hesaplandi ve sahneye cizildi.';
+        savePhysicsState();
+        renderPhysicsUI();
+        return;
+      }
+
+      if (!currentPhysicsItems().some((item) => item.type === 'block')) {
+        physicsState.notice = 'Simulasyon icin once bir cisim eklemelisin.';
+        renderPhysicsUI();
+        return;
+      }
+
+      physicsState.running = true;
+      physicsLastTick = 0;
+      physicsState.notice = 'Mekanik simulasyon basladi.';
+      savePhysicsState();
+      renderPhysicsUI();
+      if (!physicsAnimationFrame) {
+        physicsAnimationFrame = requestAnimationFrame(runMechanicsLoop);
+      }
+    }
+
+    function pausePhysicsRun() {
+      if (physicsState.scene === 'optics') {
+        physicsState.opticsLive = false;
+        physicsState.notice = 'Isin izi gizlendi.';
+      } else {
+        physicsState.running = false;
+        physicsLastTick = 0;
+        physicsState.notice = 'Mekanik simulasyon duraklatildi.';
+      }
+
+      savePhysicsState();
+      renderPhysicsUI();
+    }
+
+    function stepMechanics(timestamp) {
+      if (!physicsLastTick) {
+        physicsLastTick = timestamp;
+      }
+
+      const delta = Math.min((timestamp - physicsLastTick) / 16.666, 2);
+      physicsLastTick = timestamp;
+
+      currentPhysicsItems().forEach((item) => {
+        if (item.type !== 'block') return;
+
+        const mechanics = getMechanicsDataForBlock(item);
+        item.vx = (item.vx + (mechanics.total.x / (item.mass * 140)) * delta) * 0.995;
+        item.vy = (item.vy + (mechanics.total.y / (item.mass * 140)) * delta) * 0.995;
+        item.x += item.vx * delta * 4;
+        item.y += item.vy * delta * 4;
+
+        const halfWidth = item.width / 2;
+        const halfHeight = item.height / 2;
+
+        if (item.x < halfWidth) {
+          item.x = halfWidth;
+          item.vx *= -0.25;
+        }
+
+        if (item.x > physicsViewport.width - halfWidth) {
+          item.x = physicsViewport.width - halfWidth;
+          item.vx *= -0.25;
+        }
+
+        if (item.y < halfHeight) {
+          item.y = halfHeight;
+          item.vy *= -0.25;
+        }
+
+        if (item.y > physicsViewport.height - halfHeight - 24) {
+          item.y = physicsViewport.height - halfHeight - 24;
+          item.vy *= -0.3;
+          item.vx *= 0.98;
+        }
+      });
+    }
+
+    function runMechanicsLoop(timestamp) {
+      if (!(physicsState.scene === 'mechanics' && physicsState.running)) {
+        physicsAnimationFrame = null;
+        renderPhysicsUI();
+        return;
+      }
+
+      stepMechanics(timestamp);
+      renderPhysicsUI();
+      physicsAnimationFrame = requestAnimationFrame(runMechanicsLoop);
+    }
+
+    function getCanvasPoint(event) {
+      const rect = physicsCanvas.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * physicsViewport.width,
+        y: ((event.clientY - rect.top) / rect.height) * physicsViewport.height
+      };
+    }
+
+    function hitPhysicsItem(point) {
+      const items = [...currentPhysicsItems()].reverse();
+
+      return items.find((item) => {
+        if (item.type === 'laser') {
+          return Math.hypot(point.x - item.x, point.y - item.y) <= 20;
+        }
+
+        if (item.type === 'mirror') {
+          const mirror = getMirrorEndpoints(item);
+          return distanceToSegment(point, mirror.start, mirror.end) <= 12;
+        }
+
+        if (item.type === 'lens') {
+          return (
+            Math.abs(point.x - item.x) <= 12 &&
+            point.y >= item.y - item.height / 2 &&
+            point.y <= item.y + item.height / 2
+          );
+        }
+
+        if (item.type === 'block') {
+          return pointInsideBlock(point, item);
+        }
+
+        const forceEnd = getForceEnd(item);
+        return (
+          distanceToSegment(point, { x: item.x, y: item.y }, forceEnd) <= 12 ||
+          Math.hypot(point.x - item.x, point.y - item.y) <= 10
+        );
+      }) || null;
+    }
+
+    function initPhysicsCanvasEvents() {
+      if (!physicsCanvas) return;
+
+      physicsCanvas.addEventListener('pointerdown', (event) => {
+        const point = getCanvasPoint(event);
+        const hit = hitPhysicsItem(point);
+        physicsSelectedId = hit?.id || null;
+
+        if (hit && !(physicsState.scene === 'mechanics' && physicsState.running)) {
+          physicsDrag = {
+            id: hit.id,
+            offsetX: point.x - hit.x,
+            offsetY: point.y - hit.y
+          };
+          physicsCanvas.setPointerCapture(event.pointerId);
+        }
+
+        physicsState.notice = hit ? `${getPhysicsItemTitle(hit)} secildi.` : 'Secim kaldirildi.';
+        renderPhysicsUI();
+      });
+
+      physicsCanvas.addEventListener('pointermove', (event) => {
+        if (!physicsDrag) return;
+
+        const item = findPhysicsItemById(physicsDrag.id);
+        if (!item) return;
+
+        const point = getCanvasPoint(event);
+        item.x = point.x - physicsDrag.offsetX;
+        item.y = point.y - physicsDrag.offsetY;
+        constrainPhysicsItem(item);
+        renderPhysicsUI();
+      });
+
+      const releaseDrag = () => {
+        if (!physicsDrag) return;
+        physicsDrag = null;
+        savePhysicsState();
+      };
+
+      physicsCanvas.addEventListener('pointerup', releaseDrag);
+      physicsCanvas.addEventListener('pointercancel', releaseDrag);
+      physicsCanvas.addEventListener('pointerleave', releaseDrag);
+    }
+
+    function initPhysicsLab() {
+      if (!physicsCanvas || !physicsCtx) return;
+
+      ensurePhysicsSelection();
+      renderPhysicsUI();
+      initPhysicsCanvasEvents();
+
+      window.addEventListener('resize', renderPhysicsUI);
+
+      document.querySelectorAll('[data-physics-scene]').forEach((button) => {
+        button.addEventListener('click', () => setPhysicsScene(button.dataset.physicsScene));
+      });
+
+      document.getElementById('physics-toolbox').addEventListener('click', (event) => {
+        const target = event.target.closest('[data-physics-add]');
+        if (!target) return;
+        addPhysicsItem(target.dataset.physicsAdd);
+      });
+
+      document.getElementById('physics-object-list').addEventListener('click', (event) => {
+        const target = event.target.closest('[data-physics-select]');
+        if (!target) return;
+        physicsSelectedId = target.dataset.physicsSelect;
+        physicsState.notice = `${getPhysicsItemTitle(findPhysicsItemById(physicsSelectedId))} secildi.`;
+        renderPhysicsUI();
+      });
+
+      document.getElementById('physics-inspector').addEventListener('input', (event) => {
+        const target = event.target.closest('[data-physics-prop]');
+        if (!target) return;
+
+        const item = findPhysicsItemById(physicsSelectedId);
+        if (!item) return;
+
+        item[target.dataset.physicsProp] = Number(target.value);
+        constrainPhysicsItem(item);
+        physicsState.notice = `${getPhysicsItemTitle(item)} guncellendi.`;
+        savePhysicsState();
+        renderPhysicsUI();
+      });
+
+      document.getElementById('physics-inspector').addEventListener('click', (event) => {
+        const target = event.target.closest('[data-physics-action]');
+        if (!target) return;
+
+        const item = findPhysicsItemById(physicsSelectedId);
+        if (!item) return;
+
+        if (target.dataset.physicsAction === 'delete') {
+          physicsState[physicsState.scene].items = currentPhysicsItems().filter((entry) => entry.id !== item.id);
+          physicsSelectedId = null;
+          physicsState.notice = `${getPhysicsItemTitle(item)} silindi.`;
+        }
+
+        if (target.dataset.physicsAction === 'reset-velocity') {
+          item.vx = 0;
+          item.vy = 0;
+          physicsState.notice = 'Cismin hizi sifirlandi.';
+        }
+
+        savePhysicsState();
+        renderPhysicsUI();
+      });
+
+      document.getElementById('physics-sample-button').addEventListener('click', loadPhysicsSample);
+      document.getElementById('physics-clear-button').addEventListener('click', clearPhysicsScene);
+      document.getElementById('physics-run-button').addEventListener('click', togglePhysicsRun);
+      document.getElementById('physics-pause-button').addEventListener('click', pausePhysicsRun);
+    }
+
+    refresh();
+    initPhysicsLab();
+  </script>
+</body>
+</html>

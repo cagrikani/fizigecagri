@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fizik Lab</title>
+  <meta
+    name="description"
+    content="Optik ve mekanik deneylerinin bos bir sahnede tasarlanabildigi etkilesimli fizik laboratuvari."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">Bagimsiz proje</span>
+        <h1>Fizik Lab</h1>
+        <p class="hero-text">
+          Kullanici bos bir sahnede kendi duzenegini kurar. Optikte lazer, ayna
+          ve mercek; mekanikte cisim ve kuvvet araclari ile temel fizik
+          simulasyonlari tasarlanabilir.
+        </p>
+        <div class="hero-actions">
+          <button class="primary-button" id="run-scene-button" type="button">Simulasyonu calistir</button>
+          <button class="secondary-button" id="load-sample-button" type="button">Ornek duzenek yukle</button>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="hero-stat">
+          <span>Calisma Bicimi</span>
+          <strong>Bos sahne + arac kutusu</strong>
+        </div>
+        <div class="hero-stat">
+          <span>Moduller</span>
+          <strong>Optik ve Mekanik</strong>
+        </div>
+        <div class="hero-stat">
+          <span>Etkilesim</span>
+          <strong>Sec, surukle, duzenle</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="lab-layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Modul</h2>
+            <p>Her modul kendi bos deney sahnesiyle acilir.</p>
+          </div>
+          <div class="scene-switch" aria-label="Modul secimi">
+            <button class="scene-button active" data-scene-button="optics" type="button">Optik</button>
+            <button class="scene-button" data-scene-button="mechanics" type="button">Mekanik</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Arac Kutusu</h2>
+            <p>Secilen modula gore sahneye yeni fizik nesneleri eklenir.</p>
+          </div>
+          <div class="tool-grid" id="tool-grid"></div>
+          <div class="inline-actions">
+            <button class="secondary-button compact" id="clear-scene-button" type="button">Sahneyi temizle</button>
+            <button class="secondary-button compact" id="pause-scene-button" type="button">Duraklat</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Secili Nesne</h2>
+            <p>Konum, aci, kutle ve kuvvet gibi degerleri buradan degistir.</p>
+          </div>
+          <div id="inspector"></div>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <div class="workspace-top">
+          <div class="legend" id="legend"></div>
+          <div class="status-chip" id="scene-label">Aktif modul: Optik</div>
+        </div>
+
+        <section class="stage-panel">
+          <div class="stage-toolbar">
+            <div>
+              <h2>Deney Sahasi</h2>
+              <p id="status-text">
+                Arac kutusundan nesne ekleyip sahne uzerinde surukleyerek kendi
+                deneyini kur.
+              </p>
+            </div>
+            <div class="status-chip muted" id="scene-state-chip">Hazir</div>
+          </div>
+
+          <div class="canvas-shell">
+            <canvas id="lab-canvas" width="960" height="600" aria-label="Fizik laboratuvari sahasi"></canvas>
+            <div class="empty-note" id="empty-note">
+              Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla.
+            </div>
+          </div>
+        </section>
+
+        <div class="readout-grid">
+          <article class="readout-card">
+            <span>Sahne Ozeti</span>
+            <strong id="summary-primary">0 nesne</strong>
+          </article>
+          <article class="readout-card">
+            <span>Simulasyon</span>
+            <strong id="summary-secondary">Hazir</strong>
+          </article>
+          <article class="readout-card">
+            <span>Detay</span>
+            <strong id="summary-tertiary">Bos calisma alani</strong>
+          </article>
+        </div>
+
+        <section class="panel object-panel">
+          <div class="panel-head">
+            <h2>Sahnedeki Nesneler</h2>
+            <p>Secmek veya takip etmek icin sahne listesini kullan.</p>
+          </div>
+          <div class="object-list" id="object-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
