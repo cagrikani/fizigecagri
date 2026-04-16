@@ -3,6 +3,7 @@ const STORAGE_KEY = "fizik-lab-state-v1";
 const toolCatalog = {
   optics: [
     { type: "laser", label: "Lazer", description: "Tek bir isik kaynagi ekler." },
+    { type: "optical-object", label: "Cisim", description: "Goruntusu olusan ok seklinde cisim ekler." },
     { type: "plane-mirror", label: "Duz Ayna", description: "Standart dogrusal yansima yapar." },
     { type: "concave-mirror", label: "Cukur Ayna", description: "Isini odaga toplayan icbukey ayna." },
     { type: "convex-mirror", label: "Tumsek Ayna", description: "Isini dagitan disbukey ayna." },
@@ -153,6 +154,17 @@ function rotateLocalPoint(point, angle) {
   };
 }
 
+function toLocal(point, item) {
+  const angle = degToRad(item.angle || 0);
+  return rotateLocalPoint({ x: point.x - item.x, y: point.y - item.y }, -angle);
+}
+
+function fromLocal(point, item) {
+  const angle = degToRad(item.angle || 0);
+  const rotated = rotateLocalPoint(point, angle);
+  return { x: item.x + rotated.x, y: item.y + rotated.y };
+}
+
 function mirrorProfileX(item, y) {
   if (item.type === "plane-mirror") {
     return 0;
@@ -211,11 +223,118 @@ function forceEnd(item) {
   return { x: item.x + item.dx, y: item.y + item.dy };
 }
 
+function opticAxis(item) {
+  const length = Math.max(viewport.width, viewport.height) * 1.2;
+  return {
+    start: fromLocal({ x: -length / 2, y: 0 }, item),
+    end: fromLocal({ x: length / 2, y: 0 }, item)
+  };
+}
+
+function principalPoint(item) {
+  return { x: item.x, y: item.y };
+}
+
+function focusPoints(item) {
+  if (isLens(item)) {
+    return [
+      { label: "F", point: fromLocal({ x: item.focalLength, y: 0 }, item) },
+      { label: "F", point: fromLocal({ x: -item.focalLength, y: 0 }, item) }
+    ];
+  }
+
+  if (!isMirror(item) || item.type === "plane-mirror") {
+    return [];
+  }
+
+  const focalLength = item.type === "concave-mirror" ? item.radius / 2 : -item.radius / 2;
+  return [{ label: "F", point: fromLocal({ x: focalLength, y: 0 }, item) }];
+}
+
+function centerPoints(item) {
+  if (isLens(item)) {
+    return [{ label: "O", point: principalPoint(item) }];
+  }
+
+  if (!isMirror(item)) {
+    return [];
+  }
+
+  if (item.type === "plane-mirror") {
+    return [{ label: "V", point: principalPoint(item) }];
+  }
+
+  const radius = item.type === "concave-mirror" ? item.radius : -item.radius;
+  return [
+    { label: "V", point: principalPoint(item) },
+    { label: "C", point: fromLocal({ x: radius, y: 0 }, item) }
+  ];
+}
+
+function imageForElement(item, objectItem) {
+  if (!objectItem || objectItem.type !== "optical-object") {
+    return null;
+  }
+
+  const local = toLocal({ x: objectItem.x, y: objectItem.y }, item);
+  const doValue = -local.x;
+
+  if (doValue <= 1) {
+    return null;
+  }
+
+  if (isLens(item)) {
+    const f = item.focalLength;
+    const denominator = (1 / f) - (1 / doValue);
+    if (Math.abs(denominator) < 0.00001) {
+      return null;
+    }
+
+    const di = 1 / denominator;
+    const magnification = -di / doValue;
+    return {
+      point: fromLocal({ x: di, y: 0 }, item),
+      height: objectItem.height * magnification,
+      virtual: di < 0
+    };
+  }
+
+  if (isMirror(item)) {
+    if (item.type === "plane-mirror") {
+      return {
+        point: fromLocal({ x: local.x * -1, y: 0 }, item),
+        height: objectItem.height,
+        virtual: true
+      };
+    }
+
+    const f = item.type === "concave-mirror" ? item.radius / 2 : -item.radius / 2;
+    const denominator = (1 / f) - (1 / doValue);
+    if (Math.abs(denominator) < 0.00001) {
+      return null;
+    }
+
+    const di = 1 / denominator;
+    const magnification = -di / doValue;
+    return {
+      point: fromLocal({ x: -di, y: 0 }, item),
+      height: objectItem.height * magnification,
+      virtual: di < 0
+    };
+  }
+
+  return null;
+}
+
 function makeItem(type) {
   const offset = currentItems().length * 28;
 
   if (type === "laser") {
     return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: -8 };
+  }
+
+  if (type === "optical-object") {
+    return { id: uid("object"), type, x: 250 + offset, y: 300, height: 120 };
   }
 
   if (type === "plane-mirror") {
@@ -268,6 +387,12 @@ function constrainItem(item) {
     item.angle = clamp(Number(item.angle) || 0, -180, 180);
   }
 
+  if (item.type === "optical-object") {
+    item.x = clamp(Number(item.x) || 0, 40, width - 40);
+    item.y = clamp(Number(item.y) || 0, 60, height - 40);
+    item.height = clamp(Number(item.height) || 120, 50, 220);
+  }
+
   if (isMirror(item)) {
     item.x = clamp(Number(item.x) || 0, 30, width - 30);
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
@@ -308,6 +433,7 @@ function constrainItem(item) {
 
 function itemTitle(item) {
   if (item.type === "laser") return "Lazer kaynagi";
+  if (item.type === "optical-object") return "Optik cisim";
   if (item.type === "plane-mirror") return "Duz ayna";
   if (item.type === "concave-mirror") return "Cukur ayna";
   if (item.type === "convex-mirror") return "Tumsek ayna";
@@ -319,6 +445,7 @@ function itemTitle(item) {
 
 function itemMeta(item) {
   if (item.type === "laser") return `${Math.round(item.angle)} derece aci`;
+  if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
   if (isMirror(item)) {
     const radiusText = item.type === "plane-mirror" ? "duz yuzey" : `R ${Math.round(item.radius)}`;
     return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px • ${radiusText}`;
@@ -354,6 +481,7 @@ function renderLegend() {
       <span class="legend-chip laser">Lazer izi</span>
       <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
       <span class="legend-chip lens">Gercek gorunumlu mercek</span>
+      <span class="legend-chip block">Cisim ve goruntu oku</span>
     `;
     return;
   }
@@ -404,6 +532,10 @@ function renderInspector() {
 
   if (item.type === "laser") {
     fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1, true));
+  }
+
+  if (item.type === "optical-object") {
+    fields.push(numberField("Boy", "height", item.height, 50, 220, 1, true));
   }
 
   if (isMirror(item)) {
@@ -701,6 +833,44 @@ function drawArrow(start, end, color, width = 3) {
   ctx.fill();
 }
 
+function drawVerticalObject(base, height, color, dashed = false) {
+  const top = { x: base.x, y: base.y - height };
+  ctx.save();
+  if (dashed) {
+    ctx.setLineDash([8, 6]);
+  }
+  drawArrow(base, top, color, dashed ? 2.5 : 3.5);
+  ctx.restore();
+}
+
+function drawAxisAndMarkers(item) {
+  const axis = opticAxis(item);
+
+  ctx.save();
+  ctx.setLineDash([10, 8]);
+  ctx.strokeStyle = "rgba(198, 208, 228, 0.22)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(axis.start.x, axis.start.y);
+  ctx.lineTo(axis.end.x, axis.end.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  [...focusPoints(item), ...centerPoints(item)].forEach((marker) => {
+    ctx.fillStyle = marker.label === "F" ? "#ffd166" : "#b7dcff";
+    ctx.beginPath();
+    ctx.arc(marker.point.x, marker.point.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+    ctx.font = "600 12px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText(marker.label, marker.point.x, marker.point.y - 10);
+  });
+
+  ctx.restore();
+}
+
 function drawOptics(trace) {
   const drawLensBody = (item, isSelected) => {
     const top = item.y - item.height / 2;
@@ -789,6 +959,8 @@ function drawOptics(trace) {
     ctx.stroke();
   };
 
+  const opticalObjects = currentItems().filter((item) => item.type === "optical-object");
+
   currentItems().forEach((item) => {
     const isSelected = item.id === selectedId;
 
@@ -805,13 +977,41 @@ function drawOptics(trace) {
       drawArrow({ x: item.x, y: item.y }, beamEnd, "#ffe8e8", 2);
     }
 
+    if (item.type === "optical-object") {
+      drawVerticalObject({ x: item.x, y: item.y }, item.height, isSelected ? "#8ef6d7" : "#7bd389");
+      ctx.fillStyle = "rgba(123, 211, 137, 0.18)";
+      ctx.fillRect(item.x - 12, item.y - 8, 24, 8);
+    }
+
     if (isMirror(item)) {
+      drawAxisAndMarkers(item);
       drawMirrorBody(item, isSelected);
     }
 
     if (isLens(item)) {
+      drawAxisAndMarkers(item);
       drawLensBody(item, isSelected);
     }
+  });
+
+  currentItems().forEach((item) => {
+    if (!(isMirror(item) || isLens(item))) {
+      return;
+    }
+
+    opticalObjects.forEach((objectItem) => {
+      const image = imageForElement(item, objectItem);
+      if (!image || !Number.isFinite(image.height)) {
+        return;
+      }
+
+      drawVerticalObject(
+        { x: image.point.x, y: image.point.y },
+        image.height,
+        image.virtual ? "rgba(255, 209, 102, 0.8)" : "rgba(255, 107, 107, 0.92)",
+        image.virtual
+      );
+    });
   });
 
   ctx.save();
@@ -955,7 +1155,7 @@ function renderUI() {
   document.getElementById("status-text").textContent =
     state.notice ||
     (state.scene === "optics"
-      ? "Lazer, ayna ve mercek ekleyip isigin yolunu incele."
+      ? "Cisim, asal eksen, odak ve goruntuyu ayna-mercek duzeneklerinde incele."
       : "Cisim ve kuvvet oku ekleyip net kuvvetin harekete etkisini izle.");
 
   document.getElementById("run-scene-button").textContent =
@@ -988,6 +1188,7 @@ function loadSample() {
   if (state.scene === "optics") {
     state.optics.items = [
       { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12 },
+      { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
       { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
       { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
       { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
@@ -1130,6 +1331,10 @@ function hitItem(point) {
   return items.find((item) => {
     if (item.type === "laser") {
       return Math.hypot(point.x - item.x, point.y - item.y) <= 20;
+    }
+
+    if (item.type === "optical-object") {
+      return Math.abs(point.x - item.x) <= 16 && point.y >= item.y - item.height - 12 && point.y <= item.y + 10;
     }
 
     if (isMirror(item)) {
