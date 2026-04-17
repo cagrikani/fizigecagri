@@ -465,6 +465,24 @@ h1 {
   right: 12px;
 }
 
+.tool-glyph.vector::before {
+  width: 24px;
+  height: 3px;
+  background: #5da9ff;
+  transform: rotate(-24deg);
+}
+
+.tool-glyph.vector::after {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #5da9ff;
+  right: 12px;
+  top: 12px;
+  transform: rotate(-24deg);
+}
+
 .tool-card strong,
 .object-item strong,
 .readout-card strong {

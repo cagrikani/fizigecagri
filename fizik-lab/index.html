@@ -39,8 +39,8 @@
           <strong>Bos sahne + arac kutusu</strong>
         </div>
         <div class="hero-stat">
-          <span>Modul</span>
-          <strong>Optik</strong>
+          <span>Moduller</span>
+          <strong>Optik ve Vektorler</strong>
         </div>
         <div class="hero-stat">
           <span>Etkilesim</span>
@@ -53,8 +53,27 @@
       <aside class="sidebar">
         <section class="panel">
           <div class="panel-head">
+            <h2>Modul</h2>
+            <p>Optik ve vektor calisma alanlari arasinda gecis yap.</p>
+          </div>
+          <div class="scene-switch" aria-label="Modul secimi">
+            <button class="scene-button active" data-scene-button="optics" type="button">Optik</button>
+            <button class="scene-button" data-scene-button="vectors" type="button">Vektorler</button>
+          </div>
+        </section>
+
+        <section class="panel" id="module-controls-panel">
+          <div class="panel-head">
+            <h2>Modul Kontrolleri</h2>
+            <p id="module-controls-copy">Aktif modula gore yardimci islemler burada gorunur.</p>
+          </div>
+          <div id="module-controls"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
             <h2>Arac Kutusu</h2>
-            <p>Optik sahneye yeni fizik nesneleri eklenir.</p>
+            <p id="toolbox-copy">Optik sahneye yeni fizik nesneleri eklenir.</p>
           </div>
           <div class="tool-grid" id="tool-grid"></div>
           <div class="inline-actions">

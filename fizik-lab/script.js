@@ -15,9 +15,8 @@ const toolCatalog = {
     { type: "convex-lens", label: "Ince Kenarli Mercek", description: "Ortasi kalin, isigi odaga toplar." },
     { type: "concave-lens", label: "Kalin Kenarli Mercek", description: "Ortasi ince, isigi dagitir." }
   ],
-  mechanics: [
-    { type: "block", label: "Cisim", description: "Kuvvet uygulanabilen hareketli blok." },
-    { type: "force", label: "Kuvvet Oku", description: "Bir cisme etki eden kuvvet vektoru." }
+  vectors: [
+    { type: "vector", label: "Vektor", description: "Ucu, boyu ve acisi ayarlanabilen yeni vektor ekler." }
   ]
 };
 
@@ -27,7 +26,11 @@ const defaultState = {
   running: false,
   notice: "",
   optics: { items: [] },
-  mechanics: { items: [] }
+  vectors: {
+    items: [],
+    mode: "tip-to-tail",
+    showHelpers: true
+  }
 };
 
 const canvas = document.getElementById("lab-canvas");
@@ -77,12 +80,16 @@ function normalizeState(raw) {
     });
 
   return {
-    scene: "optics",
+    scene: raw.scene === "vectors" ? "vectors" : "optics",
     opticsVisible: raw.opticsVisible !== false,
     running: false,
     notice: typeof raw.notice === "string" ? raw.notice : "",
     optics: { items: Array.isArray(raw.optics?.items) ? normalizeItems(raw.optics.items) : [] },
-    mechanics: { items: [] }
+    vectors: {
+      items: Array.isArray(raw.vectors?.items) ? raw.vectors.items : [],
+      mode: ["tip-to-tail", "parallelogram", "components"].includes(raw.vectors?.mode) ? raw.vectors.mode : "tip-to-tail",
+      showHelpers: raw.vectors?.showHelpers !== false
+    }
   };
 }
 
@@ -91,7 +98,7 @@ function saveState() {
 }
 
 function currentItems() {
-  return state.optics.items;
+  return state[state.scene].items;
 }
 
 function selectedItem() {
@@ -259,6 +266,10 @@ function isFiber(item) {
 
 function isPrism(item) {
   return item.type === "prism";
+}
+
+function isVector(item) {
+  return item.type === "vector";
 }
 
 function prismVertices(item) {
@@ -463,6 +474,18 @@ function makeItem(type) {
     return { id: uid("prism"), type, x: 700, y: 240, angle: 0, size: 130, dispersion: 18, index: 1.52 };
   }
 
+  if (type === "vector") {
+    return {
+      id: uid("vector"),
+      type,
+      x: 180 + offset,
+      y: 420 - offset * 0.6,
+      dx: 140,
+      dy: -70,
+      color: ["#5da9ff", "#40d67b", "#ff9f43", "#bf5af2"][currentItems().length % 4]
+    };
+  }
+
   if (type === "plane-mirror") {
     return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: 90, length: 140, radius: 0 };
   }
@@ -560,6 +583,14 @@ function constrainItem(item) {
     item.index = clamp(Number(item.index) || 1.52, 1.1, 2.2);
   }
 
+  if (isVector(item)) {
+    item.x = clamp(Number(item.x) || 0, 30, width - 30);
+    item.y = clamp(Number(item.y) || 0, 30, height - 30);
+    item.dx = clamp(Number(item.dx) || 0, -300, 300);
+    item.dy = clamp(Number(item.dy) || 0, -300, 300);
+    item.color = typeof item.color === "string" ? item.color : "#5da9ff";
+  }
+
   if (isMirror(item)) {
     item.x = clamp(Number(item.x) || 0, 30, width - 30);
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
@@ -603,6 +634,7 @@ function itemTitle(item) {
   if (item.type === "optical-object") return "Optik cisim";
   if (item.type === "round-object") return "Yuvarlak cisim";
   if (item.type === "eye") return "Goz";
+  if (item.type === "vector") return "Vektor";
   if (item.type === "depth-tank") return "Gorunur derinlik kabi";
   if (item.type === "fiber") return "Fiber optik kablo";
   if (item.type === "prism") return "Prizma";
@@ -623,6 +655,9 @@ function itemMeta(item) {
   if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
   if (item.type === "round-object") return `${Math.round(item.radius)} px yaricap`;
   if (item.type === "eye") return `${Math.round(item.angle)} derece bakis`;
+  if (item.type === "vector") {
+    return `${Math.round(Math.hypot(item.dx, item.dy))} br • ${Math.round(Math.atan2(-item.dy, item.dx) * (180 / Math.PI))} derece`;
+  }
   if (item.type === "depth-tank") {
     return `n1 ${item.topIndex.toFixed(2)} • n2 ${item.bottomIndex.toFixed(2)} • ${Math.round(item.height)} px`;
   }
@@ -652,6 +687,7 @@ function toolGlyph(type) {
     "depth-tank": '<span class="tool-glyph depth-tank"><span></span></span>',
     fiber: '<span class="tool-glyph fiber"><span></span></span>',
     prism: '<span class="tool-glyph prism"><span></span></span>',
+    vector: '<span class="tool-glyph vector"><span></span></span>',
     "plane-mirror": '<span class="tool-glyph plane-mirror"><span></span></span>',
     "concave-mirror": '<span class="tool-glyph concave-mirror"><span></span></span>',
     "convex-mirror": '<span class="tool-glyph convex-mirror"><span></span></span>',
@@ -681,12 +717,44 @@ function renderToolGrid() {
 
 function renderLegend() {
   const legend = document.getElementById("legend");
+  if (state.scene === "vectors") {
+    legend.innerHTML = `
+      <span class="legend-chip laser">Temel vektor</span>
+      <span class="legend-chip mirror">Yardimci kopya</span>
+      <span class="legend-chip force">Bileske vektor</span>
+    `;
+    return;
+  }
   legend.innerHTML = `
     <span class="legend-chip laser">Beyaz isik</span>
     <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
     <span class="legend-chip lens">Gercek gorunumlu mercek</span>
     <span class="legend-chip block">Cisim, goz ve goruntu</span>
     <span class="legend-chip force">Prizma, fiber ve iki ortam</span>
+  `;
+}
+
+function renderModuleControls() {
+  const copy = document.getElementById("module-controls-copy");
+  const controls = document.getElementById("module-controls");
+
+  if (state.scene === "vectors") {
+    copy.textContent = "Vektorler icin yardimci yontemi sec. Bileske her yontemde sahnede gosterilir.";
+    controls.innerHTML = `
+      <div class="scene-switch" aria-label="Vektor yontemi">
+        <button class="scene-button ${state.vectors.mode === "tip-to-tail" ? "active" : ""}" type="button" data-vector-mode="tip-to-tail">Uc uca ekleme</button>
+        <button class="scene-button ${state.vectors.mode === "parallelogram" ? "active" : ""}" type="button" data-vector-mode="parallelogram">Paralelkenar</button>
+        <button class="scene-button ${state.vectors.mode === "components" ? "active" : ""}" type="button" data-vector-mode="components">Bilesenler</button>
+      </div>
+    `;
+    return;
+  }
+
+  copy.textContent = "Aktif modula gore yardimci islemler burada gorunur.";
+  controls.innerHTML = `
+    <div class="inspector-note">
+      Optik modulde yardimci noktalar ve isik yolu sahnede otomatik gosterilir.
+    </div>
   `;
 }
 
@@ -765,6 +833,11 @@ function renderInspector() {
         )
       );
     }
+  }
+
+  if (isVector(item)) {
+    fields.push(numberField("Bilesen X", "dx", item.dx, -300, 300, 1));
+    fields.push(numberField("Bilesen Y", "dy", item.dy, -300, 300, 1));
   }
 
   if (item.type === "optical-object") {
@@ -1788,63 +1861,101 @@ function drawOptics(trace) {
   ctx.restore();
 }
 
-function mechanicsForces(block) {
-  const linked = currentItems().filter(
-    (item) => item.type === "force" && pointInsideBlock({ x: item.x, y: item.y }, block, 14)
-  );
-
-  const total = linked.reduce(
-    (sum, force) => ({ x: sum.x + force.dx, y: sum.y + force.dy }),
-    { x: 0, y: 0 }
-  );
-
-  return { linked, total, magnitude: Math.hypot(total.x, total.y) };
+function vectorEnd(item, origin = item) {
+  return { x: origin.x + item.dx, y: origin.y + item.dy };
 }
 
-function drawMechanics() {
-  ctx.strokeStyle = "rgba(159, 174, 203, 0.16)";
-  ctx.lineWidth = 2;
+function vectorResultant(vectors) {
+  return vectors.reduce((sum, vector) => ({ x: sum.x + vector.dx, y: sum.y + vector.dy }), { x: 0, y: 0 });
+}
+
+function drawVectors() {
+  const vectors = currentItems().filter((item) => isVector(item));
+  const helpersVisible = state.vectors.showHelpers;
+  const selected = selectedItem();
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(159, 174, 203, 0.12)";
   ctx.beginPath();
-  ctx.moveTo(0, viewport.height - 26);
-  ctx.lineTo(viewport.width, viewport.height - 26);
+  ctx.moveTo(0, viewport.height / 2);
+  ctx.lineTo(viewport.width, viewport.height / 2);
+  ctx.moveTo(100, 0);
+  ctx.lineTo(100, viewport.height);
   ctx.stroke();
+  ctx.restore();
 
-  currentItems().forEach((item) => {
+  vectors.forEach((item, index) => {
     const isSelected = item.id === selectedId;
-
-    if (item.type === "force") {
-      drawArrow({ x: item.x, y: item.y }, forceEnd(item), isSelected ? "#ffd166" : "#ffb454", isSelected ? 4 : 3);
-      ctx.fillStyle = "#ffb454";
-      ctx.beginPath();
-      ctx.arc(item.x, item.y, 6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    if (item.type === "block") {
-      ctx.fillStyle = isSelected ? "#96f2d7" : "#7bd389";
-      ctx.fillRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
-      ctx.strokeStyle = isSelected ? "#4fd1c5" : "rgba(123, 211, 137, 0.6)";
-      ctx.lineWidth = isSelected ? 4 : 2;
-      ctx.strokeRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
-
-      ctx.fillStyle = "#082226";
-      ctx.font = "bold 14px Space Grotesk";
-      ctx.textAlign = "center";
-      ctx.fillText(`${item.mass} kg`, item.x, item.y + 5);
-
-      if (isSelected) {
-        const mechanics = mechanicsForces(item);
-        if (mechanics.magnitude > 1) {
-          drawArrow(
-            { x: item.x, y: item.y },
-            { x: item.x + mechanics.total.x * 0.5, y: item.y + mechanics.total.y * 0.5 },
-            "#ff6b6b",
-            3
-          );
-        }
-      }
-    }
+    drawArrow({ x: item.x, y: item.y }, vectorEnd(item), item.color, isSelected ? 4 : 3);
+    ctx.fillStyle = item.color;
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+    ctx.font = "600 12px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText(`v${index + 1}`, item.x + item.dx * 0.55, item.y + item.dy * 0.55 - 10);
   });
+
+  if (!vectors.length || !helpersVisible) {
+    return;
+  }
+
+  const total = vectorResultant(vectors);
+  const helperOrigin = { x: 120, y: viewport.height - 110 };
+
+  if (state.vectors.mode === "tip-to-tail") {
+    let current = { ...helperOrigin };
+    vectors.forEach((vector) => {
+      const next = vectorEnd(vector, current);
+      ctx.save();
+      ctx.setLineDash([8, 6]);
+      drawArrow(current, next, "rgba(148, 223, 255, 0.78)", 2.5);
+      ctx.restore();
+      current = next;
+    });
+    drawArrow(helperOrigin, { x: helperOrigin.x + total.x, y: helperOrigin.y + total.y }, "#ff6b6b", 4);
+  }
+
+  if (state.vectors.mode === "parallelogram" && vectors.length >= 2) {
+    const [a, b] = vectors;
+    const origin = { x: 180, y: viewport.height - 140 };
+    const endA = vectorEnd(a, origin);
+    const endB = vectorEnd(b, origin);
+    const corner = { x: origin.x + a.dx + b.dx, y: origin.y + a.dy + b.dy };
+
+    ctx.save();
+    ctx.setLineDash([8, 6]);
+    drawArrow(origin, endA, "rgba(148, 223, 255, 0.78)", 2.5);
+    drawArrow(origin, endB, "rgba(148, 223, 255, 0.78)", 2.5);
+    ctx.beginPath();
+    ctx.moveTo(endA.x, endA.y);
+    ctx.lineTo(corner.x, corner.y);
+    ctx.moveTo(endB.x, endB.y);
+    ctx.lineTo(corner.x, corner.y);
+    ctx.strokeStyle = "rgba(148, 223, 255, 0.72)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+    drawArrow(origin, corner, "#ff6b6b", 4);
+  }
+
+  if (state.vectors.mode === "components" && selected && isVector(selected)) {
+    const end = vectorEnd(selected);
+    ctx.save();
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(selected.x, selected.y);
+    ctx.lineTo(end.x, selected.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.strokeStyle = "rgba(148, 223, 255, 0.78)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+    drawArrow({ x: selected.x, y: selected.y }, { x: end.x, y: selected.y }, "#ffd166", 3);
+    drawArrow({ x: end.x, y: selected.y }, end, "#40d67b", 3);
+    drawArrow(selected, end, "#ff6b6b", 4);
+  }
 }
 
 function renderSummaries(trace = { segments: [], interactions: 0 }) {
@@ -1862,6 +1973,21 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
     return;
   }
 
+  if (state.scene === "vectors") {
+    const vectors = items.filter((item) => isVector(item));
+    const total = vectorResultant(vectors);
+    primary.textContent = `${vectors.length} vektor`;
+    secondary.textContent =
+      state.vectors.mode === "tip-to-tail"
+        ? "Uc uca ekleme"
+        : state.vectors.mode === "parallelogram"
+          ? "Paralelkenar"
+          : "Bilesenler";
+    tertiary.textContent = `${Math.round(Math.hypot(total.x, total.y))} br bileske`;
+    sceneState.textContent = state.vectors.showHelpers ? "Yardimcilar acik" : "Yardimcilar gizli";
+    return;
+  }
+
   primary.textContent = `${items.length} nesne`;
   secondary.textContent = state.opticsVisible ? `${trace.interactions} etkilesim` : "Isin gizli";
   tertiary.textContent = items.some((item) => item.type === "laser")
@@ -1874,6 +2000,12 @@ function renderScene() {
   resizeCanvas();
   currentItems().forEach((item) => constrainItem(item));
   drawBackground();
+  if (state.scene === "vectors") {
+    drawVectors();
+    renderSummaries();
+    return;
+  }
+
   const trace = buildOpticsTrace();
   drawOptics(trace);
   renderSummaries(trace);
@@ -1883,16 +2015,30 @@ function renderUI() {
   ensureSelection();
   renderToolGrid();
   renderLegend();
+  renderModuleControls();
   renderInspector();
   renderObjectList();
   renderScene();
 
-  document.getElementById("scene-label").textContent = "Aktif modul: Optik";
+  document.querySelectorAll("[data-scene-button]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.sceneButton === state.scene);
+  });
+
+  document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektorler"}`;
   document.getElementById("empty-note").style.display = currentItems().length ? "none" : "block";
+  document.getElementById("toolbox-copy").textContent =
+    state.scene === "optics"
+      ? "Optik sahneye yeni fizik nesneleri eklenir."
+      : "Vektor sahnesine yeni vektorler eklenir.";
   document.getElementById("status-text").textContent =
     state.notice ||
-    "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele.";
-  document.getElementById("run-scene-button").textContent = "Isin yolunu hesapla";
+    (state.scene === "optics"
+      ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
+      : "Vektorleri surukleyip bileske, paralelkenar ve bilesen cozumlerini incele.");
+  document.getElementById("run-scene-button").textContent =
+    state.scene === "optics" ? "Isin yolunu hesapla" : "Bileskeyi goster";
+  document.getElementById("pause-scene-button").textContent =
+    state.scene === "optics" ? "Duraklat" : "Yardimcilari gizle";
 }
 
 function addItem(type) {
@@ -1907,7 +2053,7 @@ function addItem(type) {
 function clearScene() {
   state.running = false;
   lastTick = 0;
-  state.optics.items = [];
+  state[state.scene].items = [];
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
   saveState();
@@ -1917,6 +2063,21 @@ function clearScene() {
 function loadSample() {
   state.running = false;
   lastTick = 0;
+  if (state.scene === "vectors") {
+    state.vectors.items = [
+      { id: uid("vector"), type: "vector", x: 180, y: 430, dx: 160, dy: -90, color: "#5da9ff" },
+      { id: uid("vector"), type: "vector", x: 180, y: 430, dx: 110, dy: 55, color: "#40d67b" },
+      { id: uid("vector"), type: "vector", x: 180, y: 430, dx: -70, dy: -120, color: "#ff9f43" }
+    ];
+    state.vectors.mode = "tip-to-tail";
+    state.vectors.showHelpers = true;
+    selectedId = state.vectors.items[0].id;
+    state.notice = "Ornek vektor duzenegi yuklendi.";
+    saveState();
+    renderUI();
+    return;
+  }
+
   state.optics.items = [
       { id: uid("laser"), type: "laser", x: 120, y: 350, angle: 0, colorMode: "white", color: "red" },
     { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
@@ -1938,10 +2099,22 @@ function loadSample() {
 }
 
 function setScene(scene) {
-  state.scene = "optics";
+  if (scene === state.scene) return;
+  state.scene = scene === "vectors" ? "vectors" : "optics";
+  selectedId = null;
+  state.notice = state.scene === "optics" ? "Optik modul aktif." : "Vektorler modul aktif.";
+  saveState();
+  renderUI();
 }
 
 function runScene() {
+  if (state.scene === "vectors") {
+    state.vectors.showHelpers = true;
+    state.notice = "Vektor yardimcilari ve bileske gosterildi.";
+    saveState();
+    renderUI();
+    return;
+  }
   state.opticsVisible = true;
   state.notice = "Isin yolu hesaplandi ve cizildi.";
   saveState();
@@ -1949,6 +2122,13 @@ function runScene() {
 }
 
 function pauseScene() {
+  if (state.scene === "vectors") {
+    state.vectors.showHelpers = false;
+    state.notice = "Vektor yardimcilari gizlendi.";
+    saveState();
+    renderUI();
+    return;
+  }
   state.opticsVisible = false;
   state.notice = "Isin izi gizlendi.";
   saveState();
@@ -2052,6 +2232,13 @@ function hitItem(point) {
       return pointInPolygon(point, prismVertices(item));
     }
 
+    if (isVector(item)) {
+      return (
+        distanceToSegment(point, { x: item.x, y: item.y }, vectorEnd(item)) <= 12 ||
+        Math.hypot(point.x - item.x, point.y - item.y) <= 10
+      );
+    }
+
     if (isMirror(item)) {
       const points = mirrorPolyline(item);
       for (let index = 0; index < points.length - 1; index += 1) {
@@ -2135,6 +2322,20 @@ function initEvents() {
     const button = event.target.closest("[data-add]");
     if (!button) return;
     addItem(button.dataset.add);
+  });
+
+  document.querySelectorAll("[data-scene-button]").forEach((button) => {
+    button.addEventListener("click", () => setScene(button.dataset.sceneButton));
+  });
+
+  document.getElementById("module-controls").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-vector-mode]");
+    if (!button) return;
+    state.vectors.mode = button.dataset.vectorMode;
+    state.vectors.showHelpers = true;
+    state.notice = "Vektor yontemi degistirildi.";
+    saveState();
+    renderUI();
   });
 
   document.getElementById("object-list").addEventListener("click", (event) => {
