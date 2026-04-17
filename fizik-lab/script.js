@@ -334,7 +334,7 @@ function focusPoints(item) {
     return [];
   }
 
-  const focalLength = item.type === "concave-mirror" ? item.radius / 2 : -item.radius / 2;
+  const focalLength = -item.radius / 2;
   return [{ label: "F", point: fromLocal({ x: focalLength, y: 0 }, item) }];
 }
 
@@ -351,7 +351,7 @@ function centerPoints(item) {
     return [{ label: "V", point: principalPoint(item) }];
   }
 
-  const radius = item.type === "concave-mirror" ? item.radius : -item.radius;
+  const radius = -item.radius;
   return [
     { label: "V", point: principalPoint(item) },
     { label: "C", point: fromLocal({ x: radius, y: 0 }, item) }
@@ -418,7 +418,7 @@ function makeItem(type) {
   const offset = currentItems().length * 28;
 
   if (type === "laser") {
-    return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: -8, colorMode: "white", color: "red" };
+    return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: 0, colorMode: "white", color: "red" };
   }
 
   if (type === "optical-object") {
@@ -464,7 +464,7 @@ function makeItem(type) {
   }
 
   if (type === "plane-mirror") {
-    return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: -35, length: 140, radius: 0 };
+    return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: 90, length: 140, radius: 0 };
   }
 
   if (type === "concave-mirror" || type === "convex-mirror") {
@@ -1359,6 +1359,7 @@ function drawAxisAndMarkers(item) {
 
 function drawOptics(trace) {
   const drawEye = (item, isSelected) => {
+    const spread = degToRad(18);
     ctx.save();
     ctx.translate(item.x, item.y);
     ctx.rotate(degToRad(item.angle));
@@ -1376,8 +1377,12 @@ function drawOptics(trace) {
     ctx.strokeStyle = "rgba(255, 226, 130, 0.75)";
     ctx.setLineDash([6, 5]);
     ctx.beginPath();
-    ctx.moveTo(10, 0);
-    ctx.lineTo(48, 0);
+    ctx.moveTo(8, 0);
+    ctx.lineTo(58, 0);
+    ctx.moveTo(8, 0);
+    ctx.lineTo(54 * Math.cos(-spread), 54 * Math.sin(-spread));
+    ctx.moveTo(8, 0);
+    ctx.lineTo(54 * Math.cos(spread), 54 * Math.sin(spread));
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
@@ -1545,7 +1550,7 @@ function drawOptics(trace) {
       if (index === 0) ctx.moveTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);
     });
-    ctx.strokeStyle = isSelected ? "#5f4b6f" : "#44304f";
+    ctx.strokeStyle = isSelected ? "#8b6440" : "#6f4d2f";
     ctx.lineWidth = item.type === "plane-mirror" ? 10 : 12;
     ctx.lineCap = "round";
     ctx.stroke();
@@ -1556,7 +1561,7 @@ function drawOptics(trace) {
       else ctx.lineTo(point.x, point.y);
     });
 
-    ctx.strokeStyle = isSelected ? "#bfe9ff" : "#94dfff";
+    ctx.strokeStyle = isSelected ? "#c7efff" : "#a9e8ff";
     ctx.lineWidth = item.type === "plane-mirror" ? (isSelected ? 6 : 5) : (isSelected ? 7 : 6);
     ctx.lineCap = "round";
     ctx.stroke();
@@ -1913,7 +1918,7 @@ function loadSample() {
   state.running = false;
   lastTick = 0;
   state.optics.items = [
-      { id: uid("laser"), type: "laser", x: 120, y: 350, angle: -12, colorMode: "white", color: "red" },
+      { id: uid("laser"), type: "laser", x: 120, y: 350, angle: 0, colorMode: "white", color: "red" },
     { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
     { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 18 },
     { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
@@ -1921,7 +1926,7 @@ function loadSample() {
     { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
     { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16, index: 1.52 },
     { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
-    { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: -32, length: 150, radius: 0 },
+      { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: 90, length: 150, radius: 0 },
     { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
   ];
   selectedId = state.optics.items[0].id;
