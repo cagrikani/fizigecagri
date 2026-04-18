@@ -17,7 +17,67 @@ const toolCatalog = {
   ],
   vectors: [
     { type: "vector", label: "Vektor", description: "Ucu, boyu ve acisi ayarlanabilen yeni vektor ekler." }
+  ],
+  heat: [
+    { type: "molecular-sample", label: "Molekullu Madde", description: "Kati ve sivi halde molekulleri gorunen ornek madde ekler." },
+    { type: "heat-solid", label: "Kati Madde", description: "Kutle ve oz isisi ayarlanabilen kati madde ekler." },
+    { type: "heat-liquid", label: "Sivi Madde", description: "Kutle ve oz isisi ayarlanabilen sivi madde ekler." },
+    { type: "thermometer", label: "Termometre", description: "Kaba daldirildiginda sicakligi gosteren termometre ekler." }
   ]
+};
+
+const SCENE_META = {
+  optics: { label: "Optik" },
+  vectors: { label: "Vektörler" },
+  heat: { label: "Isı ve Sıcaklık" }
+};
+
+const HEAT_MATERIAL_LIBRARY = {
+  "molecular-sample": {
+    title: "Molekullu ornek madde",
+    mass: 1.2,
+    specificHeat: 2.2,
+    temperature: 20,
+    meltingPoint: 40,
+    boilingPoint: 92,
+    latentHeatFusion: 65,
+    latentHeatVaporization: 140,
+    phase: "solid",
+    renderMode: "molecular",
+    solidColor: "#bdd9ff",
+    liquidColor: "#59b4ff",
+    gasColor: "rgba(183, 229, 255, 0.72)"
+  },
+  "heat-solid": {
+    title: "Kati madde",
+    mass: 1.6,
+    specificHeat: 0.9,
+    temperature: 20,
+    meltingPoint: 78,
+    boilingPoint: 145,
+    latentHeatFusion: 52,
+    latentHeatVaporization: 118,
+    phase: "solid",
+    renderMode: "simple",
+    solidColor: "#d8def1",
+    liquidColor: "#8ccfff",
+    gasColor: "rgba(214, 229, 255, 0.62)"
+  },
+  "heat-liquid": {
+    title: "Sivi madde",
+    mass: 1.4,
+    specificHeat: 4.1,
+    temperature: 24,
+    meltingPoint: 6,
+    boilingPoint: 100,
+    latentHeatFusion: 44,
+    latentHeatVaporization: 150,
+    phase: "liquid",
+    renderMode: "simple",
+    solidColor: "#d6ebff",
+    liquidColor: "#4fd1c5",
+    gasColor: "rgba(197, 255, 241, 0.72)"
+  }
 };
 
 const defaultState = {
@@ -31,6 +91,11 @@ const defaultState = {
     items: [],
     mode: "tip-to-tail",
     resultVisible: false
+  },
+  heat: {
+    items: [],
+    power: 140,
+    elapsed: 0
   }
 };
 
@@ -80,7 +145,7 @@ function normalizeState(raw) {
 
   return {
     view: raw.view === "lab" ? "lab" : "home",
-    scene: raw.scene === "vectors" ? "vectors" : "optics",
+    scene: ["optics", "vectors", "heat"].includes(raw.scene) ? raw.scene : "optics",
     opticsVisible: raw.opticsVisible !== false,
     running: false,
     notice: typeof raw.notice === "string" ? raw.notice : "",
@@ -89,6 +154,11 @@ function normalizeState(raw) {
       items: Array.isArray(raw.vectors?.items) ? raw.vectors.items : [],
       mode: ["tip-to-tail", "parallelogram", "components"].includes(raw.vectors?.mode) ? raw.vectors.mode : "tip-to-tail",
       resultVisible: raw.vectors?.resultVisible === true
+    },
+    heat: {
+      items: Array.isArray(raw.heat?.items) ? raw.heat.items : [],
+      power: clamp(Number(raw.heat?.power) || 140, 40, 240),
+      elapsed: Math.max(Number(raw.heat?.elapsed) || 0, 0)
     }
   };
 }
@@ -274,6 +344,18 @@ function isPrism(item) {
 
 function isVector(item) {
   return item.type === "vector";
+}
+
+function isHeatMaterial(item) {
+  return item.type === "molecular-sample" || item.type === "heat-solid" || item.type === "heat-liquid";
+}
+
+function isThermometer(item) {
+  return item.type === "thermometer";
+}
+
+function sceneLabel(scene = state.scene) {
+  return SCENE_META[scene]?.label || SCENE_META.optics.label;
 }
 
 function vectorLabel(item) {
@@ -533,6 +615,318 @@ function calculateVectors() {
   renderUI();
 }
 
+function heatMaterialLabel(item) {
+  const materials = currentItems().filter((entry) => isHeatMaterial(entry));
+  const index = materials.findIndex((entry) => entry.id === item.id);
+  return ["A", "B", "C", "D"][index] || `M${index + 1}`;
+}
+
+function heatPhaseLabel(phase) {
+  if (phase === "solid") return "Kati";
+  if (phase === "melting") return "Erime";
+  if (phase === "liquid") return "Sivi";
+  if (phase === "boiling") return "Kaynama";
+  return "Gaz";
+}
+
+function heatStationLayout() {
+  const graphHeight = 152;
+  const graph = {
+    x: 38,
+    y: viewport.height - graphHeight - 26,
+    width: viewport.width - 76,
+    height: graphHeight
+  };
+  const potWidth = clamp(viewport.width * 0.44, 320, 460);
+  const potHeight = 190;
+  const pot = {
+    x: viewport.width / 2,
+    y: 214,
+    width: potWidth,
+    height: potHeight
+  };
+
+  return {
+    pot,
+    interior: {
+      left: pot.x - pot.width / 2 + 28,
+      right: pot.x + pot.width / 2 - 28,
+      top: pot.y - pot.height / 2 + 34,
+      bottom: pot.y + pot.height / 2 - 24,
+      width: pot.width - 56,
+      height: pot.height - 58
+    },
+    heater: {
+      x: pot.x,
+      y: pot.y + pot.height / 2 + 36,
+      width: pot.width * 0.68,
+      height: 34
+    },
+    graph
+  };
+}
+
+function heatMaterials(items = currentItems()) {
+  return items.filter((item) => isHeatMaterial(item));
+}
+
+function heatThermometers(items = currentItems()) {
+  return items.filter((item) => isThermometer(item));
+}
+
+function createHeatMaterial(type) {
+  const template = HEAT_MATERIAL_LIBRARY[type];
+  const moleculeCount = type === "molecular-sample" ? 16 : 0;
+  const molecules = Array.from({ length: moleculeCount }, (_, index) => ({
+    x: ((index % 4) + 0.5) / 4,
+    y: (Math.floor(index / 4) + 0.5) / 4,
+    seed: Math.random() * Math.PI * 2
+  }));
+
+  return {
+    id: uid("heat"),
+    type,
+    materialName: template.title,
+    mass: template.mass,
+    specificHeat: template.specificHeat,
+    temperature: template.temperature,
+    meltingPoint: template.meltingPoint,
+    boilingPoint: template.boilingPoint,
+    latentHeatFusion: template.latentHeatFusion,
+    latentHeatVaporization: template.latentHeatVaporization,
+    phase: template.phase,
+    phaseProgress: 0,
+    renderMode: template.renderMode,
+    solidColor: template.solidColor,
+    liquidColor: template.liquidColor,
+    gasColor: template.gasColor,
+    internalEnergy: template.mass * template.specificHeat * template.temperature,
+    history: [{ time: state.heat.elapsed, temperature: template.temperature, phase: template.phase }],
+    molecules
+  };
+}
+
+function heatMaterialEnergy(item) {
+  const sensible = item.mass * item.specificHeat * item.temperature;
+  const fusion = (item.phase === "melting" || item.phase === "liquid" || item.phase === "boiling" || item.phase === "gas")
+    ? item.latentHeatFusion * item.mass
+    : item.latentHeatFusion * item.mass * item.phaseProgress;
+  const vapor = (item.phase === "boiling" || item.phase === "gas")
+    ? item.latentHeatVaporization * item.mass * (item.phase === "gas" ? 1 : item.phaseProgress)
+    : 0;
+  return sensible + fusion + vapor;
+}
+
+function heatMaterialLayouts(materials = heatMaterials()) {
+  const layout = heatStationLayout();
+  const gap = 14;
+  const count = Math.max(materials.length, 1);
+  const slotWidth = (layout.interior.width - gap * (count - 1)) / count;
+
+  return materials.map((item, index) => {
+    const left = layout.interior.left + index * (slotWidth + gap);
+    return {
+      item,
+      left,
+      right: left + slotWidth,
+      top: layout.interior.top,
+      bottom: layout.interior.bottom,
+      width: slotWidth,
+      height: layout.interior.height,
+      centerX: left + slotWidth / 2
+    };
+  });
+}
+
+function heatGraphTarget() {
+  const selected = selectedItem();
+  if (selected && isHeatMaterial(selected)) {
+    return selected;
+  }
+  return heatMaterials()[0] || null;
+}
+
+function recordHeatHistory(item) {
+  const time = state.heat.elapsed;
+  item.history = Array.isArray(item.history) ? item.history : [];
+  const previous = item.history[item.history.length - 1];
+  if (!previous || time - previous.time >= 0.35 || Math.abs(previous.temperature - item.temperature) >= 0.35 || previous.phase !== item.phase) {
+    item.history.push({
+      time,
+      temperature: item.temperature,
+      phase: item.phase
+    });
+  } else {
+    previous.temperature = item.temperature;
+    previous.phase = item.phase;
+  }
+
+  if (item.history.length > 360) {
+    item.history = item.history.slice(-360);
+  }
+}
+
+function resetHeatHistories() {
+  state.heat.elapsed = 0;
+  heatMaterials().forEach((item) => {
+    item.history = [{ time: 0, temperature: item.temperature, phase: item.phase }];
+  });
+}
+
+function reconcileHeatMaterial(item) {
+  item.mass = clamp(Number(item.mass) || 1, 0.2, 6);
+  item.specificHeat = clamp(Number(item.specificHeat) || 1, 0.2, 6);
+  item.temperature = clamp(Number(item.temperature) || 0, -20, 220);
+  item.meltingPoint = clamp(Number(item.meltingPoint) || 40, -20, 180);
+  item.boilingPoint = clamp(Number(item.boilingPoint) || item.meltingPoint + 20, item.meltingPoint + 10, 220);
+  item.latentHeatFusion = clamp(Number(item.latentHeatFusion) || 60, 10, 240);
+  item.latentHeatVaporization = clamp(Number(item.latentHeatVaporization) || 140, 20, 360);
+  item.phaseProgress = clamp(Number(item.phaseProgress) || 0, 0, 1);
+  item.renderMode = item.renderMode === "molecular" ? "molecular" : "simple";
+  item.history = Array.isArray(item.history) ? item.history : [{ time: state.heat.elapsed, temperature: item.temperature, phase: item.phase }];
+
+  if (!state.running) {
+    if (item.temperature < item.meltingPoint) {
+      item.phase = "solid";
+      item.phaseProgress = 0;
+    } else if (item.temperature < item.boilingPoint) {
+      item.phase = "liquid";
+      item.phaseProgress = 0;
+    } else {
+      item.phase = "gas";
+      item.phaseProgress = 0;
+    }
+  }
+
+  item.internalEnergy = heatMaterialEnergy(item);
+}
+
+function heatMeasurementForThermometer(item) {
+  const layout = heatStationLayout();
+  const bulb = { x: item.x, y: item.y };
+  if (
+    bulb.x < layout.interior.left ||
+    bulb.x > layout.interior.right ||
+    bulb.y < layout.interior.top ||
+    bulb.y > layout.interior.bottom
+  ) {
+    return null;
+  }
+
+  const match = heatMaterialLayouts().find((entry) => bulb.x >= entry.left && bulb.x <= entry.right);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    item: match.item,
+    temperature: match.item.temperature
+  };
+}
+
+function stepHeatSimulation(deltaSeconds) {
+  state.heat.elapsed += deltaSeconds;
+  const heatGain = state.heat.power * deltaSeconds * 0.035;
+
+  heatMaterials().forEach((item) => {
+    let remaining = heatGain;
+    const sensibleCapacity = Math.max(item.mass * item.specificHeat, 0.2);
+    item.internalEnergy += heatGain;
+
+    for (let steps = 0; steps < 6 && remaining > 0.0001; steps += 1) {
+      if (item.phase === "solid") {
+        const needed = Math.max((item.meltingPoint - item.temperature) * sensibleCapacity, 0);
+        if (needed > remaining) {
+          item.temperature += remaining / sensibleCapacity;
+          remaining = 0;
+          break;
+        }
+        item.temperature = item.meltingPoint;
+        remaining -= needed;
+        item.phase = "melting";
+        item.phaseProgress = 0;
+        continue;
+      }
+
+      if (item.phase === "melting") {
+        const needed = item.latentHeatFusion * item.mass * (1 - item.phaseProgress);
+        if (needed > remaining) {
+          item.phaseProgress += remaining / Math.max(item.latentHeatFusion * item.mass, 0.001);
+          remaining = 0;
+          break;
+        }
+        remaining -= needed;
+        item.phase = "liquid";
+        item.phaseProgress = 0;
+        continue;
+      }
+
+      if (item.phase === "liquid") {
+        const needed = Math.max((item.boilingPoint - item.temperature) * sensibleCapacity, 0);
+        if (needed > remaining) {
+          item.temperature += remaining / sensibleCapacity;
+          remaining = 0;
+          break;
+        }
+        item.temperature = item.boilingPoint;
+        remaining -= needed;
+        item.phase = "boiling";
+        item.phaseProgress = 0;
+        continue;
+      }
+
+      if (item.phase === "boiling") {
+        const needed = item.latentHeatVaporization * item.mass * (1 - item.phaseProgress);
+        if (needed > remaining) {
+          item.phaseProgress += remaining / Math.max(item.latentHeatVaporization * item.mass, 0.001);
+          remaining = 0;
+          break;
+        }
+        remaining -= needed;
+        item.phase = "gas";
+        item.phaseProgress = 0;
+        continue;
+      }
+
+      item.temperature += remaining / Math.max(sensibleCapacity * 0.78, 0.16);
+      remaining = 0;
+    }
+
+    recordHeatHistory(item);
+    item.internalEnergy = heatMaterialEnergy(item);
+  });
+}
+
+function runHeatLoop(timestamp) {
+  if (!(state.scene === "heat" && state.running)) {
+    animationFrame = null;
+    lastTick = 0;
+    renderUI();
+    return;
+  }
+
+  if (!lastTick) {
+    lastTick = timestamp;
+  }
+
+  const elapsedMs = timestamp - lastTick;
+  if (elapsedMs >= 120) {
+    stepHeatSimulation(elapsedMs / 1000);
+    lastTick = timestamp;
+    renderUI();
+  }
+
+  animationFrame = requestAnimationFrame(runHeatLoop);
+}
+
+function stopAnimationLoop() {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame);
+    animationFrame = null;
+  }
+  lastTick = 0;
+}
+
 function prismVertices(item) {
   const half = item.size / 2;
   return [
@@ -781,6 +1175,7 @@ function imageForElement(item, objectItem) {
 
 function makeItem(type) {
   const offset = currentItems().length * 28;
+  const heatLayout = heatStationLayout();
 
   if (type === "laser") {
     return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: 0, colorMode: "white", color: "red" };
@@ -837,6 +1232,19 @@ function makeItem(type) {
       dx: 140 - offset * 8,
       dy: -70 + offset * 18,
       color: ["#5da9ff", "#40d67b", "#ff9f43", "#bf5af2"][currentItems().length % 4]
+    };
+  }
+
+  if (type === "molecular-sample" || type === "heat-solid" || type === "heat-liquid") {
+    return createHeatMaterial(type);
+  }
+
+  if (type === "thermometer") {
+    return {
+      id: uid("thermometer"),
+      type,
+      x: heatLayout.pot.x + heatLayout.pot.width / 2 + 40,
+      y: heatLayout.pot.y + 28
     };
   }
 
@@ -950,6 +1358,15 @@ function constrainItem(item) {
     item.color = typeof item.color === "string" ? item.color : "#5da9ff";
   }
 
+  if (isHeatMaterial(item)) {
+    reconcileHeatMaterial(item);
+  }
+
+  if (isThermometer(item)) {
+    item.x = clamp(Number(item.x) || 0, 24, width - 24);
+    item.y = clamp(Number(item.y) || 0, 88, height - 24);
+  }
+
   if (isMirror(item)) {
     item.x = clamp(Number(item.x) || 0, 30, width - 30);
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
@@ -994,6 +1411,10 @@ function itemTitle(item) {
   if (item.type === "round-object") return "Yuvarlak cisim";
   if (item.type === "eye") return "Goz";
   if (item.type === "vector") return "Vektor";
+  if (item.type === "molecular-sample") return "Molekullu ornek madde";
+  if (item.type === "heat-solid") return "Kati madde";
+  if (item.type === "heat-liquid") return "Sivi madde";
+  if (item.type === "thermometer") return "Termometre";
   if (item.type === "depth-tank") return "Gorunur derinlik kabi";
   if (item.type === "fiber") return "Fiber optik kablo";
   if (item.type === "prism") return "Prizma";
@@ -1016,6 +1437,15 @@ function itemMeta(item) {
   if (item.type === "eye") return `${Math.round(item.angle)} derece bakis`;
   if (item.type === "vector") {
     return `${vectorLabel(item)} • ${Math.round(vectorMagnitude(item))} br • ${vectorAngle(item)} derece`;
+  }
+  if (isHeatMaterial(item)) {
+    return `${heatMaterialLabel(item)} • ${heatPhaseLabel(item.phase)} • ${item.temperature.toFixed(1)}°C • ${item.mass.toFixed(1)} kg`;
+  }
+  if (isThermometer(item)) {
+    const measurement = heatMeasurementForThermometer(item);
+    return measurement
+      ? `${measurement.item.materialName} • ${measurement.temperature.toFixed(1)}°C`
+      : "Olcum icin kaba daldir";
   }
   if (item.type === "depth-tank") {
     return `n1 ${item.topIndex.toFixed(2)} • n2 ${item.bottomIndex.toFixed(2)} • ${Math.round(item.height)} px`;
@@ -1047,6 +1477,10 @@ function toolGlyph(type) {
     fiber: '<span class="tool-glyph fiber"><span></span></span>',
     prism: '<span class="tool-glyph prism"><span></span></span>',
     vector: '<span class="tool-glyph vector"><span></span></span>',
+    "molecular-sample": '<span class="tool-glyph molecular-sample"><span></span></span>',
+    "heat-solid": '<span class="tool-glyph heat-solid"><span></span></span>',
+    "heat-liquid": '<span class="tool-glyph heat-liquid"><span></span></span>',
+    thermometer: '<span class="tool-glyph thermometer"><span></span></span>',
     "plane-mirror": '<span class="tool-glyph plane-mirror"><span></span></span>',
     "concave-mirror": '<span class="tool-glyph concave-mirror"><span></span></span>',
     "convex-mirror": '<span class="tool-glyph convex-mirror"><span></span></span>',
@@ -1081,6 +1515,14 @@ function renderLegend() {
       <span class="legend-chip laser">Girilen vektor</span>
       <span class="legend-chip mirror">Yontem cizgileri</span>
       <span class="legend-chip force">Bileske vektor</span>
+    `;
+    return;
+  }
+  if (state.scene === "heat") {
+    legend.innerHTML = `
+      <span class="legend-chip laser">Isi akisi</span>
+      <span class="legend-chip mirror">Hal degisimi</span>
+      <span class="legend-chip force">Termometre ve grafik</span>
     `;
     return;
   }
@@ -1144,6 +1586,33 @@ function renderModuleControls() {
     return;
   }
 
+  if (state.scene === "heat") {
+    const materials = heatMaterials();
+    const thermometers = heatThermometers();
+    const graphTarget = heatGraphTarget();
+    copy.textContent = "Isitma gucu, grafik ve olcum islemleri bu panelden yonetilir.";
+    controls.innerHTML = `
+      <div class="vector-controls">
+        <div class="field full">
+          <label>Isitici gucu</label>
+          <input data-heat-prop="power" id="heat-power-input" type="range" min="40" max="240" step="10" value="${state.heat.power}" />
+        </div>
+        <div class="vector-mode-note">
+          Isitici gucu <strong>${state.heat.power}</strong> br. Kaba en fazla 3 malzeme ve 1 termometre yerlestirebilirsin.
+        </div>
+        <div class="inline-actions">
+          <button class="primary-button compact-action" type="button" data-heat-action="start" ${materials.length ? "" : "disabled"}>Isitmayi baslat</button>
+          <button class="secondary-button compact-action" type="button" data-heat-action="pause" ${state.running ? "" : "disabled"}>Isitmayi durdur</button>
+          <button class="secondary-button compact-action" type="button" data-heat-action="reset-graph" ${graphTarget ? "" : "disabled"}>Grafigi sifirla</button>
+        </div>
+        <div class="vector-mode-note subtle">
+          ${materials.length} malzeme • ${thermometers.length} termometre • Grafik hedefi: ${graphTarget ? `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName}` : "secili madde yok"}
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   copy.textContent = "Aktif modula gore yardimci islemler burada gorunur.";
   controls.innerHTML = `
     <div class="inspector-note">
@@ -1197,7 +1666,7 @@ function renderInspector() {
     return;
   }
 
-  const fields = isVector(item)
+  const fields = isVector(item) || isHeatMaterial(item)
     ? []
     : [
         numberField("Konum X", "x", item.x, 0, viewport.width, 1),
@@ -1234,6 +1703,21 @@ function renderInspector() {
   if (isVector(item)) {
     fields.push(numberField("Bilesen X", "dx", item.dx, -300, 300, 1));
     fields.push(numberField("Bilesen Y", "dy", item.dy, -300, 300, 1));
+  }
+
+  if (isHeatMaterial(item)) {
+    fields.push(numberField("Kutle", "mass", item.mass, 0.2, 6, 0.1));
+    fields.push(numberField("Oz isi", "specificHeat", item.specificHeat, 0.2, 6, 0.1));
+    fields.push(numberField("Sicaklik", "temperature", item.temperature, -20, 220, 0.1));
+    if (item.type === "molecular-sample") {
+      fields.push(numberField("Erime noktasi", "meltingPoint", item.meltingPoint, -20, 180, 1));
+      fields.push(numberField("Kaynama noktasi", "boilingPoint", item.boilingPoint, item.meltingPoint + 10, 220, 1));
+    }
+  }
+
+  if (isThermometer(item)) {
+    fields.push(numberField("Konum X", "x", item.x, 24, viewport.width - 24, 1));
+    fields.push(numberField("Konum Y", "y", item.y, 36, viewport.height - 30, 1));
   }
 
   if (item.type === "optical-object") {
@@ -1306,7 +1790,7 @@ function renderInspector() {
 
   inspector.innerHTML = `
     <div>
-      <strong>${isVector(item) ? `${vectorLabel(item)} • ${itemTitle(item)}` : itemTitle(item)}</strong>
+      <strong>${isVector(item) ? `${vectorLabel(item)} • ${itemTitle(item)}` : isHeatMaterial(item) ? `${heatMaterialLabel(item)} • ${itemTitle(item)}` : itemTitle(item)}</strong>
       <div class="inspector-note">${itemMeta(item)}</div>
       ${
         isVector(item)
@@ -1314,6 +1798,23 @@ function renderInspector() {
               <span>Buyukluk <strong>${vectorMagnitude(item).toFixed(1)} br</strong></span>
               <span>Yon <strong>${vectorAngle(item)} derece</strong></span>
               <span>Bilesen <strong>(${Math.round(item.dx)}, ${Math.round(-item.dy)})</strong></span>
+            </div>`
+          : ""
+      }
+      ${
+        isHeatMaterial(item)
+          ? `<div class="vector-stats">
+              <span>Hal <strong>${heatPhaseLabel(item.phase)}</strong></span>
+              <span>Ic enerji <strong>${item.internalEnergy.toFixed(1)} br</strong></span>
+              <span>Ozellik <strong>c=${item.specificHeat.toFixed(1)} • m=${item.mass.toFixed(1)}</strong></span>
+            </div>`
+          : ""
+      }
+      ${
+        isThermometer(item)
+          ? `<div class="vector-stats">
+              <span>Olcum <strong>${heatMeasurementForThermometer(item)?.temperature?.toFixed(1) ?? "--"}°C</strong></span>
+              <span>Durum <strong>${heatMeasurementForThermometer(item) ? "Madde icinde" : "Boslukta"}</strong></span>
             </div>`
           : ""
       }
@@ -1344,7 +1845,13 @@ function renderObjectList() {
     .map(
       (item) => `
         <button class="object-item ${item.id === selectedId ? "active" : ""}" type="button" data-select="${item.id}">
-          <strong>${isVector(item) ? `${vectorLabel(item)} • ${itemTitle(item)}` : itemTitle(item)}</strong>
+          <strong>${
+            isVector(item)
+              ? `${vectorLabel(item)} • ${itemTitle(item)}`
+              : isHeatMaterial(item)
+                ? `${heatMaterialLabel(item)} • ${itemTitle(item)}`
+                : itemTitle(item)
+          }</strong>
           <small>${itemMeta(item)}</small>
           ${
             isVector(item)
@@ -1813,6 +2320,337 @@ function drawArrow(start, end, color, width = 3) {
   ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 6), end.y - head * Math.sin(angle + Math.PI / 6));
   ctx.closePath();
   ctx.fill();
+}
+
+function roundedRectPath(x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawHeatGraph(graphTarget, graphBounds) {
+  roundedRectPath(graphBounds.x, graphBounds.y, graphBounds.width, graphBounds.height, 24);
+  ctx.fillStyle = "rgba(9, 15, 27, 0.84)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+  ctx.font = "700 14px Space Grotesk";
+  ctx.textAlign = "left";
+  ctx.fillText("Sicaklik - zaman grafigi", graphBounds.x + 18, graphBounds.y + 24);
+
+  if (!graphTarget) {
+    ctx.fillStyle = "rgba(159, 174, 203, 0.86)";
+    ctx.font = "500 13px IBM Plex Sans";
+    ctx.fillText("Grafik icin once kaba bir madde ekle.", graphBounds.x + 18, graphBounds.y + 52);
+    return;
+  }
+
+  const history = Array.isArray(graphTarget.history) ? graphTarget.history : [];
+  const inner = {
+    x: graphBounds.x + 42,
+    y: graphBounds.y + 28,
+    width: graphBounds.width - 62,
+    height: graphBounds.height - 48
+  };
+  const maxTime = Math.max(history[history.length - 1]?.time || 10, 10);
+  const temps = history.map((entry) => entry.temperature);
+  const maxTemp = Math.max(graphTarget.boilingPoint + 20, ...temps, 100);
+  const minTemp = Math.min(...temps, 0);
+
+  for (let index = 0; index <= 4; index += 1) {
+    const y = inner.y + (inner.height / 4) * index;
+    ctx.strokeStyle = "rgba(159, 174, 203, 0.12)";
+    ctx.beginPath();
+    ctx.moveTo(inner.x, y);
+    ctx.lineTo(inner.x + inner.width, y);
+    ctx.stroke();
+
+    const value = maxTemp - ((maxTemp - minTemp) / 4) * index;
+    ctx.fillStyle = "rgba(159, 174, 203, 0.9)";
+    ctx.font = "500 11px IBM Plex Sans";
+    ctx.fillText(`${Math.round(value)}°`, graphBounds.x + 4, y + 4);
+  }
+
+  for (let index = 0; index <= 4; index += 1) {
+    const x = inner.x + (inner.width / 4) * index;
+    ctx.strokeStyle = "rgba(159, 174, 203, 0.08)";
+    ctx.beginPath();
+    ctx.moveTo(x, inner.y);
+    ctx.lineTo(x, inner.y + inner.height);
+    ctx.stroke();
+
+    const value = (maxTime / 4) * index;
+    ctx.fillStyle = "rgba(159, 174, 203, 0.9)";
+    ctx.fillText(`${value.toFixed(0)} s`, x - 6, inner.y + inner.height + 16);
+  }
+
+  const drawMarker = (temperature, label, color) => {
+    const y = inner.y + inner.height - ((temperature - minTemp) / Math.max(maxTemp - minTemp, 1)) * inner.height;
+    ctx.strokeStyle = color;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(inner.x, y);
+    ctx.lineTo(inner.x + inner.width, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.fillText(label, inner.x + inner.width - 46, y - 6);
+  };
+
+  drawMarker(graphTarget.meltingPoint, "Erime", "rgba(255, 180, 84, 0.95)");
+  drawMarker(graphTarget.boilingPoint, "Kaynama", "rgba(79, 209, 197, 0.95)");
+
+  if (history.length > 1) {
+    ctx.strokeStyle = "#ffb454";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    history.forEach((entry, index) => {
+      const x = inner.x + (entry.time / Math.max(maxTime, 1)) * inner.width;
+      const y = inner.y + inner.height - ((entry.temperature - minTemp) / Math.max(maxTemp - minTemp, 1)) * inner.height;
+      if (!index) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+  ctx.font = "600 12px IBM Plex Sans";
+  ctx.fillText(
+    `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`,
+    inner.x,
+    graphBounds.y + 24
+  );
+}
+
+function drawHeatMaterial(layout, index) {
+  const { item, left, right, top, bottom, width, centerX } = layout;
+  const label = heatMaterialLabel(item);
+  const selected = item.id === selectedId;
+  const baseY = bottom - 8;
+  const solidHeight = Math.min(74, bottom - top - 16);
+  const liquidHeight = Math.min(84, bottom - top - 12);
+  const phase = item.phase;
+
+  ctx.strokeStyle = selected ? "rgba(255, 209, 102, 0.92)" : "rgba(159, 174, 203, 0.22)";
+  ctx.lineWidth = selected ? 2.5 : 1.2;
+  roundedRectPath(left, top, width, bottom - top, 18);
+  ctx.stroke();
+
+  const drawLiquid = (fillLevel, color, bubbleCount = 0) => {
+    const fillHeight = clamp(fillLevel, 18, bottom - top - 6);
+    const topY = bottom - fillHeight;
+    ctx.beginPath();
+    ctx.moveTo(left + 6, bottom);
+    ctx.lineTo(left + 6, topY + 8);
+    for (let step = 0; step <= 6; step += 1) {
+      const x = left + 6 + ((width - 12) / 6) * step;
+      const waveY = topY + Math.sin(state.heat.elapsed * 2.2 + step + index) * 3.2;
+      ctx.lineTo(x, waveY);
+    }
+    ctx.lineTo(right - 6, bottom);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    for (let bubble = 0; bubble < bubbleCount; bubble += 1) {
+      const bx = left + 18 + ((width - 36) * ((bubble * 0.29 + 0.12) % 1));
+      const by = bottom - 18 - (((state.heat.elapsed * 18 + bubble * 19) % 54));
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      ctx.beginPath();
+      ctx.arc(bx, by, 4 + (bubble % 2), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    return { topY };
+  };
+
+  let molecularZone = null;
+  if (phase === "solid") {
+    roundedRectPath(left + 10, baseY - solidHeight, width - 20, solidHeight, 18);
+    ctx.fillStyle = item.solidColor;
+    ctx.fill();
+    molecularZone = { left: left + 12, top: baseY - solidHeight + 8, width: width - 24, height: solidHeight - 16 };
+  } else if (phase === "melting") {
+    const liquidPart = liquidHeight * item.phaseProgress;
+    drawLiquid(28 + liquidPart, item.liquidColor, 0);
+    roundedRectPath(left + 12, baseY - (solidHeight * (1 - item.phaseProgress)), width - 24, solidHeight * (1 - item.phaseProgress), 16);
+    ctx.fillStyle = item.solidColor;
+    ctx.fill();
+    molecularZone = { left: left + 12, top: baseY - liquidHeight + 8, width: width - 24, height: liquidHeight - 18 };
+  } else if (phase === "liquid") {
+    const liquid = drawLiquid(liquidHeight, item.liquidColor, 0);
+    molecularZone = { left: left + 12, top: liquid.topY + 10, width: width - 24, height: bottom - liquid.topY - 20 };
+  } else if (phase === "boiling") {
+    const liquid = drawLiquid(liquidHeight - 6, item.liquidColor, 4);
+    molecularZone = { left: left + 12, top: liquid.topY + 10, width: width - 24, height: bottom - liquid.topY - 20 };
+  } else {
+    for (let puff = 0; puff < 5; puff += 1) {
+      ctx.fillStyle = item.gasColor;
+      ctx.beginPath();
+      ctx.arc(centerX - 16 + puff * 8, top + 24 + Math.sin(state.heat.elapsed * 1.3 + puff) * 8, 10 + (puff % 2) * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (item.renderMode === "molecular" && molecularZone) {
+    const molecules = Array.isArray(item.molecules) ? item.molecules : [];
+    molecules.forEach((molecule, moleculeIndex) => {
+      const solid = phase === "solid" || phase === "melting";
+      const amplitude = solid ? 2 + item.temperature * 0.015 : 7 + item.temperature * 0.02;
+      const x = molecularZone.left + molecule.x * molecularZone.width + Math.cos(state.heat.elapsed * (solid ? 2.2 : 3.4) + molecule.seed) * amplitude;
+      const y = molecularZone.top + molecule.y * molecularZone.height + Math.sin(state.heat.elapsed * (solid ? 2.1 : 4.1) + molecule.seed + moleculeIndex) * amplitude;
+      ctx.fillStyle = solid ? "#f3f7ff" : "#d9fbff";
+      ctx.beginPath();
+      ctx.arc(x, y, 4.2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.96)";
+  ctx.font = "700 12px Space Grotesk";
+  ctx.textAlign = "center";
+  ctx.fillText(label, centerX, top - 8);
+  ctx.font = "600 11px IBM Plex Sans";
+  ctx.fillText(`${item.temperature.toFixed(1)}°C • ${heatPhaseLabel(item.phase)}`, centerX, bottom + 18);
+}
+
+function drawThermometer(item) {
+  const measure = heatMeasurementForThermometer(item);
+  const minTemp = 0;
+  const maxTemp = 140;
+  const level = clamp(((measure?.temperature ?? minTemp) - minTemp) / (maxTemp - minTemp), 0, 1);
+
+  ctx.strokeStyle = "rgba(224, 241, 255, 0.92)";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(item.x, item.y - 74);
+  ctx.lineTo(item.x, item.y - 10);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.42)";
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(item.x, item.y - 74);
+  ctx.lineTo(item.x, item.y - 10);
+  ctx.stroke();
+
+  ctx.strokeStyle = "#ff8f6b";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(item.x, item.y - 12 - 58 * level);
+  ctx.lineTo(item.x, item.y - 10);
+  ctx.stroke();
+
+  ctx.fillStyle = "#ff6b6b";
+  ctx.beginPath();
+  ctx.arc(item.x, item.y, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = selectedId === item.id ? "#ffd166" : "rgba(224, 241, 255, 0.92)";
+  ctx.lineWidth = selectedId === item.id ? 2.5 : 1.2;
+  ctx.beginPath();
+  ctx.arc(item.x, item.y, 15, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.95)";
+  ctx.font = "600 11px IBM Plex Sans";
+  ctx.textAlign = "left";
+  ctx.fillText(measure ? `${measure.temperature.toFixed(1)}°C` : "--", item.x + 16, item.y - 6);
+}
+
+function drawHeat() {
+  const layout = heatStationLayout();
+  const materials = heatMaterials();
+  const thermometers = heatThermometers();
+  const graphTarget = heatGraphTarget();
+
+  const stageGradient = ctx.createLinearGradient(0, 0, 0, viewport.height);
+  stageGradient.addColorStop(0, "rgba(255, 180, 84, 0.08)");
+  stageGradient.addColorStop(0.45, "rgba(79, 209, 197, 0.04)");
+  stageGradient.addColorStop(1, "rgba(10, 16, 28, 0)");
+  ctx.fillStyle = stageGradient;
+  ctx.fillRect(0, 0, viewport.width, viewport.height);
+
+  roundedRectPath(layout.pot.x - layout.pot.width / 2, layout.pot.y - layout.pot.height / 2, layout.pot.width, layout.pot.height, 34);
+  const potGradient = ctx.createLinearGradient(layout.pot.x, layout.pot.y - layout.pot.height / 2, layout.pot.x, layout.pot.y + layout.pot.height / 2);
+  potGradient.addColorStop(0, "rgba(174, 225, 255, 0.26)");
+  potGradient.addColorStop(1, "rgba(64, 121, 183, 0.16)");
+  ctx.fillStyle = potGradient;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(196, 233, 255, 0.72)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(220, 243, 255, 0.82)";
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(layout.pot.x - layout.pot.width / 2 + 46, layout.pot.y - layout.pot.height / 2 + 10);
+  ctx.lineTo(layout.pot.x + layout.pot.width / 2 - 46, layout.pot.y - layout.pot.height / 2 + 10);
+  ctx.stroke();
+
+  roundedRectPath(layout.heater.x - layout.heater.width / 2, layout.heater.y - layout.heater.height / 2, layout.heater.width, layout.heater.height, 18);
+  ctx.fillStyle = "rgba(99, 54, 22, 0.95)";
+  ctx.fill();
+  ctx.fillStyle = state.running ? "rgba(255, 180, 84, 0.94)" : "rgba(120, 82, 54, 0.65)";
+  roundedRectPath(layout.heater.x - layout.heater.width / 2 + 18, layout.heater.y - 7, layout.heater.width - 36, 14, 9);
+  ctx.fill();
+
+  if (state.running) {
+    for (let flame = 0; flame < 5; flame += 1) {
+      const x = layout.heater.x - 80 + flame * 40;
+      const height = 18 + Math.sin(state.heat.elapsed * 5 + flame) * 6;
+      ctx.fillStyle = flame % 2 ? "rgba(255, 122, 69, 0.86)" : "rgba(255, 209, 102, 0.82)";
+      ctx.beginPath();
+      ctx.moveTo(x, layout.heater.y - 12);
+      ctx.quadraticCurveTo(x + 8, layout.heater.y - 12 - height, x + 16, layout.heater.y - 12);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  if (state.running) {
+    for (let stream = 0; stream < 5; stream += 1) {
+      ctx.strokeStyle = `rgba(255, 180, 84, ${0.18 + stream * 0.06})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(layout.heater.x - 80 + stream * 40, layout.heater.y - 18);
+      ctx.quadraticCurveTo(
+        layout.heater.x - 70 + stream * 40,
+        layout.heater.y - 46 - Math.sin(state.heat.elapsed * 3 + stream) * 10,
+        layout.heater.x - 64 + stream * 40,
+        layout.pot.y + layout.pot.height / 2 - 8
+      );
+      ctx.stroke();
+    }
+  }
+
+  heatMaterialLayouts(materials).forEach((entry, index) => drawHeatMaterial(entry, index));
+  thermometers.forEach((thermometer) => drawThermometer(thermometer));
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.95)";
+  ctx.font = "700 14px Space Grotesk";
+  ctx.textAlign = "left";
+  ctx.fillText("Kap ve isitici", layout.pot.x - layout.pot.width / 2, 34);
+  ctx.font = "500 12px IBM Plex Sans";
+  ctx.fillStyle = "rgba(159, 174, 203, 0.95)";
+  ctx.fillText("Isi verildikce sicaklik, ic enerji ve hal degisimi alttaki grafikle izlenir.", layout.pot.x - layout.pot.width / 2, 54);
+
+  drawHeatGraph(graphTarget, layout.graph);
 }
 
 function drawVectorAxes() {
@@ -2530,6 +3368,18 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
     return;
   }
 
+  if (state.scene === "heat") {
+    const materials = heatMaterials(items);
+    const graphTarget = heatGraphTarget();
+    primary.textContent = `${materials.length} malzeme`;
+    secondary.textContent = state.running ? `Isitici acik • ${state.heat.power} br` : "Isitici beklemede";
+    tertiary.textContent = graphTarget
+      ? `${heatMaterialLabel(graphTarget)} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`
+      : "Kaba malzeme eklenmeyi bekliyor";
+    sceneState.textContent = state.running ? "Isitiliyor" : "Hazir";
+    return;
+  }
+
   primary.textContent = `${items.length} nesne`;
   secondary.textContent = state.opticsVisible ? `${trace.interactions} etkilesim` : "Isin gizli";
   tertiary.textContent = items.some((item) => item.type === "laser")
@@ -2544,6 +3394,12 @@ function renderScene() {
   drawBackground();
   if (state.scene === "vectors") {
     drawVectors();
+    renderSummaries();
+    return;
+  }
+
+  if (state.scene === "heat") {
+    drawHeat();
     renderSummaries();
     return;
   }
@@ -2578,32 +3434,53 @@ function renderUI() {
     button.classList.toggle("active", button.dataset.sceneButton === state.scene);
   });
 
-  document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektörler"}`;
-  document.getElementById("sidebar-scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektörler"}`;
-  document.getElementById("empty-note").style.display = currentItems().length ? "none" : "block";
+  document.getElementById("scene-label").textContent = `Aktif modul: ${sceneLabel()}`;
+  document.getElementById("sidebar-scene-label").textContent = `Aktif modul: ${sceneLabel()}`;
+  const isEmptyScene = state.scene === "heat" ? !heatMaterials().length : !currentItems().length;
+  document.getElementById("empty-note").style.display = isEmptyScene ? "block" : "none";
   document.getElementById("empty-note").textContent =
     state.scene === "optics"
       ? "Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla."
-      : "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas.";
+      : state.scene === "vectors"
+        ? "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas."
+        : "Kap bos. Arac kutusundan malzeme ekleyip isitmayi baslat.";
   document.getElementById("toolbox-panel").hidden = state.scene === "vectors";
   document.getElementById("toolbox-copy").textContent =
     state.scene === "optics"
       ? "Optik sahneye yeni fizik nesneleri eklenir."
-      : "Vektor sahnesinde uretilen vektorler mod kontrol panelinden yonetilir.";
+      : state.scene === "vectors"
+        ? "Vektor sahnesinde uretilen vektorler mod kontrol panelinden yonetilir."
+        : "Malzemeleri ve termometreyi bu kutudan ekleyebilirsin.";
   document.getElementById("status-text").textContent =
     state.notice ||
     (state.scene === "optics"
       ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
-      : "Vektörleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla.");
+      : state.scene === "vectors"
+        ? "Vektörleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla."
+        : "Kap icine madde ekle, isitici gucunu ayarla, termometre ile sicakligi oku ve alttaki grafikten hal degisimini izle.");
   document.getElementById("run-scene-button").textContent =
-    state.scene === "optics" ? "Isin yolunu hesapla" : "Bileskeyi goster";
+    state.scene === "optics" ? "Isin yolunu hesapla" : state.scene === "heat" ? "Isitmayi baslat" : "Bileskeyi goster";
   document.getElementById("pause-scene-button").textContent =
-    state.scene === "optics" ? "Duraklat" : "Yardimcilari gizle";
+    state.scene === "optics" ? "Duraklat" : state.scene === "heat" ? "Isitmayi durdur" : "Yardimcilari gizle";
   document.getElementById("run-scene-button").style.display = state.scene === "vectors" ? "none" : "";
   document.getElementById("pause-scene-button").style.display = state.scene === "vectors" ? "none" : "";
 }
 
 function addItem(type) {
+  if (state.scene === "heat") {
+    if (isHeatMaterial({ type }) && heatMaterials().length >= 3) {
+      state.notice = "Kapta en fazla 3 malzeme kullanilabilir.";
+      renderUI();
+      return;
+    }
+
+    if (type === "thermometer" && heatThermometers().length >= 1) {
+      state.notice = "Bir termometre yeterli. Onu sahnede hareket ettirebilirsin.";
+      renderUI();
+      return;
+    }
+  }
+
   const item = makeItem(type);
   currentItems().push(item);
   selectedId = item.id;
@@ -2613,11 +3490,15 @@ function addItem(type) {
 }
 
 function clearScene() {
+  stopAnimationLoop();
   state.running = false;
   lastTick = 0;
   state[state.scene].items = [];
   if (state.scene === "vectors") {
     state.vectors.resultVisible = false;
+  }
+  if (state.scene === "heat") {
+    state.heat.elapsed = 0;
   }
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
@@ -2626,15 +3507,19 @@ function clearScene() {
 }
 
 function openScene(scene) {
-  state.scene = scene === "vectors" ? "vectors" : "optics";
+  stopAnimationLoop();
+  state.running = false;
+  state.scene = ["optics", "vectors", "heat"].includes(scene) ? scene : "optics";
   state.view = "lab";
   selectedId = null;
-  state.notice = state.scene === "optics" ? "Optik modul acildi." : "Vektörler modul acildi.";
+  state.notice = `${sceneLabel()} modul acildi.`;
   saveState();
   renderUI();
 }
 
 function goHome() {
+  stopAnimationLoop();
+  state.running = false;
   state.view = "home";
   state.notice = "";
   selectedId = null;
@@ -2644,12 +3529,14 @@ function goHome() {
 
 function setScene(scene) {
   if (scene === state.scene) return;
-  state.scene = scene === "vectors" ? "vectors" : "optics";
+  stopAnimationLoop();
+  state.running = false;
+  state.scene = ["optics", "vectors", "heat"].includes(scene) ? scene : "optics";
   selectedId = null;
   if (state.scene === "vectors") {
     state.vectors.resultVisible = false;
   }
-  state.notice = state.scene === "optics" ? "Optik modul aktif." : "Vektörler modul aktif.";
+  state.notice = `${sceneLabel()} modul aktif.`;
   saveState();
   renderUI();
 }
@@ -2657,6 +3544,20 @@ function setScene(scene) {
 function runScene() {
   if (state.scene === "vectors") {
     calculateVectors();
+    return;
+  }
+  if (state.scene === "heat") {
+    if (!heatMaterials().length) {
+      state.notice = "Isitmadan once kaba en az bir malzeme ekle.";
+      renderUI();
+      return;
+    }
+    state.running = true;
+    state.notice = "Isitici calismaya basladi.";
+    if (!animationFrame) {
+      animationFrame = requestAnimationFrame(runHeatLoop);
+    }
+    renderUI();
     return;
   }
   state.opticsVisible = true;
@@ -2669,6 +3570,14 @@ function pauseScene() {
   if (state.scene === "vectors") {
     state.vectors.resultVisible = false;
     state.notice = "Vektor bileskesi gizlendi.";
+    saveState();
+    renderUI();
+    return;
+  }
+  if (state.scene === "heat") {
+    stopAnimationLoop();
+    state.running = false;
+    state.notice = "Isitici durduruldu.";
     saveState();
     renderUI();
     return;
@@ -2761,6 +3670,22 @@ function vectorHandleMode(point, item) {
 }
 
 function hitItem(point) {
+  if (state.scene === "heat") {
+    const thermometer = [...heatThermometers()].reverse().find(
+      (item) => point.x >= item.x - 16 && point.x <= item.x + 16 && point.y >= item.y - 82 && point.y <= item.y + 16
+    );
+    if (thermometer) {
+      return thermometer;
+    }
+
+    const materialLayout = [...heatMaterialLayouts()].reverse().find(
+      (entry) => point.x >= entry.left && point.x <= entry.right && point.y >= entry.top && point.y <= entry.bottom
+    );
+    if (materialLayout) {
+      return materialLayout.item;
+    }
+  }
+
   const items = [...currentItems()].reverse();
 
   return items.find((item) => {
@@ -2841,14 +3766,17 @@ function initCanvasInteractions() {
     selectedId = hit?.id || null;
 
     if (hit) {
-      const mode = isVector(hit) ? vectorHandleMode(point, hit) : "move";
-      dragState = {
-        id: hit.id,
-        mode,
-        offsetX: point.x - hit.x,
-        offsetY: point.y - hit.y
-      };
-      canvas.setPointerCapture(event.pointerId);
+      const draggable = !(state.scene === "heat" && isHeatMaterial(hit));
+      if (draggable) {
+        const mode = isVector(hit) ? vectorHandleMode(point, hit) : "move";
+        dragState = {
+          id: hit.id,
+          mode,
+          offsetX: point.x - hit.x,
+          offsetY: point.y - hit.y
+        };
+        canvas.setPointerCapture(event.pointerId);
+      }
     }
 
     state.notice = hit ? `${itemTitle(hit)} secildi.` : "Secim kaldirildi.";
@@ -2914,6 +3842,31 @@ function initEvents() {
   document.getElementById("back-home-button").addEventListener("click", goHome);
 
   document.getElementById("module-controls").addEventListener("click", (event) => {
+    if (state.scene === "heat") {
+      const action = event.target.closest("[data-heat-action]");
+      if (!action) {
+        return;
+      }
+
+      if (action.dataset.heatAction === "start") {
+        runScene();
+        return;
+      }
+
+      if (action.dataset.heatAction === "pause") {
+        pauseScene();
+        return;
+      }
+
+      if (action.dataset.heatAction === "reset-graph") {
+        resetHeatHistories();
+        state.notice = "Sicaklik grafigi sifirlandi.";
+        saveState();
+        renderUI();
+      }
+      return;
+    }
+
     const button = event.target.closest("[data-vector-mode]");
     if (button) {
       state.vectors.mode = button.dataset.vectorMode;
@@ -2951,6 +3904,18 @@ function initEvents() {
     }
   });
 
+  document.getElementById("module-controls").addEventListener("input", (event) => {
+    const input = event.target.closest("[data-heat-prop]");
+    if (!input || state.scene !== "heat") return;
+
+    if (input.dataset.heatProp === "power") {
+      state.heat.power = clamp(Number(input.value) || 140, 40, 240);
+      state.notice = `Isitici gucu ${state.heat.power} br olarak ayarlandi.`;
+      saveState();
+      renderUI();
+    }
+  });
+
   document.getElementById("object-list").addEventListener("click", (event) => {
     const button = event.target.closest("[data-select]");
     if (!button) return;
@@ -2971,6 +3936,9 @@ function initEvents() {
     if (isVector(item)) {
       state.vectors.resultVisible = false;
     }
+    if (isHeatMaterial(item)) {
+      recordHeatHistory(item);
+    }
     state.notice = `${itemTitle(item)} guncellendi.`;
     saveState();
     renderUI();
@@ -2987,6 +3955,11 @@ function initEvents() {
       state[state.scene].items = currentItems().filter((entry) => entry.id !== item.id);
       if (isVector(item)) {
         state.vectors.resultVisible = false;
+      }
+      if (state.scene === "heat" && !heatMaterials(state[state.scene].items).length) {
+        stopAnimationLoop();
+        state.running = false;
+        state.heat.elapsed = 0;
       }
       selectedId = null;
       state.notice = `${itemTitle(item)} silindi.`;

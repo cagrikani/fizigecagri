@@ -225,7 +225,7 @@ h1 {
 
 .home-module-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
   margin-top: 34px;
 }
@@ -308,6 +308,11 @@ h1 {
   border-color: rgba(93, 169, 255, 0.24);
 }
 
+.heat-card {
+  background: linear-gradient(135deg, rgba(255, 180, 84, 0.18), rgba(255, 122, 69, 0.12));
+  border-color: rgba(255, 180, 84, 0.28);
+}
+
 .scene-button.module-card.active.optics-card {
   background: linear-gradient(135deg, rgba(255, 208, 102, 0.28), rgba(110, 168, 254, 0.18));
   border-color: rgba(255, 208, 102, 0.44);
@@ -320,12 +325,22 @@ h1 {
   color: var(--text);
 }
 
+.scene-button.module-card.active.heat-card {
+  background: linear-gradient(135deg, rgba(255, 180, 84, 0.3), rgba(255, 122, 69, 0.18));
+  border-color: rgba(255, 180, 84, 0.42);
+  color: var(--text);
+}
+
 .home-module-button.optics-card {
   background: linear-gradient(135deg, rgba(255, 208, 102, 0.24), rgba(110, 168, 254, 0.14));
 }
 
 .home-module-button.vectors-card {
   background: linear-gradient(135deg, rgba(93, 169, 255, 0.26), rgba(64, 214, 123, 0.14));
+}
+
+.home-module-button.heat-card {
+  background: linear-gradient(135deg, rgba(255, 180, 84, 0.24), rgba(255, 122, 69, 0.14));
 }
 
 .optics-icon {
@@ -340,6 +355,13 @@ h1 {
     radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.16), transparent 26%),
     linear-gradient(145deg, rgba(74, 157, 255, 0.2), rgba(56, 214, 146, 0.16)),
     rgba(10, 18, 34, 0.72);
+}
+
+.heat-icon {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.18), transparent 26%),
+    linear-gradient(145deg, rgba(255, 180, 84, 0.22), rgba(255, 122, 69, 0.18)),
+    rgba(24, 13, 8, 0.72);
 }
 
 .hero-panel {
@@ -634,6 +656,60 @@ h1 {
   transform: rotate(-24deg);
 }
 
+.tool-glyph.molecular-sample::before {
+  width: 26px;
+  height: 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #9fd9ff, #4ea9ff);
+  bottom: 10px;
+}
+
+.tool-glyph.molecular-sample::after {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.62);
+}
+
+.tool-glyph.heat-solid::before {
+  width: 24px;
+  height: 20px;
+  border-radius: 8px;
+  background: #dfe7f7;
+  bottom: 10px;
+}
+
+.tool-glyph.heat-liquid::before {
+  width: 28px;
+  height: 18px;
+  border-radius: 10px 10px 14px 14px;
+  background: linear-gradient(180deg, #66d9d0, #3ba2ff);
+  bottom: 10px;
+}
+
+.tool-glyph.heat-liquid::after {
+  width: 30px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.7);
+  bottom: 24px;
+  border-radius: 999px;
+}
+
+.tool-glyph.thermometer::before {
+  width: 6px;
+  height: 26px;
+  border-radius: 999px;
+  background: #f4f9ff;
+}
+
+.tool-glyph.thermometer::after {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff7a45;
+  bottom: 6px;
+}
+
 .tool-card strong,
 .object-item strong,
 .readout-card strong {
@@ -654,14 +730,14 @@ h1 {
 
 .home-module-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 28px;
 }
 
 .home-module-button {
   width: 100%;
-  min-height: 118px;
+  min-height: 220px;
 }
 
 .legend-chip,
@@ -907,6 +983,10 @@ h1 {
   .hero,
   .lab-layout {
     grid-template-columns: 1fr;
+  }
+
+  .home-module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
