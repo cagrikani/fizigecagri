@@ -53,12 +53,8 @@ let animationFrame = null;
 let lastTick = 0;
 
 function loadState() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return normalizeState(raw);
-  } catch {
-    return structuredClone(defaultState);
-  }
+  localStorage.removeItem(STORAGE_KEY);
+  return structuredClone(defaultState);
 }
 
 function normalizeState(raw) {
@@ -94,7 +90,7 @@ function normalizeState(raw) {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  return state;
 }
 
 function currentItems() {
@@ -117,6 +113,10 @@ function uid(prefix) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function radToDeg(value) {
+  return (value * 180) / Math.PI;
 }
 
 function degToRad(value) {
@@ -270,6 +270,20 @@ function isPrism(item) {
 
 function isVector(item) {
   return item.type === "vector";
+}
+
+function vectorLabel(item) {
+  const vectors = currentItems().filter((entry) => isVector(entry));
+  const index = vectors.findIndex((entry) => entry.id === item.id);
+  return `V${index + 1}`;
+}
+
+function vectorMagnitude(item) {
+  return Math.hypot(item.dx, item.dy);
+}
+
+function vectorAngle(item) {
+  return ((Math.round(radToDeg(Math.atan2(-item.dy, item.dx))) % 360) + 360) % 360;
 }
 
 function prismVertices(item) {
@@ -478,10 +492,10 @@ function makeItem(type) {
     return {
       id: uid("vector"),
       type,
-      x: 180 + offset,
-      y: 420 - offset * 0.6,
-      dx: 140,
-      dy: -70,
+      x: viewport.width / 2,
+      y: viewport.height / 2,
+      dx: 140 - offset * 8,
+      dy: -70 + offset * 18,
       color: ["#5da9ff", "#40d67b", "#ff9f43", "#bf5af2"][currentItems().length % 4]
     };
   }
@@ -588,6 +602,11 @@ function constrainItem(item) {
     item.y = clamp(Number(item.y) || 0, 30, height - 30);
     item.dx = clamp(Number(item.dx) || 0, -300, 300);
     item.dy = clamp(Number(item.dy) || 0, -300, 300);
+    if (Math.hypot(item.dx, item.dy) < 24) {
+      const angle = Math.atan2(item.dy || -1, item.dx || 1);
+      item.dx = Math.cos(angle) * 24;
+      item.dy = Math.sin(angle) * 24;
+    }
     item.color = typeof item.color === "string" ? item.color : "#5da9ff";
   }
 
@@ -656,7 +675,7 @@ function itemMeta(item) {
   if (item.type === "round-object") return `${Math.round(item.radius)} px yaricap`;
   if (item.type === "eye") return `${Math.round(item.angle)} derece bakis`;
   if (item.type === "vector") {
-    return `${Math.round(Math.hypot(item.dx, item.dy))} br • ${Math.round(Math.atan2(-item.dy, item.dx) * (180 / Math.PI))} derece`;
+    return `${vectorLabel(item)} • ${Math.round(vectorMagnitude(item))} br • ${vectorAngle(item)} derece`;
   }
   if (item.type === "depth-tank") {
     return `n1 ${item.topIndex.toFixed(2)} • n2 ${item.bottomIndex.toFixed(2)} • ${Math.round(item.height)} px`;
@@ -910,8 +929,17 @@ function renderInspector() {
 
   inspector.innerHTML = `
     <div>
-      <strong>${itemTitle(item)}</strong>
+      <strong>${isVector(item) ? `${vectorLabel(item)} • ${itemTitle(item)}` : itemTitle(item)}</strong>
       <div class="inspector-note">${itemMeta(item)}</div>
+      ${
+        isVector(item)
+          ? `<div class="vector-stats">
+              <span>Buyukluk <strong>${vectorMagnitude(item).toFixed(1)} br</strong></span>
+              <span>Yon <strong>${vectorAngle(item)} derece</strong></span>
+              <span>Bilesen <strong>(${Math.round(item.dx)}, ${Math.round(-item.dy)})</strong></span>
+            </div>`
+          : ""
+      }
     </div>
     <div class="inspector-grid">${fields.join("")}</div>
     <div class="inline-actions" style="margin-top: 14px;">
@@ -939,8 +967,13 @@ function renderObjectList() {
     .map(
       (item) => `
         <button class="object-item ${item.id === selectedId ? "active" : ""}" type="button" data-select="${item.id}">
-          <strong>${itemTitle(item)}</strong>
+          <strong>${isVector(item) ? `${vectorLabel(item)} • ${itemTitle(item)}` : itemTitle(item)}</strong>
           <small>${itemMeta(item)}</small>
+          ${
+            isVector(item)
+              ? `<small class="vector-object-meta">Koordinat (${Math.round(item.x - viewport.width / 2)}, ${Math.round(viewport.height / 2 - item.y)}) • Kuyruk (${Math.round(item.x)}, ${Math.round(item.y)})</small>`
+              : ""
+          }
         </button>
       `
     )
@@ -1390,6 +1423,67 @@ function drawArrow(start, end, color, width = 3) {
   ctx.lineTo(end.x - head * Math.cos(angle + Math.PI / 6), end.y - head * Math.sin(angle + Math.PI / 6));
   ctx.closePath();
   ctx.fill();
+}
+
+function drawVectorAxes() {
+  const center = { x: viewport.width / 2, y: viewport.height / 2 };
+
+  ctx.save();
+  for (let x = center.x; x <= viewport.width; x += 40) {
+    ctx.strokeStyle = "rgba(159, 174, 203, 0.08)";
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, viewport.height);
+    ctx.stroke();
+  }
+
+  for (let x = center.x; x >= 0; x -= 40) {
+    ctx.strokeStyle = "rgba(159, 174, 203, 0.08)";
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, viewport.height);
+    ctx.stroke();
+  }
+
+  for (let y = center.y; y <= viewport.height; y += 40) {
+    ctx.strokeStyle = "rgba(159, 174, 203, 0.08)";
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(viewport.width, y);
+    ctx.stroke();
+  }
+
+  for (let y = center.y; y >= 0; y -= 40) {
+    ctx.strokeStyle = "rgba(159, 174, 203, 0.08)";
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(viewport.width, y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "rgba(239, 244, 255, 0.45)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, center.y);
+  ctx.lineTo(viewport.width, center.y);
+  ctx.moveTo(center.x, 0);
+  ctx.lineTo(center.x, viewport.height);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.8)";
+  ctx.font = "600 12px Space Grotesk";
+  ctx.textAlign = "center";
+  ctx.fillText("x", viewport.width - 18, center.y - 10);
+  ctx.fillText("y", center.x + 14, 18);
+  ctx.fillText("0", center.x - 14, center.y + 18);
+
+  for (let offset = 40; offset <= Math.max(viewport.width, viewport.height) / 2; offset += 40) {
+    ctx.fillText(`${offset}`, center.x + offset, center.y + 18);
+    ctx.fillText(`${-offset}`, center.x - offset, center.y + 18);
+    ctx.fillText(`${offset}`, center.x - 18, center.y - offset + 4);
+    ctx.fillText(`${-offset}`, center.x - 20, center.y + offset + 4);
+  }
+  ctx.restore();
 }
 
 function drawVerticalObject(base, height, color, dashed = false) {
@@ -1873,28 +1967,25 @@ function drawVectors() {
   const vectors = currentItems().filter((item) => isVector(item));
   const helpersVisible = state.vectors.showHelpers;
   const selected = selectedItem();
-
-  ctx.save();
-  ctx.strokeStyle = "rgba(159, 174, 203, 0.12)";
-  ctx.beginPath();
-  ctx.moveTo(0, viewport.height / 2);
-  ctx.lineTo(viewport.width, viewport.height / 2);
-  ctx.moveTo(100, 0);
-  ctx.lineTo(100, viewport.height);
-  ctx.stroke();
-  ctx.restore();
+  const center = { x: viewport.width / 2, y: viewport.height / 2 };
+  drawVectorAxes();
 
   vectors.forEach((item, index) => {
     const isSelected = item.id === selectedId;
-    drawArrow({ x: item.x, y: item.y }, vectorEnd(item), item.color, isSelected ? 4 : 3);
+    const end = vectorEnd(item);
+    drawArrow({ x: item.x, y: item.y }, end, item.color, isSelected ? 4 : 3);
     ctx.fillStyle = item.color;
     ctx.beginPath();
     ctx.arc(item.x, item.y, 6, 0, Math.PI * 2);
     ctx.fill();
+    ctx.beginPath();
+    ctx.arc(end.x, end.y, isSelected ? 7 : 5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
     ctx.font = "600 12px Space Grotesk";
     ctx.textAlign = "center";
-    ctx.fillText(`v${index + 1}`, item.x + item.dx * 0.55, item.y + item.dy * 0.55 - 10);
+    ctx.fillText(vectorLabel(item), item.x + item.dx * 0.55, item.y + item.dy * 0.55 - 10);
+    ctx.fillText(`${Math.round(vectorMagnitude(item))} br • ${vectorAngle(item)}°`, end.x, end.y - 14);
   });
 
   if (!vectors.length || !helpersVisible) {
@@ -1902,7 +1993,7 @@ function drawVectors() {
   }
 
   const total = vectorResultant(vectors);
-  const helperOrigin = { x: 120, y: viewport.height - 110 };
+  const helperOrigin = { ...center };
 
   if (state.vectors.mode === "tip-to-tail") {
     let current = { ...helperOrigin };
@@ -1919,7 +2010,7 @@ function drawVectors() {
 
   if (state.vectors.mode === "parallelogram" && vectors.length >= 2) {
     const [a, b] = vectors;
-    const origin = { x: 180, y: viewport.height - 140 };
+    const origin = { ...center };
     const endA = vectorEnd(a, origin);
     const endB = vectorEnd(b, origin);
     const corner = { x: origin.x + a.dx + b.dx, y: origin.y + a.dy + b.dy };
@@ -1940,22 +2031,31 @@ function drawVectors() {
     drawArrow(origin, corner, "#ff6b6b", 4);
   }
 
-  if (state.vectors.mode === "components" && selected && isVector(selected)) {
-    const end = vectorEnd(selected);
-    ctx.save();
-    ctx.setLineDash([8, 6]);
-    ctx.beginPath();
-    ctx.moveTo(selected.x, selected.y);
-    ctx.lineTo(end.x, selected.y);
-    ctx.lineTo(end.x, end.y);
-    ctx.strokeStyle = "rgba(148, 223, 255, 0.78)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.restore();
-    drawArrow({ x: selected.x, y: selected.y }, { x: end.x, y: selected.y }, "#ffd166", 3);
-    drawArrow({ x: end.x, y: selected.y }, end, "#40d67b", 3);
-    drawArrow(selected, end, "#ff6b6b", 4);
+  if (state.vectors.mode === "components") {
+    vectors.forEach((vector) => {
+      const start = { ...center };
+      const end = vectorEnd(vector, start);
+      ctx.save();
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.strokeStyle = "rgba(148, 223, 255, 0.78)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+      drawArrow(start, { x: end.x, y: start.y }, "#ffd166", 3);
+      drawArrow({ x: end.x, y: start.y }, end, "#40d67b", 3);
+      drawArrow(start, end, vector.color, selected?.id === vector.id ? 4 : 3);
+      ctx.fillStyle = "rgba(239, 244, 255, 0.86)";
+      ctx.font = "600 12px Space Grotesk";
+      ctx.textAlign = "left";
+      ctx.fillText(`${vectorLabel(vector)}: x=${Math.round(vector.dx)}, y=${Math.round(-vector.dy)}`, end.x + 10, end.y - 6);
+    });
   }
+
+  drawArrow(helperOrigin, { x: helperOrigin.x + total.x, y: helperOrigin.y + total.y }, "#ff6b6b", 4);
 }
 
 function renderSummaries(trace = { segments: [], interactions: 0 }) {
@@ -1983,7 +2083,7 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
         : state.vectors.mode === "parallelogram"
           ? "Paralelkenar"
           : "Bilesenler";
-    tertiary.textContent = `${Math.round(Math.hypot(total.x, total.y))} br bileske`;
+    tertiary.textContent = `${Math.round(Math.hypot(total.x, total.y))} br bileske • ${((Math.round(radToDeg(Math.atan2(-total.y, total.x))) % 360) + 360) % 360} derece`;
     sceneState.textContent = state.vectors.showHelpers ? "Yardimcilar acik" : "Yardimcilar gizli";
     return;
   }
@@ -2034,7 +2134,7 @@ function renderUI() {
     state.notice ||
     (state.scene === "optics"
       ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
-      : "Vektorleri surukleyip bileske, paralelkenar ve bilesen cozumlerini incele.");
+      : "Vektorleri kuyruktan surukleyerek tasiyin, ucundan surukleyerek buyukluk ve yonlerini degistirin.");
   document.getElementById("run-scene-button").textContent =
     state.scene === "optics" ? "Isin yolunu hesapla" : "Bileskeyi goster";
   document.getElementById("pause-scene-button").textContent =
@@ -2056,44 +2156,6 @@ function clearScene() {
   state[state.scene].items = [];
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
-  saveState();
-  renderUI();
-}
-
-function loadSample() {
-  state.running = false;
-  lastTick = 0;
-  if (state.scene === "vectors") {
-    state.vectors.items = [
-      { id: uid("vector"), type: "vector", x: 180, y: 430, dx: 160, dy: -90, color: "#5da9ff" },
-      { id: uid("vector"), type: "vector", x: 180, y: 430, dx: 110, dy: 55, color: "#40d67b" },
-      { id: uid("vector"), type: "vector", x: 180, y: 430, dx: -70, dy: -120, color: "#ff9f43" }
-    ];
-    state.vectors.mode = "tip-to-tail";
-    state.vectors.showHelpers = true;
-    selectedId = state.vectors.items[0].id;
-    state.notice = "Ornek vektor duzenegi yuklendi.";
-    saveState();
-    renderUI();
-    return;
-  }
-
-  state.optics.items = [
-      { id: uid("laser"), type: "laser", x: 120, y: 350, angle: 0, colorMode: "white", color: "red" },
-    { id: uid("object"), type: "optical-object", x: 260, y: 320, height: 110 },
-    { id: uid("round"), type: "round-object", x: 220, y: 360, radius: 18 },
-    { id: uid("eye"), type: "eye", x: 120, y: 210, angle: 0 },
-    { id: uid("tank"), type: "depth-tank", x: 280, y: 320, width: 220, height: 220, interfaceLevel: 92, topIndex: 1, bottomIndex: 1.33 },
-    { id: uid("fiber"), type: "fiber", x: 560, y: 185, length: 220, height: 54, bounces: 5 },
-    { id: uid("prism"), type: "prism", x: 740, y: 230, angle: 0, size: 120, dispersion: 16, index: 1.52 },
-    { id: uid("mirror"), type: "concave-mirror", x: 420, y: 260, angle: 0, length: 170, radius: 180 },
-      { id: uid("mirror"), type: "plane-mirror", x: 610, y: 230, angle: 90, length: 150, radius: 0 },
-    { id: uid("lens"), type: "convex-lens", x: 760, y: 260, height: 200, focalLength: 150, edgeWidth: 16, bulge: 24 }
-  ];
-  selectedId = state.optics.items[0].id;
-  state.opticsVisible = true;
-  state.notice = "Ornek optik duzenek yuklendi.";
-
   saveState();
   renderUI();
 }
@@ -2198,6 +2260,19 @@ function canvasPoint(event) {
   };
 }
 
+function vectorHandleMode(point, item) {
+  const end = vectorEnd(item);
+  if (Math.hypot(point.x - end.x, point.y - end.y) <= 16) {
+    return "vector-end";
+  }
+
+  if (Math.hypot(point.x - item.x, point.y - item.y) <= 12) {
+    return "move";
+  }
+
+  return "move";
+}
+
 function hitItem(point) {
   const items = [...currentItems()].reverse();
 
@@ -2278,8 +2353,10 @@ function initCanvasInteractions() {
     selectedId = hit?.id || null;
 
     if (hit) {
+      const mode = isVector(hit) ? vectorHandleMode(point, hit) : "move";
       dragState = {
         id: hit.id,
+        mode,
         offsetX: point.x - hit.x,
         offsetY: point.y - hit.y
       };
@@ -2297,8 +2374,13 @@ function initCanvasInteractions() {
     if (!item) return;
 
     const point = canvasPoint(event);
-    item.x = point.x - dragState.offsetX;
-    item.y = point.y - dragState.offsetY;
+    if (dragState.mode === "vector-end" && isVector(item)) {
+      item.dx = point.x - item.x;
+      item.dy = point.y - item.y;
+    } else {
+      item.x = point.x - dragState.offsetX;
+      item.y = point.y - dragState.offsetY;
+    }
     constrainItem(item);
     renderUI();
   });
@@ -2316,6 +2398,9 @@ function initCanvasInteractions() {
 
 function initEvents() {
   window.addEventListener("resize", renderUI);
+  window.addEventListener("afterprint", () => {
+    document.body.classList.remove("print-stage-only");
+  });
   initCanvasInteractions();
 
   document.getElementById("tool-grid").addEventListener("click", (event) => {
@@ -2384,9 +2469,12 @@ function initEvents() {
   });
 
   document.getElementById("run-scene-button").addEventListener("click", runScene);
-  document.getElementById("load-sample-button").addEventListener("click", loadSample);
   document.getElementById("clear-scene-button").addEventListener("click", clearScene);
   document.getElementById("pause-scene-button").addEventListener("click", pauseScene);
+  document.getElementById("export-pdf-button").addEventListener("click", () => {
+    document.body.classList.add("print-stage-only");
+    window.print();
+  });
 }
 
 initEvents();
