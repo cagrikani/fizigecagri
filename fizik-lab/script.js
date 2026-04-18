@@ -403,6 +403,29 @@ function planeMirrorImagePoint(mirror, point) {
   return fromPlaneMirrorLocal({ x: -local.x, y: local.y }, mirror);
 }
 
+function opticalObjectEndpoints(item) {
+  return {
+    base: { x: item.x, y: item.y },
+    top: { x: item.x, y: item.y - item.height }
+  };
+}
+
+function planeMirrorImageForOpticalObject(mirror, objectItem) {
+  const endpoints = opticalObjectEndpoints(objectItem);
+  const imageBase = planeMirrorImagePoint(mirror, endpoints.base);
+  const imageTop = planeMirrorImagePoint(mirror, endpoints.top);
+
+  if (!imageBase || !imageTop) {
+    return null;
+  }
+
+  return {
+    base: imageBase,
+    top: imageTop,
+    virtual: true
+  };
+}
+
 function mirrorBackDirection(item) {
   const angle = degToRad(item.type === "plane-mirror" ? (item.angle || 0) - 90 : item.angle || 0);
   return { x: Math.cos(angle), y: Math.sin(angle) };
@@ -1553,6 +1576,24 @@ function drawVerticalObject(base, height, color, dashed = false) {
   ctx.restore();
 }
 
+function drawSegmentObject(base, top, color, dashed = false) {
+  ctx.save();
+  if (dashed) {
+    ctx.setLineDash([8, 6]);
+  }
+  drawArrow(base, top, color, dashed ? 2.5 : 3.5);
+
+  const normal = normalizeVector({ x: top.y - base.y, y: -(top.x - base.x) });
+  const halfWidth = 12;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = dashed ? 2 : 3;
+  ctx.beginPath();
+  ctx.moveTo(base.x - normal.x * halfWidth, base.y - normal.y * halfWidth);
+  ctx.lineTo(base.x + normal.x * halfWidth, base.y + normal.y * halfWidth);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawAxisAndMarkers(item) {
   const axis = opticAxis(item);
 
@@ -1874,6 +1915,16 @@ function drawOptics(trace) {
     }
 
     opticalObjects.forEach((objectItem) => {
+      if (item.type === "plane-mirror") {
+        const image = planeMirrorImageForOpticalObject(item, objectItem);
+        if (!image) {
+          return;
+        }
+
+        drawSegmentObject(image.base, image.top, "rgba(255, 209, 102, 0.8)", true);
+        return;
+      }
+
       const image = imageForElement(item, objectItem);
       if (!image || !Number.isFinite(image.height)) {
         return;
