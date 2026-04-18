@@ -383,13 +383,29 @@ function centerPoints(item) {
   ];
 }
 
+function toPlaneMirrorLocal(point, mirror) {
+  const angle = degToRad((mirror.angle || 0) - 90);
+  return rotateLocalPoint({ x: point.x - mirror.x, y: point.y - mirror.y }, -angle);
+}
+
+function fromPlaneMirrorLocal(point, mirror) {
+  const angle = degToRad((mirror.angle || 0) - 90);
+  const rotated = rotateLocalPoint(point, angle);
+  return { x: mirror.x + rotated.x, y: mirror.y + rotated.y };
+}
+
 function planeMirrorImagePoint(mirror, point) {
-  const local = toLocal(point, mirror);
+  const local = toPlaneMirrorLocal(point, mirror);
   if (local.x >= -1) {
     return null;
   }
 
-  return fromLocal({ x: -local.x, y: local.y }, mirror);
+  return fromPlaneMirrorLocal({ x: -local.x, y: local.y }, mirror);
+}
+
+function mirrorBackDirection(item) {
+  const angle = degToRad(item.type === "plane-mirror" ? (item.angle || 0) - 90 : item.angle || 0);
+  return { x: Math.cos(angle), y: Math.sin(angle) };
 }
 
 function imageForElement(item, objectItem) {
@@ -1158,8 +1174,8 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
     return null;
   }
 
-  const eyeLocal = toLocal(eye, mirror);
-  const objectLocal = toLocal(objectItem, mirror);
+  const eyeLocal = toPlaneMirrorLocal(eye, mirror);
+  const objectLocal = toPlaneMirrorLocal(objectItem, mirror);
 
   if (eyeLocal.x >= -4 || objectLocal.x >= -4) {
     return null;
@@ -1173,8 +1189,8 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
     return null;
   }
 
-  const imagePoint = fromLocal(imageLocal, mirror);
-  const hitPoint = fromLocal({ x: 0, y: hitY }, mirror);
+  const imagePoint = fromPlaneMirrorLocal(imageLocal, mirror);
+  const hitPoint = fromPlaneMirrorLocal({ x: 0, y: hitY }, mirror);
   const viewVector = { x: hitPoint.x - eye.x, y: hitPoint.y - eye.y };
   const viewDistance = Math.hypot(viewVector.x, viewVector.y);
   const forward = { x: Math.cos(degToRad(eye.angle || 0)), y: Math.sin(degToRad(eye.angle || 0)) };
@@ -1192,7 +1208,7 @@ function planeMirrorFieldForEye(mirror, eye) {
     return null;
   }
 
-  const eyeLocal = toLocal(eye, mirror);
+  const eyeLocal = toPlaneMirrorLocal(eye, mirror);
   if (eyeLocal.x >= -4) {
     return null;
   }
@@ -1752,13 +1768,19 @@ function drawOptics(trace) {
 
   const drawMirrorBody = (item, isSelected) => {
     const points = mirrorPolyline(item);
+    const back = mirrorBackDirection(item);
+    const backOffset = 10;
+    const backPoints = points.map((point) => ({
+      x: point.x + back.x * backOffset,
+      y: point.y + back.y * backOffset
+    }));
 
     ctx.beginPath();
-    points.forEach((point, index) => {
+    backPoints.forEach((point, index) => {
       if (index === 0) ctx.moveTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);
     });
-    ctx.strokeStyle = isSelected ? "#8b6440" : "#6f4d2f";
+    ctx.strokeStyle = isSelected ? "#875433" : "#5e3921";
     ctx.lineWidth = item.type === "plane-mirror" ? 10 : 12;
     ctx.lineCap = "round";
     ctx.stroke();
