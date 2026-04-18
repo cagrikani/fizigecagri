@@ -45,6 +45,11 @@ select {
   padding: 28px 0 40px;
 }
 
+#lab-screen[hidden],
+#home-screen[hidden] {
+  display: none !important;
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
@@ -614,6 +619,18 @@ h1 {
   justify-content: space-between;
 }
 
+.home-module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.home-module-button {
+  width: 100%;
+  min-height: 118px;
+}
+
 .legend-chip,
 .status-chip {
   display: inline-flex;
@@ -876,6 +893,7 @@ h1 {
 
   .tool-grid,
   .readout-grid,
+  .home-module-grid,
   .vector-builder,
   .inspector-grid,
   .object-list {

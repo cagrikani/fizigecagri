@@ -21,6 +21,7 @@ const toolCatalog = {
 };
 
 const defaultState = {
+  view: "home",
   scene: "optics",
   opticsVisible: true,
   running: false,
@@ -78,6 +79,7 @@ function normalizeState(raw) {
     });
 
   return {
+    view: raw.view === "lab" ? "lab" : "home",
     scene: raw.scene === "vectors" ? "vectors" : "optics",
     opticsVisible: raw.opticsVisible !== false,
     running: false,
@@ -2552,6 +2554,17 @@ function renderScene() {
 }
 
 function renderUI() {
+  document.getElementById("home-screen").hidden = state.view !== "home";
+  document.getElementById("lab-screen").hidden = state.view !== "lab";
+
+  document.querySelectorAll("[data-home-module]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.homeModule === state.scene);
+  });
+
+  if (state.view !== "lab") {
+    return;
+  }
+
   trimVectorsToModeLimit();
   ensureSelection();
   renderToolGrid();
@@ -2566,6 +2579,7 @@ function renderUI() {
   });
 
   document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektorler"}`;
+  document.getElementById("sidebar-scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektorler"}`;
   document.getElementById("empty-note").style.display = currentItems().length ? "none" : "block";
   document.getElementById("empty-note").textContent =
     state.scene === "optics"
@@ -2607,6 +2621,23 @@ function clearScene() {
   }
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
+  saveState();
+  renderUI();
+}
+
+function openScene(scene) {
+  state.scene = scene === "vectors" ? "vectors" : "optics";
+  state.view = "lab";
+  selectedId = null;
+  state.notice = state.scene === "optics" ? "Optik modul acildi." : "Vektorler modul acildi.";
+  saveState();
+  renderUI();
+}
+
+function goHome() {
+  state.view = "home";
+  state.notice = "";
+  selectedId = null;
   saveState();
   renderUI();
 }
@@ -2876,9 +2907,11 @@ function initEvents() {
     addItem(button.dataset.add);
   });
 
-  document.querySelectorAll("[data-scene-button]").forEach((button) => {
-    button.addEventListener("click", () => setScene(button.dataset.sceneButton));
+  document.querySelectorAll("[data-home-module]").forEach((button) => {
+    button.addEventListener("click", () => openScene(button.dataset.homeModule));
   });
+
+  document.getElementById("back-home-button").addEventListener("click", goHome);
 
   document.getElementById("module-controls").addEventListener("click", (event) => {
     const button = event.target.closest("[data-vector-mode]");
