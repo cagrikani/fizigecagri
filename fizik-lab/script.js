@@ -383,20 +383,29 @@ function centerPoints(item) {
   ];
 }
 
+function planeMirrorImagePoint(mirror, point) {
+  const local = toLocal(point, mirror);
+  if (local.x >= -1) {
+    return null;
+  }
+
+  return fromLocal({ x: -local.x, y: local.y }, mirror);
+}
+
 function imageForElement(item, objectItem) {
   if (!objectItem || (objectItem.type !== "optical-object" && objectItem.type !== "round-object")) {
     return null;
   }
 
   const local = toLocal({ x: objectItem.x, y: objectItem.y }, item);
-  const doValue = -local.x;
   const size = objectItem.type === "round-object" ? objectItem.radius : objectItem.height;
 
-  if (doValue <= 1) {
-    return null;
-  }
-
   if (isLens(item)) {
+    const doValue = -local.x;
+    if (doValue <= 1) {
+      return null;
+    }
+
     const f = item.focalLength;
     const denominator = (1 / f) - (1 / doValue);
     if (Math.abs(denominator) < 0.00001) {
@@ -414,11 +423,21 @@ function imageForElement(item, objectItem) {
 
   if (isMirror(item)) {
     if (item.type === "plane-mirror") {
+      const imagePoint = planeMirrorImagePoint(item, objectItem);
+      if (!imagePoint) {
+        return null;
+      }
+
       return {
-        point: fromLocal({ x: local.x * -1, y: local.y }, item),
+        point: imagePoint,
         height: size,
         virtual: true
       };
+    }
+
+    const doValue = -local.x;
+    if (doValue <= 1) {
+      return null;
     }
 
     const f = item.type === "concave-mirror" ? item.radius / 2 : -item.radius / 2;
@@ -1168,6 +1187,28 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
   return { imagePoint, hitPoint };
 }
 
+function planeMirrorFieldForEye(mirror, eye) {
+  if (mirror.type !== "plane-mirror") {
+    return null;
+  }
+
+  const eyeLocal = toLocal(eye, mirror);
+  if (eyeLocal.x >= -4) {
+    return null;
+  }
+
+  const endpoints = mirrorEndpoints(mirror);
+  const forward = { x: Math.cos(degToRad(eye.angle || 0)), y: Math.sin(degToRad(eye.angle || 0)) };
+  const toMirror = normalizeVector({ x: mirror.x - eye.x, y: mirror.y - eye.y });
+  const facing = Math.acos(clamp(dot(toMirror, forward), -1, 1)) * (180 / Math.PI);
+
+  if (facing > 65) {
+    return null;
+  }
+
+  return endpoints;
+}
+
 function buildFiberGuide(item, hitPoint, direction, beamColor) {
   const bounds = fiberBounds(item);
   const travelingRight = direction.x >= 0;
@@ -1845,6 +1886,20 @@ function drawOptics(trace) {
     }
 
     eyes.forEach((eye) => {
+      const field = planeMirrorFieldForEye(item, eye);
+      if (field) {
+        ctx.save();
+        ctx.setLineDash([8, 6]);
+        ctx.strokeStyle = "rgba(183, 220, 255, 0.6)";
+        ctx.beginPath();
+        ctx.moveTo(eye.x, eye.y);
+        ctx.lineTo(field.start.x, field.start.y);
+        ctx.moveTo(eye.x, eye.y);
+        ctx.lineTo(field.end.x, field.end.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       roundObjects.forEach((roundObject) => {
         const view = planeMirrorViewForEye(item, eye, roundObject);
         if (!view) {
