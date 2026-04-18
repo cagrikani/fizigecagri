@@ -242,6 +242,7 @@ h1 {
   width: 78px;
   height: 78px;
   border-radius: 24px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .home-module-button .module-copy strong {
@@ -314,7 +315,9 @@ h1 {
 }
 
 .optics-icon {
-  background: radial-gradient(circle at 30% 30%, rgba(255, 244, 198, 0.92), rgba(255, 208, 102, 0.18) 54%, rgba(255, 208, 102, 0) 60%);
+  background:
+    radial-gradient(circle at 22px 39px, rgba(255, 248, 214, 0.98) 0 7px, rgba(255, 208, 102, 0.24) 8px 18px, transparent 19px),
+    linear-gradient(135deg, rgba(255, 208, 102, 0.16), rgba(110, 168, 254, 0.1));
 }
 
 .optics-icon::before,
@@ -326,44 +329,51 @@ h1 {
 }
 
 .optics-icon::before {
-  left: 12px;
-  top: 37px;
-  width: 44px;
+  left: 22px;
+  top: 38px;
+  width: 28px;
   height: 3px;
-  background: linear-gradient(90deg, rgba(255, 242, 195, 1), rgba(255, 208, 102, 0));
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 243, 194, 1), rgba(255, 208, 102, 0));
+  box-shadow:
+    0 -8px 0 0 rgba(255, 208, 102, 0.7),
+    0 8px 0 0 rgba(255, 208, 102, 0.7);
 }
 
 .optics-icon::after {
   right: 12px;
-  top: 18px;
-  width: 16px;
-  height: 34px;
-  border-radius: 14px / 24px;
-  border: 3px solid rgba(142, 194, 255, 0.95);
+  top: 16px;
+  width: 18px;
+  height: 42px;
+  border-radius: 16px / 28px;
+  border: 3px solid rgba(170, 215, 255, 0.96);
+  background: linear-gradient(180deg, rgba(180, 221, 255, 0.14), rgba(120, 186, 255, 0.04));
 }
 
 .vectors-icon {
-  background: linear-gradient(135deg, rgba(93, 169, 255, 0.18), rgba(64, 214, 123, 0.1));
+  background:
+    linear-gradient(135deg, rgba(93, 169, 255, 0.18), rgba(64, 214, 123, 0.12)),
+    radial-gradient(circle at 18px 58px, rgba(255, 255, 255, 0.16), transparent 12px);
 }
 
 .vectors-icon::before {
-  left: 14px;
-  top: 42px;
-  width: 34px;
-  height: 4px;
+  left: 16px;
+  bottom: 18px;
+  width: 36px;
+  height: 10px;
   background: #5da9ff;
-  transform: rotate(-28deg);
+  clip-path: polygon(0 32%, 68% 32%, 68% 0, 100% 50%, 68% 100%, 68% 68%, 0 68%);
 }
 
 .vectors-icon::after {
-  right: 14px;
-  top: 18px;
-  width: 0;
-  height: 0;
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-  border-left: 14px solid #40d67b;
-  transform: rotate(18deg);
+  left: 18px;
+  top: 22px;
+  width: 34px;
+  height: 10px;
+  background: #40d67b;
+  clip-path: polygon(0 32%, 68% 32%, 68% 0, 100% 50%, 68% 100%, 68% 68%, 0 68%);
+  transform: rotate(-36deg);
+  transform-origin: left center;
 }
 
 .hero-panel {

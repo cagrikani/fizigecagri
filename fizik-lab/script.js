@@ -2578,8 +2578,8 @@ function renderUI() {
     button.classList.toggle("active", button.dataset.sceneButton === state.scene);
   });
 
-  document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektorler"}`;
-  document.getElementById("sidebar-scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektorler"}`;
+  document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektörler"}`;
+  document.getElementById("sidebar-scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektörler"}`;
   document.getElementById("empty-note").style.display = currentItems().length ? "none" : "block";
   document.getElementById("empty-note").textContent =
     state.scene === "optics"
@@ -2629,7 +2629,7 @@ function openScene(scene) {
   state.scene = scene === "vectors" ? "vectors" : "optics";
   state.view = "lab";
   selectedId = null;
-  state.notice = state.scene === "optics" ? "Optik modul acildi." : "Vektorler modul acildi.";
+  state.notice = state.scene === "optics" ? "Optik modul acildi." : "Vektörler modul acildi.";
   saveState();
   renderUI();
 }
@@ -2649,7 +2649,7 @@ function setScene(scene) {
   if (state.scene === "vectors") {
     state.vectors.resultVisible = false;
   }
-  state.notice = state.scene === "optics" ? "Optik modul aktif." : "Vektorler modul aktif.";
+  state.notice = state.scene === "optics" ? "Optik modul aktif." : "Vektörler modul aktif.";
   saveState();
   renderUI();
 }
