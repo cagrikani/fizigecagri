@@ -302,6 +302,12 @@ function vectorModeLabel(mode = state.vectors.mode) {
   return "Bilesenler";
 }
 
+function vectorModeLimit(mode = state.vectors.mode) {
+  if (mode === "tip-to-tail") return 4;
+  if (mode === "parallelogram") return 2;
+  return 4;
+}
+
 function vectorStartPosition(index = currentItems().filter((item) => isVector(item)).length) {
   const centerX = viewport.width / 2;
   const centerY = viewport.height / 2;
@@ -468,8 +474,9 @@ function addVectorFromComponents(dx, dy) {
   }
 
   const vectors = currentItems().filter((item) => isVector(item));
-  if (state.vectors.mode === "parallelogram" && vectors.length >= 2) {
-    state.notice = "Paralelkenar yonteminde en fazla iki vektor olusturulabilir.";
+  const limit = vectorModeLimit();
+  if (vectors.length >= limit) {
+    state.notice = `${vectorModeLabel()} icin en fazla ${limit} vektor olusturulabilir.`;
     renderUI();
     return;
   }
@@ -1078,12 +1085,14 @@ function renderModuleControls() {
     const vectors = currentItems().filter((item) => isVector(item));
     const scenario = vectorScenario(vectors);
     const calculateLabel = state.vectors.resultVisible ? "Bileskeyi yeniden hesapla" : "Bileske hesapla";
+    const limit = vectorModeLimit();
+    const canCreate = vectors.length < limit;
     const helperText =
       state.vectors.mode === "tip-to-tail"
-        ? "Vektorleri ekleyip kuyruklarini diger vektorlerin ucuna yaklastir. Yapistiginda zincir olusur."
+        ? "En fazla 4 vektor olustur. Vektorleri ust bolgede tutup kuyruklarini diger vektorlerin ucuna yaklastir. Yapistiginda zincir olusur."
         : state.vectors.mode === "parallelogram"
-          ? "Iki vektor olustur. Baslangic noktalarini ayni yere tasidiginda paralelkenar kurulur."
-          : "Vektorleri bilesenleri ile olustur. Hesaplandiginda x ve y bilesenleri koordinat sisteminde ayrilir.";
+          ? "Sistem yalnizca 2 vektor ister. Iki vektoru bilesenleriyle olustur, baslangic noktalarini birlestir, sonra bileskeyi hesapla."
+          : "En fazla 4 vektor olustur. Vektorler koordinat sisteminde gorunur; hesaplandiginda tumu bilesenlerine ayrilir.";
 
     copy.textContent = "Vektor olusturma, mod secimi ve bileske hesaplama islemleri bu panelden yapilir.";
     controls.innerHTML = `
@@ -1104,7 +1113,7 @@ function renderModuleControls() {
           </div>
         </div>
         <div class="inline-actions">
-          <button class="primary-button compact-action" type="button" data-vector-action="create">Vektor ciz</button>
+          <button class="primary-button compact-action" type="button" data-vector-action="create" ${canCreate ? "" : "disabled"}>Vektor ciz</button>
           ${
             scenario.canCalculate
               ? `<button class="secondary-button compact-action" type="button" data-vector-action="calculate">${calculateLabel}</button>`
@@ -1113,7 +1122,7 @@ function renderModuleControls() {
           <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektorleri temizle</button>
         </div>
         <div class="vector-mode-note">${helperText}</div>
-        <div class="vector-mode-note subtle">${vectors.length} vektor olusturuldu.</div>
+        <div class="vector-mode-note subtle">${vectors.length} / ${limit} vektor olusturuldu.</div>
       </div>
     `;
     return;
