@@ -1105,10 +1105,10 @@ function renderModuleControls() {
     const canCreate = vectors.length < limit;
     const helperText =
       state.vectors.mode === "tip-to-tail"
-        ? "En fazla 4 vektor olustur. Vektorleri ust bolgede tutup kuyruklarini diger vektorlerin ucuna yaklastir. Yapistiginda zincir olusur."
+        ? "En fazla 4 vektor olustur. Vektörleri ust bolgede tutup kuyruklarini diger vektorlerin ucuna yaklastir. Yapistiginda zincir olusur."
         : state.vectors.mode === "parallelogram"
           ? "Sistem yalnizca 2 vektor ister. Iki vektoru bilesenleriyle olustur, baslangic noktalarini birlestir, sonra bileskeyi hesapla."
-          : "En fazla 4 vektor olustur. Vektorler koordinat sisteminde gorunur; hesaplandiginda tumu bilesenlerine ayrilir.";
+          : "En fazla 4 vektor olustur. Vektörler koordinat sisteminde gorunur; hesaplandiginda tumu bilesenlerine ayrilir.";
 
     copy.textContent = "Vektor olusturma, mod secimi ve bileske hesaplama islemleri bu panelden yapilir.";
     controls.innerHTML = `
@@ -1135,7 +1135,7 @@ function renderModuleControls() {
               ? `<button class="secondary-button compact-action" type="button" data-vector-action="calculate">${calculateLabel}</button>`
               : ""
           }
-          <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektorleri temizle</button>
+          <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektörleri temizle</button>
         </div>
         <div class="vector-mode-note">${helperText}</div>
         <div class="vector-mode-note subtle">${vectors.length} / ${limit} vektor olusturuldu.</div>
@@ -2584,7 +2584,7 @@ function renderUI() {
   document.getElementById("empty-note").textContent =
     state.scene === "optics"
       ? "Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla."
-      : "Vektorler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas.";
+      : "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas.";
   document.getElementById("toolbox-panel").hidden = state.scene === "vectors";
   document.getElementById("toolbox-copy").textContent =
     state.scene === "optics"
@@ -2594,7 +2594,7 @@ function renderUI() {
     state.notice ||
     (state.scene === "optics"
       ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
-      : "Vektorleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla.");
+      : "Vektörleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla.");
   document.getElementById("run-scene-button").textContent =
     state.scene === "optics" ? "Isin yolunu hesapla" : "Bileskeyi goster";
   document.getElementById("pause-scene-button").textContent =
