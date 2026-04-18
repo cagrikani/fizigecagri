@@ -280,6 +280,12 @@ function vectorLabel(item) {
   return `V${index + 1}`;
 }
 
+function vectorSymbol(item) {
+  const vectors = currentItems().filter((entry) => isVector(entry));
+  const index = vectors.findIndex((entry) => entry.id === item.id);
+  return ["A", "B", "C", "D"][index] || `V${index + 1}`;
+}
+
 function vectorMagnitude(item) {
   return Math.hypot(item.dx, item.dy);
 }
@@ -471,6 +477,9 @@ function addVectorFromComponents(dx, dy) {
 
   const vectors = currentItems().filter((item) => isVector(item));
   const limit = vectorModeLimit();
+  if (state.vectors.mode === "parallelogram") {
+    state.vectors.items = vectors.slice(0, 2);
+  }
   if (vectors.length >= limit) {
     state.notice = `${vectorModeLabel()} icin en fazla ${limit} vektor olusturulabilir.`;
     renderUI();
@@ -2444,6 +2453,7 @@ function drawVectors() {
     vectors.forEach((vector) => {
       const start = { ...center };
       const end = vectorEnd(vector, start);
+      const symbol = vectorSymbol(vector);
       ctx.save();
       ctx.setLineDash([8, 6]);
       ctx.beginPath();
@@ -2460,9 +2470,24 @@ function drawVectors() {
       ctx.fillStyle = "rgba(239, 244, 255, 0.86)";
       ctx.font = "600 12px Space Grotesk";
       ctx.textAlign = "left";
-      ctx.fillText(`${vectorLabel(vector)}: x=${Math.round(vector.dx)}, y=${Math.round(-vector.dy)}`, end.x + 10, end.y - 6);
+      ctx.fillText(`${symbol}: x=${Math.round(vector.dx)}, y=${Math.round(-vector.dy)}`, end.x + 10, end.y - 6);
+      ctx.fillStyle = "#ffd166";
+      ctx.fillText(`${symbol}_x`, start.x + vector.dx * 0.5, start.y - 10);
+      ctx.fillStyle = "#40d67b";
+      ctx.fillText(`${symbol}_y`, end.x + 10, start.y + vector.dy * 0.5);
     });
-    drawArrow(center, { x: center.x + total.x, y: center.y + total.y }, "#ff6b6b", 4.5);
+    const resultantEnd = { x: center.x + total.x, y: center.y + total.y };
+    drawArrow(center, resultantEnd, "#ff6b6b", 4.5);
+    ctx.fillStyle = "rgba(255, 107, 107, 0.95)";
+    ctx.font = "700 12px Space Grotesk";
+    ctx.textAlign = "left";
+    ctx.fillText("R", resultantEnd.x + 10, resultantEnd.y - 10);
+    ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+    ctx.fillText(
+      `Bileske |R|=${Math.round(Math.hypot(total.x, total.y))} br, aci=${((Math.round(radToDeg(Math.atan2(-total.y, total.x))) % 360) + 360) % 360}°, Rx=${Math.round(total.x)}, Ry=${Math.round(-total.y)}`,
+      24,
+      34
+    );
   }
 }
 
