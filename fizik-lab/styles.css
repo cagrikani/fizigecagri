@@ -644,6 +644,36 @@ h1 {
   color: var(--text);
 }
 
+.vector-controls {
+  display: grid;
+  gap: 14px;
+}
+
+.vector-builder {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vector-mode-note {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(93, 169, 255, 0.18);
+  background: rgba(93, 169, 255, 0.08);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.vector-mode-note.subtle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.compact-action {
+  padding-inline: 16px;
+}
+
 .inspector-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 14px;
@@ -733,6 +763,7 @@ h1 {
 
   .tool-grid,
   .readout-grid,
+  .vector-builder,
   .inspector-grid,
   .object-list {
     grid-template-columns: 1fr;

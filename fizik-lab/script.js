@@ -29,9 +29,11 @@ const defaultState = {
   vectors: {
     items: [],
     mode: "tip-to-tail",
-    showHelpers: true
+    resultVisible: false
   }
 };
+
+const VECTOR_SNAP_DISTANCE = 20;
 
 const canvas = document.getElementById("lab-canvas");
 const ctx = canvas.getContext("2d");
@@ -84,7 +86,7 @@ function normalizeState(raw) {
     vectors: {
       items: Array.isArray(raw.vectors?.items) ? raw.vectors.items : [],
       mode: ["tip-to-tail", "parallelogram", "components"].includes(raw.vectors?.mode) ? raw.vectors.mode : "tip-to-tail",
-      showHelpers: raw.vectors?.showHelpers !== false
+      resultVisible: raw.vectors?.resultVisible === true
     }
   };
 }
@@ -284,6 +286,228 @@ function vectorMagnitude(item) {
 
 function vectorAngle(item) {
   return ((Math.round(radToDeg(Math.atan2(-item.dy, item.dx))) % 360) + 360) % 360;
+}
+
+function vectorTail(item) {
+  return { x: item.x, y: item.y };
+}
+
+function distanceBetween(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function vectorModeLabel(mode = state.vectors.mode) {
+  if (mode === "tip-to-tail") return "Uc uca ekleme";
+  if (mode === "parallelogram") return "Paralelkenar";
+  return "Bilesenler";
+}
+
+function vectorStartPosition(index = currentItems().filter((item) => isVector(item)).length) {
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height / 2;
+
+  if (state.vectors.mode === "tip-to-tail") {
+    return { x: 120 + index * 90, y: 120 + (index % 2) * 46 };
+  }
+
+  if (state.vectors.mode === "parallelogram") {
+    return { x: centerX - 120 + index * 140, y: centerY + 120 };
+  }
+
+  return { x: centerX, y: centerY };
+}
+
+function updateVectorNotice(message) {
+  state.notice = message;
+  state.vectors.resultVisible = false;
+}
+
+function vectorScenario(vectors = currentItems().filter((item) => isVector(item))) {
+  if (state.vectors.mode === "tip-to-tail") {
+    if (!vectors.length) {
+      return { canCalculate: false };
+    }
+
+    if (vectors.length === 1) {
+      const only = vectors[0];
+      return {
+        canCalculate: true,
+        ordered: [only],
+        start: vectorTail(only),
+        end: vectorEnd(only)
+      };
+    }
+
+    const predecessor = new Map();
+    const successor = new Map();
+
+    vectors.forEach((vector) => {
+      let best = null;
+      vectors.forEach((candidate) => {
+        if (candidate.id === vector.id) return;
+        const distance = distanceBetween(vectorTail(vector), vectorEnd(candidate));
+        if (distance > VECTOR_SNAP_DISTANCE) return;
+        if (!best || distance < best.distance) {
+          best = { id: candidate.id, distance };
+        }
+      });
+      if (best) predecessor.set(vector.id, best.id);
+    });
+
+    vectors.forEach((vector) => {
+      let best = null;
+      vectors.forEach((candidate) => {
+        if (candidate.id === vector.id) return;
+        const distance = distanceBetween(vectorEnd(vector), vectorTail(candidate));
+        if (distance > VECTOR_SNAP_DISTANCE) return;
+        if (!best || distance < best.distance) {
+          best = { id: candidate.id, distance };
+        }
+      });
+      if (best) successor.set(vector.id, best.id);
+    });
+
+    const startCandidates = vectors.filter((vector) => !predecessor.has(vector.id));
+    const endCandidates = vectors.filter((vector) => !successor.has(vector.id));
+
+    if (startCandidates.length !== 1 || endCandidates.length !== 1) {
+      return { canCalculate: false };
+    }
+
+    const ordered = [];
+    const visited = new Set();
+    let current = startCandidates[0];
+
+    while (current && !visited.has(current.id)) {
+      ordered.push(current);
+      visited.add(current.id);
+      current = vectors.find((vector) => vector.id === successor.get(current.id));
+    }
+
+    if (ordered.length !== vectors.length) {
+      return { canCalculate: false };
+    }
+
+    return {
+      canCalculate: true,
+      ordered,
+      start: vectorTail(ordered[0]),
+      end: vectorEnd(ordered[ordered.length - 1])
+    };
+  }
+
+  if (state.vectors.mode === "parallelogram") {
+    if (vectors.length !== 2) {
+      return { canCalculate: false };
+    }
+
+    const [first, second] = vectors;
+    if (distanceBetween(vectorTail(first), vectorTail(second)) > VECTOR_SNAP_DISTANCE) {
+      return { canCalculate: false };
+    }
+
+    return { canCalculate: true, origin: vectorTail(first), ordered: vectors };
+  }
+
+  return { canCalculate: vectors.length > 0, ordered: vectors, origin: { x: viewport.width / 2, y: viewport.height / 2 } };
+}
+
+function snapVectorForMode(item) {
+  if (!isVector(item) || state.scene !== "vectors") {
+    return;
+  }
+
+  const others = currentItems().filter((entry) => isVector(entry) && entry.id !== item.id);
+
+  if (state.vectors.mode === "tip-to-tail") {
+    let closest = null;
+    others.forEach((other) => {
+      const target = vectorEnd(other);
+      const distance = distanceBetween(vectorTail(item), target);
+      if (distance <= VECTOR_SNAP_DISTANCE && (!closest || distance < closest.distance)) {
+        closest = { point: target, distance };
+      }
+    });
+
+    if (closest) {
+      item.x = closest.point.x;
+      item.y = closest.point.y;
+    }
+  }
+
+  if (state.vectors.mode === "parallelogram") {
+    let closest = null;
+    others.forEach((other) => {
+      const target = vectorTail(other);
+      const distance = distanceBetween(vectorTail(item), target);
+      if (distance <= VECTOR_SNAP_DISTANCE && (!closest || distance < closest.distance)) {
+        closest = { point: target, distance };
+      }
+    });
+
+    if (closest) {
+      item.x = closest.point.x;
+      item.y = closest.point.y;
+    }
+  }
+
+  if (state.vectors.mode === "components") {
+    item.x = viewport.width / 2;
+    item.y = viewport.height / 2;
+  }
+}
+
+function addVectorFromComponents(dx, dy) {
+  const numericDx = Number(dx);
+  const numericDy = Number(dy);
+
+  if (!Number.isFinite(numericDx) || !Number.isFinite(numericDy)) {
+    state.notice = "Bilesenleri sayisal olarak gir.";
+    renderUI();
+    return;
+  }
+
+  const vectors = currentItems().filter((item) => isVector(item));
+  if (state.vectors.mode === "parallelogram" && vectors.length >= 2) {
+    state.notice = "Paralelkenar yonteminde en fazla iki vektor olusturulabilir.";
+    renderUI();
+    return;
+  }
+
+  const position = vectorStartPosition(vectors.length);
+  const item = {
+    id: uid("vector"),
+    type: "vector",
+    x: position.x,
+    y: position.y,
+    dx: numericDx,
+    dy: -numericDy,
+    color: ["#5da9ff", "#40d67b", "#ff9f43", "#bf5af2"][vectors.length % 4]
+  };
+
+  constrainItem(item);
+  currentItems().push(item);
+  selectedId = item.id;
+  updateVectorNotice(`${vectorLabel(item)} olusturuldu. Uygun konuma tasiyip sonra bileskeyi hesaplayabilirsin.`);
+  renderUI();
+}
+
+function calculateVectors() {
+  const scenario = vectorScenario();
+  if (!scenario.canCalculate) {
+    state.notice =
+      state.vectors.mode === "tip-to-tail"
+        ? "Tum vektorleri uc uca bagladiktan sonra bileske hesaplanabilir."
+        : state.vectors.mode === "parallelogram"
+          ? "Iki vektorun baslangic noktalari birlestirildiginde bileske hesaplanir."
+          : "En az bir vektor olusturup sonra bileskeyi hesaplayabilirsin.";
+    renderUI();
+    return;
+  }
+
+  state.vectors.resultVisible = true;
+  state.notice = `${vectorModeLabel()} icin bileske hesaplandi.`;
+  renderUI();
 }
 
 function prismVertices(item) {
@@ -831,8 +1055,8 @@ function renderLegend() {
   const legend = document.getElementById("legend");
   if (state.scene === "vectors") {
     legend.innerHTML = `
-      <span class="legend-chip laser">Temel vektor</span>
-      <span class="legend-chip mirror">Yardimci kopya</span>
+      <span class="legend-chip laser">Girilen vektor</span>
+      <span class="legend-chip mirror">Yontem cizgileri</span>
       <span class="legend-chip force">Bileske vektor</span>
     `;
     return;
@@ -851,12 +1075,45 @@ function renderModuleControls() {
   const controls = document.getElementById("module-controls");
 
   if (state.scene === "vectors") {
-    copy.textContent = "Vektorler icin yardimci yontemi sec. Bileske her yontemde sahnede gosterilir.";
+    const vectors = currentItems().filter((item) => isVector(item));
+    const scenario = vectorScenario(vectors);
+    const calculateLabel = state.vectors.resultVisible ? "Bileskeyi yeniden hesapla" : "Bileske hesapla";
+    const helperText =
+      state.vectors.mode === "tip-to-tail"
+        ? "Vektorleri ekleyip kuyruklarini diger vektorlerin ucuna yaklastir. Yapistiginda zincir olusur."
+        : state.vectors.mode === "parallelogram"
+          ? "Iki vektor olustur. Baslangic noktalarini ayni yere tasidiginda paralelkenar kurulur."
+          : "Vektorleri bilesenleri ile olustur. Hesaplandiginda x ve y bilesenleri koordinat sisteminde ayrilir.";
+
+    copy.textContent = "Vektor olusturma, mod secimi ve bileske hesaplama islemleri bu panelden yapilir.";
     controls.innerHTML = `
-      <div class="scene-switch" aria-label="Vektor yontemi">
-        <button class="scene-button ${state.vectors.mode === "tip-to-tail" ? "active" : ""}" type="button" data-vector-mode="tip-to-tail">Uc uca ekleme</button>
-        <button class="scene-button ${state.vectors.mode === "parallelogram" ? "active" : ""}" type="button" data-vector-mode="parallelogram">Paralelkenar</button>
-        <button class="scene-button ${state.vectors.mode === "components" ? "active" : ""}" type="button" data-vector-mode="components">Bilesenler</button>
+      <div class="vector-controls">
+        <div class="scene-switch" aria-label="Vektor yontemi">
+          <button class="scene-button ${state.vectors.mode === "tip-to-tail" ? "active" : ""}" type="button" data-vector-mode="tip-to-tail">Uc uca ekleme</button>
+          <button class="scene-button ${state.vectors.mode === "parallelogram" ? "active" : ""}" type="button" data-vector-mode="parallelogram">Paralelkenar</button>
+          <button class="scene-button ${state.vectors.mode === "components" ? "active" : ""}" type="button" data-vector-mode="components">Bilesenler</button>
+        </div>
+        <div class="vector-builder">
+          <div class="field">
+            <label>Bilesen X</label>
+            <input id="vector-dx-input" type="number" step="1" placeholder="orn. 120" />
+          </div>
+          <div class="field">
+            <label>Bilesen Y</label>
+            <input id="vector-dy-input" type="number" step="1" placeholder="orn. 80" />
+          </div>
+        </div>
+        <div class="inline-actions">
+          <button class="primary-button compact-action" type="button" data-vector-action="create">Vektor ciz</button>
+          ${
+            scenario.canCalculate
+              ? `<button class="secondary-button compact-action" type="button" data-vector-action="calculate">${calculateLabel}</button>`
+              : ""
+          }
+          <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektorleri temizle</button>
+        </div>
+        <div class="vector-mode-note">${helperText}</div>
+        <div class="vector-mode-note subtle">${vectors.length} vektor olusturuldu.</div>
       </div>
     `;
     return;
@@ -915,10 +1172,12 @@ function renderInspector() {
     return;
   }
 
-  const fields = [
-    numberField("Konum X", "x", item.x, 0, viewport.width, 1),
-    numberField("Konum Y", "y", item.y, 0, viewport.height, 1)
-  ];
+  const fields = isVector(item)
+    ? []
+    : [
+        numberField("Konum X", "x", item.x, 0, viewport.width, 1),
+        numberField("Konum Y", "y", item.y, 0, viewport.height, 1)
+      ];
 
   if (item.type === "laser") {
     fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1, true));
@@ -2119,18 +2378,19 @@ function vectorResultant(vectors) {
 
 function drawVectors() {
   const vectors = currentItems().filter((item) => isVector(item));
-  const helpersVisible = state.vectors.showHelpers;
   const selected = selectedItem();
   const center = { x: viewport.width / 2, y: viewport.height / 2 };
+  const scenario = vectorScenario(vectors);
   drawVectorAxes();
 
-  vectors.forEach((item, index) => {
+  vectors.forEach((item) => {
     const isSelected = item.id === selectedId;
-    const end = vectorEnd(item);
-    drawArrow({ x: item.x, y: item.y }, end, item.color, isSelected ? 4 : 3);
+    const start = state.vectors.mode === "components" ? center : vectorTail(item);
+    const end = vectorEnd(item, start);
+    drawArrow(start, end, item.color, isSelected ? 4 : 3);
     ctx.fillStyle = item.color;
     ctx.beginPath();
-    ctx.arc(item.x, item.y, 6, 0, Math.PI * 2);
+    ctx.arc(start.x, start.y, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.arc(end.x, end.y, isSelected ? 7 : 5, 0, Math.PI * 2);
@@ -2138,33 +2398,23 @@ function drawVectors() {
     ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
     ctx.font = "600 12px Space Grotesk";
     ctx.textAlign = "center";
-    ctx.fillText(vectorLabel(item), item.x + item.dx * 0.55, item.y + item.dy * 0.55 - 10);
+    ctx.fillText(vectorLabel(item), start.x + item.dx * 0.55, start.y + item.dy * 0.55 - 10);
     ctx.fillText(`${Math.round(vectorMagnitude(item))} br • ${vectorAngle(item)}°`, end.x, end.y - 14);
   });
 
-  if (!vectors.length || !helpersVisible) {
+  if (!vectors.length || !state.vectors.resultVisible) {
     return;
   }
 
   const total = vectorResultant(vectors);
-  const helperOrigin = { ...center };
 
-  if (state.vectors.mode === "tip-to-tail") {
-    let current = { ...helperOrigin };
-    vectors.forEach((vector) => {
-      const next = vectorEnd(vector, current);
-      ctx.save();
-      ctx.setLineDash([8, 6]);
-      drawArrow(current, next, "rgba(148, 223, 255, 0.78)", 2.5);
-      ctx.restore();
-      current = next;
-    });
-    drawArrow(helperOrigin, { x: helperOrigin.x + total.x, y: helperOrigin.y + total.y }, "#ff6b6b", 4);
+  if (state.vectors.mode === "tip-to-tail" && scenario.canCalculate) {
+    drawArrow(scenario.start, scenario.end, "#ff6b6b", 4.5);
   }
 
-  if (state.vectors.mode === "parallelogram" && vectors.length >= 2) {
-    const [a, b] = vectors;
-    const origin = { ...center };
+  if (state.vectors.mode === "parallelogram" && scenario.canCalculate) {
+    const [a, b] = scenario.ordered;
+    const origin = scenario.origin;
     const endA = vectorEnd(a, origin);
     const endB = vectorEnd(b, origin);
     const corner = { x: origin.x + a.dx + b.dx, y: origin.y + a.dy + b.dy };
@@ -2182,10 +2432,10 @@ function drawVectors() {
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
-    drawArrow(origin, corner, "#ff6b6b", 4);
+    drawArrow(origin, corner, "#ff6b6b", 4.5);
   }
 
-  if (state.vectors.mode === "components") {
+  if (state.vectors.mode === "components" && scenario.canCalculate) {
     vectors.forEach((vector) => {
       const start = { ...center };
       const end = vectorEnd(vector, start);
@@ -2207,9 +2457,8 @@ function drawVectors() {
       ctx.textAlign = "left";
       ctx.fillText(`${vectorLabel(vector)}: x=${Math.round(vector.dx)}, y=${Math.round(-vector.dy)}`, end.x + 10, end.y - 6);
     });
+    drawArrow(center, { x: center.x + total.x, y: center.y + total.y }, "#ff6b6b", 4.5);
   }
-
-  drawArrow(helperOrigin, { x: helperOrigin.x + total.x, y: helperOrigin.y + total.y }, "#ff6b6b", 4);
 }
 
 function renderSummaries(trace = { segments: [], interactions: 0 }) {
@@ -2230,15 +2479,13 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
   if (state.scene === "vectors") {
     const vectors = items.filter((item) => isVector(item));
     const total = vectorResultant(vectors);
+    const scenario = vectorScenario(vectors);
     primary.textContent = `${vectors.length} vektor`;
-    secondary.textContent =
-      state.vectors.mode === "tip-to-tail"
-        ? "Uc uca ekleme"
-        : state.vectors.mode === "parallelogram"
-          ? "Paralelkenar"
-          : "Bilesenler";
-    tertiary.textContent = `${Math.round(Math.hypot(total.x, total.y))} br bileske • ${((Math.round(radToDeg(Math.atan2(-total.y, total.x))) % 360) + 360) % 360} derece`;
-    sceneState.textContent = state.vectors.showHelpers ? "Yardimcilar acik" : "Yardimcilar gizli";
+    secondary.textContent = vectorModeLabel();
+    tertiary.textContent = state.vectors.resultVisible
+      ? `${Math.round(Math.hypot(total.x, total.y))} br bileske • ${((Math.round(radToDeg(Math.atan2(-total.y, total.x))) % 360) + 360) % 360} derece`
+      : "Bileske hesaplanmayi bekliyor";
+    sceneState.textContent = scenario.canCalculate ? "Hesaba hazir" : "Yerlesim bekleniyor";
     return;
   }
 
@@ -2280,19 +2527,26 @@ function renderUI() {
 
   document.getElementById("scene-label").textContent = `Aktif modul: ${state.scene === "optics" ? "Optik" : "Vektorler"}`;
   document.getElementById("empty-note").style.display = currentItems().length ? "none" : "block";
+  document.getElementById("empty-note").textContent =
+    state.scene === "optics"
+      ? "Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla."
+      : "Vektorler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas.";
+  document.getElementById("toolbox-panel").hidden = state.scene === "vectors";
   document.getElementById("toolbox-copy").textContent =
     state.scene === "optics"
       ? "Optik sahneye yeni fizik nesneleri eklenir."
-      : "Vektor sahnesine yeni vektorler eklenir.";
+      : "Vektor sahnesinde uretilen vektorler mod kontrol panelinden yonetilir.";
   document.getElementById("status-text").textContent =
     state.notice ||
     (state.scene === "optics"
       ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
-      : "Vektorleri kuyruktan surukleyerek tasiyin, ucundan surukleyerek buyukluk ve yonlerini degistirin.");
+      : "Vektorleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla.");
   document.getElementById("run-scene-button").textContent =
     state.scene === "optics" ? "Isin yolunu hesapla" : "Bileskeyi goster";
   document.getElementById("pause-scene-button").textContent =
     state.scene === "optics" ? "Duraklat" : "Yardimcilari gizle";
+  document.getElementById("run-scene-button").style.display = state.scene === "vectors" ? "none" : "";
+  document.getElementById("pause-scene-button").style.display = state.scene === "vectors" ? "none" : "";
 }
 
 function addItem(type) {
@@ -2308,6 +2562,9 @@ function clearScene() {
   state.running = false;
   lastTick = 0;
   state[state.scene].items = [];
+  if (state.scene === "vectors") {
+    state.vectors.resultVisible = false;
+  }
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
   saveState();
@@ -2318,6 +2575,9 @@ function setScene(scene) {
   if (scene === state.scene) return;
   state.scene = scene === "vectors" ? "vectors" : "optics";
   selectedId = null;
+  if (state.scene === "vectors") {
+    state.vectors.resultVisible = false;
+  }
   state.notice = state.scene === "optics" ? "Optik modul aktif." : "Vektorler modul aktif.";
   saveState();
   renderUI();
@@ -2325,10 +2585,7 @@ function setScene(scene) {
 
 function runScene() {
   if (state.scene === "vectors") {
-    state.vectors.showHelpers = true;
-    state.notice = "Vektor yardimcilari ve bileske gosterildi.";
-    saveState();
-    renderUI();
+    calculateVectors();
     return;
   }
   state.opticsVisible = true;
@@ -2339,8 +2596,8 @@ function runScene() {
 
 function pauseScene() {
   if (state.scene === "vectors") {
-    state.vectors.showHelpers = false;
-    state.notice = "Vektor yardimcilari gizlendi.";
+    state.vectors.resultVisible = false;
+    state.notice = "Vektor bileskesi gizlendi.";
     saveState();
     renderUI();
     return;
@@ -2415,8 +2672,13 @@ function canvasPoint(event) {
 }
 
 function vectorHandleMode(point, item) {
-  const end = vectorEnd(item);
+  const start = state.vectors.mode === "components" ? { x: viewport.width / 2, y: viewport.height / 2 } : vectorTail(item);
+  const end = vectorEnd(item, start);
   if (Math.hypot(point.x - end.x, point.y - end.y) <= 16) {
+    return "vector-end";
+  }
+
+  if (state.vectors.mode === "components") {
     return "vector-end";
   }
 
@@ -2462,9 +2724,10 @@ function hitItem(point) {
     }
 
     if (isVector(item)) {
+      const start = state.vectors.mode === "components" ? { x: viewport.width / 2, y: viewport.height / 2 } : vectorTail(item);
       return (
-        distanceToSegment(point, { x: item.x, y: item.y }, vectorEnd(item)) <= 12 ||
-        Math.hypot(point.x - item.x, point.y - item.y) <= 10
+        distanceToSegment(point, start, vectorEnd(item, start)) <= 12 ||
+        Math.hypot(point.x - start.x, point.y - start.y) <= 10
       );
     }
 
@@ -2529,20 +2792,30 @@ function initCanvasInteractions() {
 
     const point = canvasPoint(event);
     if (dragState.mode === "vector-end" && isVector(item)) {
-      item.dx = point.x - item.x;
-      item.dy = point.y - item.y;
+      const anchor = state.vectors.mode === "components" ? { x: viewport.width / 2, y: viewport.height / 2 } : vectorTail(item);
+      item.dx = point.x - anchor.x;
+      item.dy = point.y - anchor.y;
     } else {
       item.x = point.x - dragState.offsetX;
       item.y = point.y - dragState.offsetY;
     }
     constrainItem(item);
+    snapVectorForMode(item);
+    if (isVector(item)) {
+      state.vectors.resultVisible = false;
+    }
     renderUI();
   });
 
   const release = () => {
     if (!dragState) return;
+    const item = currentItems().find((entry) => entry.id === dragState.id);
+    if (item) {
+      snapVectorForMode(item);
+    }
     dragState = null;
     saveState();
+    renderUI();
   };
 
   canvas.addEventListener("pointerup", release);
@@ -2569,12 +2842,40 @@ function initEvents() {
 
   document.getElementById("module-controls").addEventListener("click", (event) => {
     const button = event.target.closest("[data-vector-mode]");
-    if (!button) return;
-    state.vectors.mode = button.dataset.vectorMode;
-    state.vectors.showHelpers = true;
-    state.notice = "Vektor yontemi degistirildi.";
-    saveState();
-    renderUI();
+    if (button) {
+      state.vectors.mode = button.dataset.vectorMode;
+      state.vectors.items = [];
+      state.vectors.resultVisible = false;
+      selectedId = null;
+      state.notice = `${vectorModeLabel(button.dataset.vectorMode)} modu acildi. Yeni vektorlerini bu metoda gore olustur.`;
+      saveState();
+      renderUI();
+      return;
+    }
+
+    const action = event.target.closest("[data-vector-action]");
+    if (!action) return;
+
+    if (action.dataset.vectorAction === "create") {
+      addVectorFromComponents(
+        document.getElementById("vector-dx-input")?.value,
+        document.getElementById("vector-dy-input")?.value
+      );
+      return;
+    }
+
+    if (action.dataset.vectorAction === "calculate") {
+      calculateVectors();
+      return;
+    }
+
+    if (action.dataset.vectorAction === "clear") {
+      state.vectors.items = [];
+      state.vectors.resultVisible = false;
+      selectedId = null;
+      state.notice = "Vektor sahasi temizlendi.";
+      renderUI();
+    }
   });
 
   document.getElementById("object-list").addEventListener("click", (event) => {
@@ -2594,6 +2895,9 @@ function initEvents() {
 
     item[input.dataset.prop] = input.tagName === "SELECT" ? input.value : Number(input.value);
     constrainItem(item);
+    if (isVector(item)) {
+      state.vectors.resultVisible = false;
+    }
     state.notice = `${itemTitle(item)} guncellendi.`;
     saveState();
     renderUI();
@@ -2608,6 +2912,9 @@ function initEvents() {
 
     if (button.dataset.action === "delete") {
       state[state.scene].items = currentItems().filter((entry) => entry.id !== item.id);
+      if (isVector(item)) {
+        state.vectors.resultVisible = false;
+      }
       selectedId = null;
       state.notice = `${itemTitle(item)} silindi.`;
     }
