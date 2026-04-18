@@ -314,6 +314,17 @@ function vectorModeLimit(mode = state.vectors.mode) {
   return 4;
 }
 
+function trimVectorsToModeLimit() {
+  if (state.scene !== "vectors") {
+    return;
+  }
+
+  const limit = vectorModeLimit();
+  if (state.vectors.items.length > limit) {
+    state.vectors.items = state.vectors.items.filter((item) => isVector(item)).slice(0, limit);
+  }
+}
+
 function vectorStartPosition(index = currentItems().filter((item) => isVector(item)).length) {
   const centerX = viewport.width / 2;
   const centerY = viewport.height / 2;
@@ -475,11 +486,9 @@ function addVectorFromComponents(dx, dy) {
     return;
   }
 
+  trimVectorsToModeLimit();
   const vectors = currentItems().filter((item) => isVector(item));
   const limit = vectorModeLimit();
-  if (state.vectors.mode === "parallelogram") {
-    state.vectors.items = vectors.slice(0, 2);
-  }
   if (vectors.length >= limit) {
     state.notice = `${vectorModeLabel()} icin en fazla ${limit} vektor olusturulabilir.`;
     renderUI();
@@ -2543,6 +2552,7 @@ function renderScene() {
 }
 
 function renderUI() {
+  trimVectorsToModeLimit();
   ensureSelection();
   renderToolGrid();
   renderLegend();

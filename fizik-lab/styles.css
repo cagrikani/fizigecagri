@@ -191,6 +191,119 @@ h1 {
   color: var(--accent);
 }
 
+.module-card {
+  min-width: 0;
+  border-radius: 24px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1 1 0;
+  justify-content: flex-start;
+}
+
+.module-copy {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.module-copy strong {
+  display: block;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.module-copy small {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.module-icon {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.optics-card {
+  background: linear-gradient(135deg, rgba(255, 208, 102, 0.14), rgba(110, 168, 254, 0.08));
+  border-color: rgba(255, 208, 102, 0.24);
+}
+
+.vectors-card {
+  background: linear-gradient(135deg, rgba(93, 169, 255, 0.16), rgba(64, 214, 123, 0.08));
+  border-color: rgba(93, 169, 255, 0.24);
+}
+
+.scene-button.module-card.active.optics-card {
+  background: linear-gradient(135deg, rgba(255, 208, 102, 0.28), rgba(110, 168, 254, 0.18));
+  border-color: rgba(255, 208, 102, 0.44);
+  color: var(--text);
+}
+
+.scene-button.module-card.active.vectors-card {
+  background: linear-gradient(135deg, rgba(93, 169, 255, 0.28), rgba(64, 214, 123, 0.16));
+  border-color: rgba(93, 169, 255, 0.4);
+  color: var(--text);
+}
+
+.optics-icon {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 244, 198, 0.92), rgba(255, 208, 102, 0.18) 54%, rgba(255, 208, 102, 0) 60%);
+}
+
+.optics-icon::before,
+.optics-icon::after,
+.vectors-icon::before,
+.vectors-icon::after {
+  content: "";
+  position: absolute;
+}
+
+.optics-icon::before {
+  left: 14px;
+  top: 25px;
+  width: 28px;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(255, 242, 195, 1), rgba(255, 208, 102, 0));
+}
+
+.optics-icon::after {
+  right: 8px;
+  top: 16px;
+  width: 12px;
+  height: 22px;
+  border-radius: 12px / 18px;
+  border: 2px solid rgba(142, 194, 255, 0.95);
+}
+
+.vectors-icon {
+  background: linear-gradient(135deg, rgba(93, 169, 255, 0.18), rgba(64, 214, 123, 0.1));
+}
+
+.vectors-icon::before {
+  left: 12px;
+  top: 30px;
+  width: 24px;
+  height: 3px;
+  background: #5da9ff;
+  transform: rotate(-28deg);
+}
+
+.vectors-icon::after {
+  right: 12px;
+  top: 16px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #40d67b;
+  transform: rotate(18deg);
+}
+
 .hero-panel {
   display: grid;
   gap: 14px;
