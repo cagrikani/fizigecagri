@@ -76,6 +76,22 @@ select {
   pointer-events: none;
 }
 
+.home-screen {
+  min-height: 72vh;
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+}
+
+.home-screen .hero-copy {
+  width: min(920px, 100%);
+}
+
+.home-screen .hero-text {
+  margin-inline: auto;
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -207,6 +223,39 @@ h1 {
   justify-content: flex-start;
 }
 
+.home-module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 34px;
+}
+
+.home-module-button {
+  width: 100%;
+  min-height: 190px;
+  border-radius: 32px;
+  justify-content: center;
+  padding: 24px 26px;
+}
+
+.home-module-button .module-icon {
+  width: 78px;
+  height: 78px;
+  border-radius: 24px;
+}
+
+.home-module-button .module-copy strong {
+  font-size: 1.28rem;
+}
+
+.home-module-button .module-copy small {
+  font-size: 0.98rem;
+}
+
+.home-module-button:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
 .module-copy {
   display: grid;
   gap: 4px;
@@ -256,6 +305,14 @@ h1 {
   color: var(--text);
 }
 
+.home-module-button.optics-card {
+  background: linear-gradient(135deg, rgba(255, 208, 102, 0.24), rgba(110, 168, 254, 0.14));
+}
+
+.home-module-button.vectors-card {
+  background: linear-gradient(135deg, rgba(93, 169, 255, 0.26), rgba(64, 214, 123, 0.14));
+}
+
 .optics-icon {
   background: radial-gradient(circle at 30% 30%, rgba(255, 244, 198, 0.92), rgba(255, 208, 102, 0.18) 54%, rgba(255, 208, 102, 0) 60%);
 }
@@ -269,20 +326,20 @@ h1 {
 }
 
 .optics-icon::before {
-  left: 14px;
-  top: 25px;
-  width: 28px;
+  left: 12px;
+  top: 37px;
+  width: 44px;
   height: 3px;
   background: linear-gradient(90deg, rgba(255, 242, 195, 1), rgba(255, 208, 102, 0));
 }
 
 .optics-icon::after {
-  right: 8px;
-  top: 16px;
-  width: 12px;
-  height: 22px;
-  border-radius: 12px / 18px;
-  border: 2px solid rgba(142, 194, 255, 0.95);
+  right: 12px;
+  top: 18px;
+  width: 16px;
+  height: 34px;
+  border-radius: 14px / 24px;
+  border: 3px solid rgba(142, 194, 255, 0.95);
 }
 
 .vectors-icon {
@@ -290,22 +347,22 @@ h1 {
 }
 
 .vectors-icon::before {
-  left: 12px;
-  top: 30px;
-  width: 24px;
-  height: 3px;
+  left: 14px;
+  top: 42px;
+  width: 34px;
+  height: 4px;
   background: #5da9ff;
   transform: rotate(-28deg);
 }
 
 .vectors-icon::after {
-  right: 12px;
-  top: 16px;
+  right: 14px;
+  top: 18px;
   width: 0;
   height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 10px solid #40d67b;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 14px solid #40d67b;
   transform: rotate(18deg);
 }
 
