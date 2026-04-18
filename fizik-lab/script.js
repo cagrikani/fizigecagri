@@ -313,7 +313,13 @@ function vectorStartPosition(index = currentItems().filter((item) => isVector(it
   const centerY = viewport.height / 2;
 
   if (state.vectors.mode === "tip-to-tail") {
-    return { x: 120 + index * 90, y: 120 + (index % 2) * 46 };
+    const spread = [
+      { x: 120, y: 120 },
+      { x: viewport.width - 250, y: 140 },
+      { x: 170, y: viewport.height - 180 },
+      { x: viewport.width - 280, y: viewport.height - 200 }
+    ];
+    return spread[index] || spread[spread.length - 1];
   }
 
   if (state.vectors.mode === "parallelogram") {
