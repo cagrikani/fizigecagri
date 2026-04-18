@@ -394,13 +394,48 @@ function fromPlaneMirrorLocal(point, mirror) {
   return { x: mirror.x + rotated.x, y: mirror.y + rotated.y };
 }
 
-function planeMirrorImagePoint(mirror, point) {
-  const local = toPlaneMirrorLocal(point, mirror);
-  if (local.x >= -1) {
+function reflectPointAcrossLine(point, start, end) {
+  const axis = normalizeVector({ x: end.x - start.x, y: end.y - start.y });
+  const relative = { x: point.x - start.x, y: point.y - start.y };
+  const parallelLength = dot(relative, axis);
+  const parallel = { x: axis.x * parallelLength, y: axis.y * parallelLength };
+  const perpendicular = {
+    x: relative.x - parallel.x,
+    y: relative.y - parallel.y
+  };
+
+  return {
+    x: start.x + parallel.x - perpendicular.x,
+    y: start.y + parallel.y - perpendicular.y
+  };
+}
+
+function segmentIntersection(aStart, aEnd, bStart, bEnd) {
+  const r = { x: aEnd.x - aStart.x, y: aEnd.y - aStart.y };
+  const s = { x: bEnd.x - bStart.x, y: bEnd.y - bStart.y };
+  const denominator = cross(r, s);
+
+  if (Math.abs(denominator) < 0.0001) {
     return null;
   }
 
-  return fromPlaneMirrorLocal({ x: -local.x, y: local.y }, mirror);
+  const delta = { x: bStart.x - aStart.x, y: bStart.y - aStart.y };
+  const t = cross(delta, s) / denominator;
+  const u = cross(delta, r) / denominator;
+
+  if (t < 0 || t > 1 || u < 0 || u > 1) {
+    return null;
+  }
+
+  return {
+    x: aStart.x + r.x * t,
+    y: aStart.y + r.y * t
+  };
+}
+
+function planeMirrorImagePoint(mirror, point) {
+  const endpoints = mirrorEndpoints(mirror);
+  return reflectPointAcrossLine(point, endpoints.start, endpoints.end);
 }
 
 function opticalObjectEndpoints(item) {
@@ -1197,23 +1232,14 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
     return null;
   }
 
-  const eyeLocal = toPlaneMirrorLocal(eye, mirror);
-  const objectLocal = toPlaneMirrorLocal(objectItem, mirror);
+  const endpoints = mirrorEndpoints(mirror);
+  const imagePoint = planeMirrorImagePoint(mirror, objectItem);
+  const hitPoint = segmentIntersection(eye, imagePoint, endpoints.start, endpoints.end);
 
-  if (eyeLocal.x >= -4 || objectLocal.x >= -4) {
+  if (!hitPoint) {
     return null;
   }
 
-  const imageLocal = { x: -objectLocal.x, y: objectLocal.y };
-  const ratio = -eyeLocal.x / (imageLocal.x - eyeLocal.x);
-  const hitY = eyeLocal.y + (imageLocal.y - eyeLocal.y) * ratio;
-
-  if (ratio <= 0 || ratio >= 1 || Math.abs(hitY) > mirror.length / 2) {
-    return null;
-  }
-
-  const imagePoint = fromPlaneMirrorLocal(imageLocal, mirror);
-  const hitPoint = fromPlaneMirrorLocal({ x: 0, y: hitY }, mirror);
   const viewVector = { x: hitPoint.x - eye.x, y: hitPoint.y - eye.y };
   const viewDistance = Math.hypot(viewVector.x, viewVector.y);
   const forward = { x: Math.cos(degToRad(eye.angle || 0)), y: Math.sin(degToRad(eye.angle || 0)) };
