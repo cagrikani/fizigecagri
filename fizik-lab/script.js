@@ -330,18 +330,8 @@ function updateVectorNotice(message) {
 
 function vectorScenario(vectors = currentItems().filter((item) => isVector(item))) {
   if (state.vectors.mode === "tip-to-tail") {
-    if (!vectors.length) {
+    if (vectors.length < 2) {
       return { canCalculate: false };
-    }
-
-    if (vectors.length === 1) {
-      const only = vectors[0];
-      return {
-        canCalculate: true,
-        ordered: [only],
-        start: vectorTail(only),
-        end: vectorEnd(only)
-      };
     }
 
     const predecessor = new Map();
