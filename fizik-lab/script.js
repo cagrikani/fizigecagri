@@ -3802,6 +3802,35 @@ function restoreFocusedInput(snapshot) {
   }
 }
 
+function arrangePanelsForScene() {
+  const stageSide = document.getElementById("stage-side");
+  const bottomStrip = document.getElementById("bottom-panel-strip");
+  const toolboxPanel = document.getElementById("toolbox-panel");
+  const navigationPanel = document.getElementById("navigation-panel");
+  const moduleControlsPanel = document.getElementById("module-controls-panel");
+  const inspectorPanel = document.getElementById("inspector-panel");
+  const objectPanel = document.querySelector(".object-panel");
+
+  if (!stageSide || !bottomStrip || !toolboxPanel || !navigationPanel || !moduleControlsPanel || !inspectorPanel || !objectPanel) {
+    return;
+  }
+
+  if (state.scene === "optics") {
+    stageSide.append(moduleControlsPanel, navigationPanel);
+    bottomStrip.append(toolboxPanel, inspectorPanel, objectPanel);
+    return;
+  }
+
+  if (state.scene === "vectors") {
+    stageSide.append(moduleControlsPanel, navigationPanel);
+    bottomStrip.append(inspectorPanel, objectPanel, toolboxPanel);
+    return;
+  }
+
+  stageSide.append(toolboxPanel, navigationPanel);
+  bottomStrip.append(moduleControlsPanel, inspectorPanel, objectPanel);
+}
+
 function renderUI() {
   const focusSnapshot = captureFocusedInput();
   document.getElementById("home-screen").hidden = state.view !== "home";
@@ -3815,6 +3844,8 @@ function renderUI() {
     return;
   }
 
+  document.getElementById("lab-screen").dataset.scene = state.scene;
+  arrangePanelsForScene();
   trimVectorsToModeLimit();
   ensureSelection();
   renderToolGrid();

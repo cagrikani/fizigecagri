@@ -444,6 +444,30 @@ h1 {
   align-items: start;
 }
 
+#lab-screen[data-scene="optics"] .workspace-main {
+  grid-template-columns: minmax(0, 1fr) 270px;
+}
+
+#lab-screen[data-scene="vectors"] .workspace-main {
+  grid-template-columns: minmax(0, 1fr) 390px;
+}
+
+#lab-screen[data-scene="heat"] .workspace-main {
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+#lab-screen[data-scene="optics"] .control-strip-bottom {
+  grid-template-columns: minmax(0, 1.7fr) minmax(270px, 0.9fr) minmax(270px, 1fr);
+}
+
+#lab-screen[data-scene="vectors"] .control-strip-bottom {
+  grid-template-columns: minmax(280px, 0.95fr) minmax(280px, 1.05fr);
+}
+
+#lab-screen[data-scene="heat"] .control-strip-bottom {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .panel {
   padding: 18px;
 }
@@ -489,6 +513,57 @@ h1 {
 #navigation-panel .secondary-button,
 #toolbox-panel .secondary-button {
   width: 100%;
+}
+
+#lab-screen[data-scene="optics"] #toolbox-panel {
+  grid-column: 1 / -1;
+}
+
+#lab-screen[data-scene="optics"] #toolbox-panel .tool-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+#lab-screen[data-scene="optics"] #toolbox-panel .inline-actions {
+  flex-direction: row;
+  align-items: center;
+}
+
+#lab-screen[data-scene="optics"] #toolbox-panel .secondary-button {
+  width: auto;
+}
+
+#lab-screen[data-scene="vectors"] #module-controls-panel {
+  min-height: 100%;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel {
+  grid-column: 1 / -1;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .vector-controls {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: start;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .scene-switch {
+  grid-column: span 4;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .field {
+  grid-column: span 4;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .inline-actions {
+  grid-column: span 4;
+  justify-content: flex-end;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note:not(.subtle) {
+  grid-column: span 7;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note.subtle {
+  grid-column: span 5;
 }
 
 .tool-card,
@@ -1055,6 +1130,24 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  #lab-screen[data-scene="optics"] .control-strip-bottom,
+  #lab-screen[data-scene="vectors"] .control-strip-bottom,
+  #lab-screen[data-scene="heat"] .control-strip-bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #lab-screen[data-scene="heat"] #module-controls-panel .vector-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #lab-screen[data-scene="heat"] #module-controls-panel .scene-switch,
+  #lab-screen[data-scene="heat"] #module-controls-panel .field,
+  #lab-screen[data-scene="heat"] #module-controls-panel .inline-actions,
+  #lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note,
+  #lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note.subtle {
+    grid-column: auto;
+  }
+
   #module-controls-panel,
   #inspector-panel {
     grid-column: 1 / -1;
@@ -1101,6 +1194,22 @@ h1 {
 
   .control-strip-bottom {
     grid-template-columns: 1fr;
+  }
+
+  #lab-screen[data-scene="optics"] #toolbox-panel .tool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #lab-screen[data-scene="optics"] #toolbox-panel .inline-actions,
+  #lab-screen[data-scene="heat"] #module-controls-panel .inline-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #lab-screen[data-scene="optics"] #toolbox-panel .secondary-button,
+  #lab-screen[data-scene="heat"] #module-controls-panel .secondary-button,
+  #lab-screen[data-scene="heat"] #module-controls-panel .primary-button {
+    width: 100%;
   }
 
   .panel,
