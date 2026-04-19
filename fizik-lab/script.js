@@ -756,7 +756,14 @@ function createHeatMaterial(type) {
     liquidColor: template.liquidColor,
     gasColor: template.gasColor,
     internalEnergy: template.mass * template.specificHeat * template.temperature,
-    history: [{ time: state.heat.elapsed, temperature: template.temperature, phase: template.phase }],
+    history: [
+      {
+        time: state.heat.elapsed,
+        temperature: template.temperature,
+        phase: template.phase,
+        energy: template.mass * template.specificHeat * template.temperature
+      }
+    ],
     molecules
   };
 }
@@ -832,11 +839,13 @@ function recordHeatHistory(item) {
     item.history.push({
       time,
       temperature: item.temperature,
-      phase: item.phase
+      phase: item.phase,
+      energy: item.internalEnergy
     });
   } else {
     previous.temperature = item.temperature;
     previous.phase = item.phase;
+    previous.energy = item.internalEnergy;
   }
 
   if (item.history.length > 360) {
@@ -848,7 +857,7 @@ function resetHeatHistories() {
   state.heat.elapsed = 0;
   state.heat.equilibriumTemperature = null;
   heatMaterials().forEach((item) => {
-    item.history = [{ time: 0, temperature: item.temperature, phase: item.phase }];
+    item.history = [{ time: 0, temperature: item.temperature, phase: item.phase, energy: item.internalEnergy }];
   });
 }
 
@@ -862,7 +871,9 @@ function reconcileHeatMaterial(item) {
   item.latentHeatVaporization = clamp(Number(item.latentHeatVaporization) || 140, 20, 360);
   item.phaseProgress = clamp(Number(item.phaseProgress) || 0, 0, 1);
   item.renderMode = item.renderMode === "molecular" ? "molecular" : "simple";
-  item.history = Array.isArray(item.history) ? item.history : [{ time: state.heat.elapsed, temperature: item.temperature, phase: item.phase }];
+  item.history = Array.isArray(item.history)
+    ? item.history
+    : [{ time: state.heat.elapsed, temperature: item.temperature, phase: item.phase, energy: item.internalEnergy }];
 
   if (!state.running) {
     if (item.temperature < item.meltingPoint) {
@@ -2527,9 +2538,9 @@ function drawHeatEnergyPanel(materials, bounds) {
     const rowY = bounds.y + 48 + index * 42;
     const history = Array.isArray(item.history) ? item.history : [];
     const prev = history[history.length - 2];
-    const delta = prev ? item.temperature - prev.temperature : 0;
-    const trendLabel = delta > 0.02 ? "artiyor" : delta < -0.02 ? "azaliyor" : "sabit";
-    const trendColor = delta > 0.02 ? "#ffb454" : delta < -0.02 ? "#59b4ff" : "#9faecb";
+    const delta = prev ? (item.internalEnergy || 0) - (prev.energy || 0) : 0;
+    const trendLabel = delta > 0.05 ? "artiyor" : delta < -0.05 ? "azaliyor" : "sabit";
+    const trendColor = delta > 0.05 ? "#ffb454" : delta < -0.05 ? "#59b4ff" : "#9faecb";
     const barWidth = ((item.internalEnergy || 0) / maxEnergy) * (bounds.width - 84);
 
     ctx.fillStyle = "rgba(239, 244, 255, 0.95)";
@@ -2581,23 +2592,34 @@ function drawHeatGraph(graphTarget, graphBounds) {
   ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
   ctx.font = "700 14px Space Grotesk";
   ctx.textAlign = "left";
-  ctx.fillText("Sicaklik - zaman grafigi", graphBounds.x + 18, graphBounds.y + 24);
+  ctx.fillText("Sicaklik - zaman grafigi", graphBounds.x + 18, graphBounds.y + 22);
 
   const materials = heatMaterials();
 
   if (!graphTarget && !materials.length) {
     ctx.fillStyle = "rgba(159, 174, 203, 0.86)";
     ctx.font = "500 13px IBM Plex Sans";
-    ctx.fillText("Grafik icin once kaba bir madde ekle.", graphBounds.x + 18, graphBounds.y + 52);
+    ctx.fillText("Grafik icin once kaba bir madde ekle.", graphBounds.x + 18, graphBounds.y + 46);
     return;
   }
 
   const history = Array.isArray(graphTarget.history) ? graphTarget.history : [];
+  const summaryText =
+    state.heat.mode === "mixing"
+      ? materials.length
+        ? materials.map((item) => `${heatMaterialLabel(item)} ${item.temperature.toFixed(1)}°C`).join(" • ")
+        : "Karisim icin iki madde ekle"
+      : `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`;
+
+  ctx.fillStyle = "rgba(159, 174, 203, 0.92)";
+  ctx.font = "500 11px IBM Plex Sans";
+  ctx.fillText(summaryText, graphBounds.x + 18, graphBounds.y + 42);
+
   const inner = {
     x: graphBounds.x + 42,
-    y: graphBounds.y + 28,
+    y: graphBounds.y + 58,
     width: graphBounds.width - 62,
-    height: graphBounds.height - 48
+    height: graphBounds.height - 78
   };
   const histories = state.heat.mode === "mixing" ? materials.map((item) => item.history || []) : [history];
   const flattenedTemps = histories.flat().map((entry) => entry.temperature);
@@ -2681,15 +2703,6 @@ function drawHeatGraph(graphTarget, graphBounds) {
     drawHistory(history, "#ffb454");
   }
 
-  ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
-  ctx.font = "600 12px IBM Plex Sans";
-  const summaryText =
-    state.heat.mode === "mixing"
-      ? materials.length
-        ? materials.map((item) => `${heatMaterialLabel(item)} ${item.temperature.toFixed(1)}°C`).join(" • ")
-        : "Karisim icin iki madde ekle"
-      : `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`;
-  ctx.fillText(summaryText, inner.x, graphBounds.y + 24);
 }
 
 function drawHeatMaterial(layout, index) {
