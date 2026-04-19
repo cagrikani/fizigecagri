@@ -136,7 +136,7 @@
     </header>
 
     <main class="lab-layout">
-      <aside class="sidebar">
+      <div class="control-strip control-strip-top">
         <section class="panel" id="module-controls-panel">
           <div class="panel-head">
             <h2>Modul Kontrolleri</h2>
@@ -157,22 +157,6 @@
           </div>
         </section>
 
-        <section class="panel">
-          <div class="panel-head">
-            <h2>Secili Nesne</h2>
-            <p>Konum, aci, boyut ve optik degerleri buradan degistir.</p>
-          </div>
-          <div id="inspector"></div>
-        </section>
-
-        <section class="panel object-panel">
-          <div class="panel-head">
-            <h2>Sahnedeki Nesneler</h2>
-            <p>Secmek veya takip etmek icin sahne listesini kullan.</p>
-          </div>
-          <div class="object-list" id="object-list"></div>
-        </section>
-
         <section class="panel" id="navigation-panel">
           <div class="panel-head">
             <h2>Gezinme</h2>
@@ -183,7 +167,7 @@
           </div>
           <div class="status-chip" id="sidebar-scene-label">Aktif modul: Optik</div>
         </section>
-      </aside>
+      </div>
 
       <section class="workspace">
         <div class="workspace-top">
@@ -226,6 +210,24 @@
           </article>
         </div>
       </section>
+
+      <div class="control-strip control-strip-bottom">
+        <section class="panel" id="inspector-panel">
+          <div class="panel-head">
+            <h2>Secili Nesne</h2>
+            <p>Konum, aci, boyut ve optik degerleri buradan degistir.</p>
+          </div>
+          <div id="inspector"></div>
+        </section>
+
+        <section class="panel object-panel">
+          <div class="panel-head">
+            <h2>Sahnedeki Nesneler</h2>
+            <p>Secmek veya takip etmek icin sahne listesini kullan.</p>
+          </div>
+          <div class="object-list" id="object-list"></div>
+        </section>
+      </div>
     </main>
     </div>
   </div>
