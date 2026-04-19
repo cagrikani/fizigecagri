@@ -3743,7 +3743,67 @@ function renderScene() {
   renderSummaries(trace);
 }
 
+function captureFocusedInput() {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLInputElement || active instanceof HTMLSelectElement || active instanceof HTMLTextAreaElement)) {
+    return null;
+  }
+
+  const container = active.closest("#inspector, #module-controls");
+  if (!container) {
+    return null;
+  }
+
+  const identifier = active.id
+    ? { type: "id", value: active.id }
+    : active.dataset.prop
+      ? { type: "prop", value: active.dataset.prop }
+      : null;
+
+  if (!identifier) {
+    return null;
+  }
+
+  return {
+    containerId: container.id,
+    identifier,
+    selectionStart: typeof active.selectionStart === "number" ? active.selectionStart : null,
+    selectionEnd: typeof active.selectionEnd === "number" ? active.selectionEnd : null
+  };
+}
+
+function restoreFocusedInput(snapshot) {
+  if (!snapshot || state.view !== "lab") {
+    return;
+  }
+
+  const container = document.getElementById(snapshot.containerId);
+  if (!container) {
+    return;
+  }
+
+  const selector =
+    snapshot.identifier.type === "id"
+      ? `#${CSS.escape(snapshot.identifier.value)}`
+      : `[data-prop="${snapshot.identifier.value}"]`;
+  const target = container.querySelector(selector);
+
+  if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement)) {
+    return;
+  }
+
+  target.focus({ preventScroll: true });
+
+  if (typeof target.setSelectionRange === "function" && snapshot.selectionStart !== null && snapshot.selectionEnd !== null) {
+    const length = target.value.length;
+    const start = Math.min(snapshot.selectionStart, length);
+    const end = Math.min(snapshot.selectionEnd, length);
+    target.setSelectionRange(start, end);
+  }
+}
+
 function renderUI() {
+  const focusSnapshot = captureFocusedInput();
   document.getElementById("home-screen").hidden = state.view !== "home";
   document.getElementById("lab-screen").hidden = state.view !== "lab";
 
@@ -3804,6 +3864,7 @@ function renderUI() {
     state.scene === "optics" ? "Duraklat" : state.scene === "heat" ? (state.heat.mode === "heating" ? "Isitmayi durdur" : "Karistirmayi durdur") : "Yardimcilari gizle";
   document.getElementById("run-scene-button").style.display = state.scene === "vectors" ? "none" : "";
   document.getElementById("pause-scene-button").style.display = state.scene === "vectors" ? "none" : "";
+  restoreFocusedInput(focusSnapshot);
 }
 
 function addItem(type) {
