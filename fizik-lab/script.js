@@ -671,10 +671,10 @@ function heatStationLayout() {
     height: potHeight
   };
   const energy = {
-    x: viewport.width - 272,
-    y: 38,
-    width: 236,
-    height: 184
+    x: state.heat.mode === "mixing" ? viewport.width - 298 : viewport.width - 272,
+    y: state.heat.mode === "mixing" ? 254 : 38,
+    width: state.heat.mode === "mixing" ? 262 : 236,
+    height: state.heat.mode === "mixing" ? 136 : 184
   };
   const mixingCup = {
     x: viewport.width * 0.52,
@@ -983,6 +983,12 @@ function stepHeatSimulation(deltaSeconds) {
     });
 
     if (materials.every((item) => Math.abs(item.temperature - equilibrium) < 0.15)) {
+      materials.forEach((item) => {
+        item.temperature = equilibrium;
+        updateHeatPhaseFromTemperature(item);
+        item.internalEnergy = heatMaterialEnergy(item);
+        recordHeatHistory(item);
+      });
       state.running = false;
       state.notice = `Isi alisverisi dengelendi. Ortak sicaklik ${equilibrium.toFixed(1)}°C.`;
     }
@@ -2581,6 +2587,39 @@ function drawHeatCup(cup, label, accent, subtitle = "") {
   }
 }
 
+function drawHeatExchangeGuide(layouts, equilibrium) {
+  if (layouts.length < 2) {
+    return;
+  }
+
+  const ordered = [...layouts].sort((a, b) => b.item.temperature - a.item.temperature);
+  const hot = ordered[0];
+  const cold = ordered[1];
+  const difference = hot.item.temperature - cold.item.temperature;
+
+  if (Math.abs(difference) < 0.05) {
+    ctx.fillStyle = "rgba(255, 209, 102, 0.95)";
+    ctx.font = "700 12px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText(`Denge sicakligi ${equilibrium.toFixed(1)}°C`, hot.cup.x + (cold.cup.x - hot.cup.x) / 2, hot.top - 26);
+    return;
+  }
+
+  const from = { x: hot.centerX, y: hot.top - 18 };
+  const to = { x: cold.centerX, y: cold.top - 18 };
+  drawArrow(from, to, "rgba(255, 180, 84, 0.95)", 3.5);
+
+  ctx.fillStyle = "rgba(255, 180, 84, 0.95)";
+  ctx.font = "700 11px Space Grotesk";
+  ctx.textAlign = "center";
+  ctx.fillText(`${heatMaterialLabel(hot.item)} isi verir`, from.x, from.y - 10);
+  ctx.fillStyle = "rgba(89, 180, 255, 0.95)";
+  ctx.fillText(`${heatMaterialLabel(cold.item)} isi alir`, to.x, to.y - 10);
+  ctx.fillStyle = "rgba(239, 244, 255, 0.88)";
+  ctx.font = "500 10px IBM Plex Sans";
+  ctx.fillText(`Denge: ${equilibrium.toFixed(1)}°C`, (from.x + to.x) / 2, from.y + 18);
+}
+
 function drawHeatGraph(graphTarget, graphBounds) {
   roundedRectPath(graphBounds.x, graphBounds.y, graphBounds.width, graphBounds.height, 24);
   ctx.fillStyle = "rgba(9, 15, 27, 0.84)";
@@ -2846,6 +2885,7 @@ function drawHeat() {
   const materials = heatMaterials();
   const thermometers = heatThermometers();
   const graphTarget = heatGraphTarget();
+  const materialLayouts = heatMaterialLayouts(materials);
 
   const stageGradient = ctx.createLinearGradient(0, 0, 0, viewport.height);
   stageGradient.addColorStop(0, "rgba(255, 180, 84, 0.08)");
@@ -2870,6 +2910,10 @@ function drawHeat() {
       ctx.lineTo(layout.mixingCup.x + layout.mixingCup.width / 2 + 10, layout.mixingCup.y);
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+
+    if (state.heat.mixing && state.heat.equilibriumTemperature !== null) {
+      drawHeatExchangeGuide(materialLayouts, state.heat.equilibriumTemperature);
     }
   } else {
     roundedRectPath(layout.pot.x - layout.pot.width / 2, layout.pot.y - layout.pot.height / 2, layout.pot.width, layout.pot.height, 34);
@@ -2924,7 +2968,7 @@ function drawHeat() {
     }
   }
 
-  heatMaterialLayouts(materials).forEach((entry, index) => drawHeatMaterial(entry, index));
+  materialLayouts.forEach((entry, index) => drawHeatMaterial(entry, index));
   thermometers.forEach((thermometer) => drawThermometer(thermometer));
   drawHeatEnergyPanel(materials, layout.energy);
 
