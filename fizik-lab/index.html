@@ -137,17 +137,6 @@
 
     <main class="lab-layout">
       <aside class="sidebar">
-        <section class="panel" id="navigation-panel">
-          <div class="panel-head">
-            <h2>Gezinme</h2>
-            <p>Ana sayfaya donup modul degistirebilirsin.</p>
-          </div>
-          <div class="inline-actions">
-            <button class="secondary-button" id="back-home-button" type="button">Ana sayfaya don</button>
-          </div>
-          <div class="status-chip" id="sidebar-scene-label">Aktif modul: Optik</div>
-        </section>
-
         <section class="panel" id="module-controls-panel">
           <div class="panel-head">
             <h2>Modul Kontrolleri</h2>
@@ -174,6 +163,25 @@
             <p>Konum, aci, boyut ve optik degerleri buradan degistir.</p>
           </div>
           <div id="inspector"></div>
+        </section>
+
+        <section class="panel object-panel">
+          <div class="panel-head">
+            <h2>Sahnedeki Nesneler</h2>
+            <p>Secmek veya takip etmek icin sahne listesini kullan.</p>
+          </div>
+          <div class="object-list" id="object-list"></div>
+        </section>
+
+        <section class="panel" id="navigation-panel">
+          <div class="panel-head">
+            <h2>Gezinme</h2>
+            <p>Ana sayfaya donup modul degistirebilirsin.</p>
+          </div>
+          <div class="inline-actions">
+            <button class="secondary-button" id="back-home-button" type="button">Ana sayfaya don</button>
+          </div>
+          <div class="status-chip" id="sidebar-scene-label">Aktif modul: Optik</div>
         </section>
       </aside>
 
@@ -217,14 +225,6 @@
             <strong id="summary-tertiary">Bos calisma alani</strong>
           </article>
         </div>
-
-        <section class="panel object-panel">
-          <div class="panel-head">
-            <h2>Sahnedeki Nesneler</h2>
-            <p>Secmek veya takip etmek icin sahne listesini kullan.</p>
-          </div>
-          <div class="object-list" id="object-list"></div>
-        </section>
       </section>
     </main>
     </div>
