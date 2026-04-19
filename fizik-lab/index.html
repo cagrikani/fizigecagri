@@ -136,64 +136,58 @@
     </header>
 
     <main class="lab-layout">
-      <div class="control-strip control-strip-top">
-        <section class="panel" id="module-controls-panel">
-          <div class="panel-head">
-            <h2>Modul Kontrolleri</h2>
-            <p id="module-controls-copy">Aktif modula gore yardimci islemler burada gorunur.</p>
-          </div>
-          <div id="module-controls"></div>
-        </section>
-
-        <section class="panel" id="toolbox-panel">
-          <div class="panel-head">
-            <h2>Arac Kutusu</h2>
-            <p id="toolbox-copy">Optik sahneye yeni fizik nesneleri eklenir.</p>
-          </div>
-          <div class="tool-grid" id="tool-grid"></div>
-          <div class="inline-actions">
-            <button class="secondary-button compact" id="clear-scene-button" type="button">Sahneyi temizle</button>
-            <button class="secondary-button compact" id="pause-scene-button" type="button">Duraklat</button>
-          </div>
-        </section>
-
-        <section class="panel" id="navigation-panel">
-          <div class="panel-head">
-            <h2>Gezinme</h2>
-            <p>Ana sayfaya donup modul degistirebilirsin.</p>
-          </div>
-          <div class="inline-actions">
-            <button class="secondary-button" id="back-home-button" type="button">Ana sayfaya don</button>
-          </div>
-          <div class="status-chip" id="sidebar-scene-label">Aktif modul: Optik</div>
-        </section>
-      </div>
-
       <section class="workspace">
         <div class="workspace-top">
           <div class="legend" id="legend"></div>
           <div class="status-chip" id="scene-label">Aktif modul: Optik</div>
         </div>
 
-        <section class="stage-panel">
-          <div class="stage-toolbar">
-            <div>
-              <h2>Deney Sahasi</h2>
-              <p id="status-text">
-                Arac kutusundan nesne ekleyip sahne uzerinde surukleyerek kendi
-                deneyini kur.
-              </p>
+        <div class="workspace-main">
+          <section class="stage-panel">
+            <div class="stage-toolbar">
+              <div>
+                <h2>Deney Sahasi</h2>
+                <p id="status-text">
+                  Arac kutusundan nesne ekleyip sahne uzerinde surukleyerek kendi
+                  deneyini kur.
+                </p>
+              </div>
+              <div class="status-chip muted" id="scene-state-chip">Hazir</div>
             </div>
-            <div class="status-chip muted" id="scene-state-chip">Hazir</div>
-          </div>
 
-          <div class="canvas-shell">
-            <canvas id="lab-canvas" width="960" height="600" aria-label="Fizik laboratuvari sahasi"></canvas>
-            <div class="empty-note" id="empty-note">
-              Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla.
+            <div class="canvas-shell">
+              <canvas id="lab-canvas" width="960" height="600" aria-label="Fizik laboratuvari sahasi"></canvas>
+              <div class="empty-note" id="empty-note">
+                Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla.
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+
+          <aside class="stage-side">
+            <section class="panel" id="toolbox-panel">
+              <div class="panel-head">
+                <h2>Arac Kutusu</h2>
+                <p id="toolbox-copy">Optik sahneye yeni fizik nesneleri eklenir.</p>
+              </div>
+              <div class="tool-grid" id="tool-grid"></div>
+              <div class="inline-actions">
+                <button class="secondary-button compact" id="clear-scene-button" type="button">Sahneyi temizle</button>
+                <button class="secondary-button compact" id="pause-scene-button" type="button">Duraklat</button>
+              </div>
+            </section>
+
+            <section class="panel" id="navigation-panel">
+              <div class="panel-head">
+                <h2>Gezinme</h2>
+                <p>Ana sayfaya donup modul degistirebilirsin.</p>
+              </div>
+              <div class="inline-actions">
+                <button class="secondary-button" id="back-home-button" type="button">Ana sayfaya don</button>
+              </div>
+              <div class="status-chip" id="sidebar-scene-label">Aktif modul: Optik</div>
+            </section>
+          </aside>
+        </div>
 
         <div class="readout-grid">
           <article class="readout-card">
@@ -212,6 +206,14 @@
       </section>
 
       <div class="control-strip control-strip-bottom">
+        <section class="panel" id="module-controls-panel">
+          <div class="panel-head">
+            <h2>Modul Kontrolleri</h2>
+            <p id="module-controls-copy">Aktif modula gore yardimci islemler burada gorunur.</p>
+          </div>
+          <div id="module-controls"></div>
+        </section>
+
         <section class="panel" id="inspector-panel">
           <div class="panel-head">
             <h2>Secili Nesne</h2>

@@ -422,19 +422,25 @@ h1 {
   align-items: start;
 }
 
-.control-strip,
-.workspace {
+.workspace,
+.workspace-main,
+.stage-side,
+.control-strip {
   display: grid;
   gap: 14px;
 }
 
-.control-strip-top {
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(260px, 0.8fr);
+.workspace-main {
+  grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
 }
 
+.stage-side {
+  grid-auto-rows: min-content;
+}
+
 .control-strip-bottom {
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(300px, 1.15fr) minmax(280px, 0.95fr) minmax(280px, 1fr);
   align-items: start;
 }
 
@@ -468,6 +474,21 @@ h1 {
 .tool-grid,
 .readout-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#toolbox-panel .tool-grid {
+  grid-template-columns: 1fr;
+}
+
+#toolbox-panel .inline-actions,
+#navigation-panel .inline-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+#navigation-panel .secondary-button,
+#toolbox-panel .secondary-button {
+  width: 100%;
 }
 
 .tool-card,
@@ -982,7 +1003,8 @@ h1 {
   body.print-stage-only .control-strip,
   body.print-stage-only .workspace-top,
   body.print-stage-only .readout-grid,
-  body.print-stage-only .object-panel {
+  body.print-stage-only .object-panel,
+  body.print-stage-only .stage-side {
     display: none !important;
   }
 
@@ -1021,12 +1043,19 @@ h1 {
     padding: 22px;
   }
 
-  .control-strip-top,
+  .workspace-main {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .control-strip-bottom {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  #navigation-panel,
+  #module-controls-panel,
   #inspector-panel {
     grid-column: 1 / -1;
   }
@@ -1059,7 +1088,8 @@ h1 {
   .home-module-grid,
   .vector-builder,
   .inspector-grid,
-  .object-list {
+  .object-list,
+  .stage-side {
     grid-template-columns: 1fr;
   }
 
@@ -1069,7 +1099,6 @@ h1 {
     flex-direction: column;
   }
 
-  .control-strip-top,
   .control-strip-bottom {
     grid-template-columns: 1fr;
   }
