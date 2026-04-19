@@ -1,2 +1,2 @@
-:HL["/yds-kocum/_next/static/chunks/0fbrk2wwmm2i~.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":20,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"MkI2B14PZ4D1RaRf8MEL0"}
+:HL["/fizigecagri/yds-kocum/_next/static/chunks/0.vae31n1l7z..css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":20,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"XhqSXRSCHH1B6MxTnLRXh"}
