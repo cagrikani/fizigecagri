@@ -95,7 +95,10 @@ const defaultState = {
   heat: {
     items: [],
     power: 140,
-    elapsed: 0
+    elapsed: 0,
+    mode: "heating",
+    mixing: false,
+    equilibriumTemperature: null
   }
 };
 
@@ -158,7 +161,10 @@ function normalizeState(raw) {
     heat: {
       items: Array.isArray(raw.heat?.items) ? raw.heat.items : [],
       power: clamp(Number(raw.heat?.power) || 140, 40, 240),
-      elapsed: Math.max(Number(raw.heat?.elapsed) || 0, 0)
+      elapsed: Math.max(Number(raw.heat?.elapsed) || 0, 0),
+      mode: raw.heat?.mode === "mixing" ? "mixing" : "heating",
+      mixing: raw.heat?.mixing === true,
+      equilibriumTemperature: Number.isFinite(raw.heat?.equilibriumTemperature) ? Number(raw.heat.equilibriumTemperature) : null
     }
   };
 }
@@ -629,21 +635,66 @@ function heatPhaseLabel(phase) {
   return "Gaz";
 }
 
+function heatModeLabel(mode = state.heat.mode) {
+  return mode === "mixing" ? "Karistirma" : "Isitma";
+}
+
+function heatMaterialLimit() {
+  return state.heat.mode === "mixing" ? 2 : 3;
+}
+
+function updateHeatPhaseFromTemperature(item) {
+  if (item.temperature < item.meltingPoint) {
+    item.phase = "solid";
+  } else if (item.temperature < item.boilingPoint) {
+    item.phase = "liquid";
+  } else {
+    item.phase = "gas";
+  }
+  item.phaseProgress = 0;
+}
+
 function heatStationLayout() {
-  const graphHeight = 152;
+  const graphHeight = 164;
   const graph = {
-    x: 38,
+    x: 32,
     y: viewport.height - graphHeight - 26,
-    width: viewport.width - 76,
+    width: viewport.width - 64,
     height: graphHeight
   };
-  const potWidth = clamp(viewport.width * 0.44, 320, 460);
-  const potHeight = 190;
+  const potWidth = clamp(viewport.width * 0.4, 300, 440);
+  const potHeight = 176;
   const pot = {
-    x: viewport.width / 2,
-    y: 214,
+    x: viewport.width * 0.36,
+    y: 196,
     width: potWidth,
     height: potHeight
+  };
+  const energy = {
+    x: viewport.width - 272,
+    y: 38,
+    width: 236,
+    height: 184
+  };
+  const mixingCup = {
+    x: viewport.width * 0.52,
+    y: 192,
+    width: clamp(viewport.width * 0.28, 220, 280),
+    height: 156
+  };
+  const sourceCupWidth = clamp(viewport.width * 0.18, 132, 170);
+  const sourceCupHeight = 128;
+  const leftCup = {
+    x: 164,
+    y: 206,
+    width: sourceCupWidth,
+    height: sourceCupHeight
+  };
+  const rightCup = {
+    x: viewport.width - 164,
+    y: 206,
+    width: sourceCupWidth,
+    height: sourceCupHeight
   };
 
   return {
@@ -656,12 +707,16 @@ function heatStationLayout() {
       width: pot.width - 56,
       height: pot.height - 58
     },
+    energy,
     heater: {
       x: pot.x,
       y: pot.y + pot.height / 2 + 36,
       width: pot.width * 0.68,
       height: 34
     },
+    mixingCup,
+    leftCup,
+    rightCup,
     graph
   };
 }
@@ -719,6 +774,29 @@ function heatMaterialEnergy(item) {
 
 function heatMaterialLayouts(materials = heatMaterials()) {
   const layout = heatStationLayout();
+
+  if (state.heat.mode === "mixing") {
+    return materials.map((item, index) => {
+      const cup = state.heat.mixing ? layout.mixingCup : index === 0 ? layout.leftCup : layout.rightCup;
+      const inset = state.heat.mixing ? 16 : 18;
+      const slotWidth = state.heat.mixing ? (cup.width - inset * 3) / 2 : cup.width - inset * 2;
+      const left = state.heat.mixing
+        ? cup.x - cup.width / 2 + inset + index * (slotWidth + inset)
+        : cup.x - cup.width / 2 + inset;
+      return {
+        item,
+        left,
+        right: left + slotWidth,
+        top: cup.y - cup.height / 2 + 22,
+        bottom: cup.y + cup.height / 2 - 16,
+        width: slotWidth,
+        height: cup.height - 38,
+        centerX: left + slotWidth / 2,
+        cup
+      };
+    });
+  }
+
   const gap = 14;
   const count = Math.max(materials.length, 1);
   const slotWidth = (layout.interior.width - gap * (count - 1)) / count;
@@ -768,6 +846,7 @@ function recordHeatHistory(item) {
 
 function resetHeatHistories() {
   state.heat.elapsed = 0;
+  state.heat.equilibriumTemperature = null;
   heatMaterials().forEach((item) => {
     item.history = [{ time: 0, temperature: item.temperature, phase: item.phase }];
   });
@@ -804,6 +883,50 @@ function reconcileHeatMaterial(item) {
 function heatMeasurementForThermometer(item) {
   const layout = heatStationLayout();
   const bulb = { x: item.x, y: item.y };
+  const layouts = heatMaterialLayouts();
+
+  if (state.heat.mode === "mixing") {
+    const materials = heatMaterials();
+    if (!materials.length) return null;
+    const activeCup = state.heat.mixing
+      ? {
+          left: layout.mixingCup.x - layout.mixingCup.width / 2,
+          right: layout.mixingCup.x + layout.mixingCup.width / 2,
+          top: layout.mixingCup.y - layout.mixingCup.height / 2,
+          bottom: layout.mixingCup.y + layout.mixingCup.height / 2
+        }
+      : null;
+
+    if (!state.heat.mixing) {
+      const sourceMatch = layouts.find(
+        (entry) => bulb.x >= entry.left && bulb.x <= entry.right && bulb.y >= entry.top && bulb.y <= entry.bottom
+      );
+      if (!sourceMatch) {
+        return null;
+      }
+      return {
+        item: sourceMatch.item,
+        temperature: sourceMatch.item.temperature
+      };
+    }
+
+    if (
+      bulb.x < activeCup.left ||
+      bulb.x > activeCup.right ||
+      bulb.y < activeCup.top ||
+      bulb.y > activeCup.bottom
+    ) {
+      return null;
+    }
+
+    const average =
+      materials.reduce((sum, material) => sum + material.temperature, 0) / Math.max(materials.length, 1);
+    return {
+      item: { materialName: "Karisim" },
+      temperature: average
+    };
+  }
+
   if (
     bulb.x < layout.interior.left ||
     bulb.x > layout.interior.right ||
@@ -813,7 +936,7 @@ function heatMeasurementForThermometer(item) {
     return null;
   }
 
-  const match = heatMaterialLayouts().find((entry) => bulb.x >= entry.left && bulb.x <= entry.right);
+  const match = layouts.find((entry) => bulb.x >= entry.left && bulb.x <= entry.right);
   if (!match) {
     return null;
   }
@@ -825,6 +948,36 @@ function heatMeasurementForThermometer(item) {
 }
 
 function stepHeatSimulation(deltaSeconds) {
+  if (state.heat.mode === "mixing") {
+    state.heat.elapsed += deltaSeconds;
+    const materials = heatMaterials();
+    if (!state.heat.mixing || materials.length < 2) {
+      materials.forEach((item) => {
+        recordHeatHistory(item);
+        item.internalEnergy = heatMaterialEnergy(item);
+      });
+      return;
+    }
+
+    const numerator = materials.reduce((sum, item) => sum + item.mass * item.specificHeat * item.temperature, 0);
+    const denominator = materials.reduce((sum, item) => sum + item.mass * item.specificHeat, 0) || 1;
+    const equilibrium = numerator / denominator;
+    state.heat.equilibriumTemperature = equilibrium;
+
+    materials.forEach((item) => {
+      item.temperature += (equilibrium - item.temperature) * Math.min(deltaSeconds * 1.45, 0.24);
+      updateHeatPhaseFromTemperature(item);
+      recordHeatHistory(item);
+      item.internalEnergy = heatMaterialEnergy(item);
+    });
+
+    if (materials.every((item) => Math.abs(item.temperature - equilibrium) < 0.15)) {
+      state.running = false;
+      state.notice = `Isi alisverisi dengelendi. Ortak sicaklik ${equilibrium.toFixed(1)}°C.`;
+    }
+    return;
+  }
+
   state.heat.elapsed += deltaSeconds;
   const heatGain = state.heat.power * deltaSeconds * 0.035;
 
@@ -1590,23 +1743,35 @@ function renderModuleControls() {
     const materials = heatMaterials();
     const thermometers = heatThermometers();
     const graphTarget = heatGraphTarget();
-    copy.textContent = "Isitma gucu, grafik ve olcum islemleri bu panelden yonetilir.";
+    copy.textContent = "Isitma, karistirma ve enerji takibi bu panelden yonetilir.";
     controls.innerHTML = `
       <div class="vector-controls">
+        <div class="scene-switch" aria-label="Isi ve sicaklik alt modu">
+          <button class="scene-button ${state.heat.mode === "heating" ? "active" : ""}" type="button" data-heat-mode="heating">Isitma</button>
+          <button class="scene-button ${state.heat.mode === "mixing" ? "active" : ""}" type="button" data-heat-mode="mixing">Karistirma</button>
+        </div>
         <div class="field full">
           <label>Isitici gucu</label>
-          <input data-heat-prop="power" id="heat-power-input" type="range" min="40" max="240" step="10" value="${state.heat.power}" />
+          <input data-heat-prop="power" id="heat-power-input" type="range" min="40" max="240" step="10" value="${state.heat.power}" ${state.heat.mode === "mixing" ? "disabled" : ""} />
         </div>
         <div class="vector-mode-note">
-          Isitici gucu <strong>${state.heat.power}</strong> br. Kaba en fazla 3 malzeme ve 1 termometre yerlestirebilirsin.
+          ${
+            state.heat.mode === "heating"
+              ? `Isitici gucu <strong>${state.heat.power}</strong> br. Kaba en fazla ${heatMaterialLimit()} malzeme ve 1 termometre yerlestirebilirsin.`
+              : `Iki farkli sicakliktaki maddeyi ekle, sonra karistir. Sistem ayni ortamda isi alisverisini gosterecek.`
+          }
         </div>
         <div class="inline-actions">
-          <button class="primary-button compact-action" type="button" data-heat-action="start" ${materials.length ? "" : "disabled"}>Isitmayi baslat</button>
-          <button class="secondary-button compact-action" type="button" data-heat-action="pause" ${state.running ? "" : "disabled"}>Isitmayi durdur</button>
+          <button class="primary-button compact-action" type="button" data-heat-action="start" ${
+            state.heat.mode === "heating" ? (materials.length ? "" : "disabled") : (materials.length === 2 ? "" : "disabled")
+          }>${state.heat.mode === "heating" ? "Isitmayi baslat" : "Karistir"}</button>
+          <button class="secondary-button compact-action" type="button" data-heat-action="pause" ${state.running ? "" : "disabled"}>${
+            state.heat.mode === "heating" ? "Isitmayi durdur" : "Karistirmayi durdur"
+          }</button>
           <button class="secondary-button compact-action" type="button" data-heat-action="reset-graph" ${graphTarget ? "" : "disabled"}>Grafigi sifirla</button>
         </div>
         <div class="vector-mode-note subtle">
-          ${materials.length} malzeme • ${thermometers.length} termometre • Grafik hedefi: ${graphTarget ? `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName}` : "secili madde yok"}
+          ${materials.length} / ${heatMaterialLimit()} malzeme • ${thermometers.length} termometre • Grafik hedefi: ${graphTarget ? `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName}` : "secili madde yok"}
         </div>
       </div>
     `;
@@ -2337,6 +2502,74 @@ function roundedRectPath(x, y, width, height, radius) {
   ctx.closePath();
 }
 
+function drawHeatEnergyPanel(materials, bounds) {
+  roundedRectPath(bounds.x, bounds.y, bounds.width, bounds.height, 24);
+  ctx.fillStyle = "rgba(9, 15, 27, 0.88)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
+  ctx.font = "700 14px Space Grotesk";
+  ctx.textAlign = "left";
+  ctx.fillText("Ic enerji", bounds.x + 18, bounds.y + 24);
+
+  if (!materials.length) {
+    ctx.fillStyle = "rgba(159, 174, 203, 0.88)";
+    ctx.font = "500 12px IBM Plex Sans";
+    ctx.fillText("Enerji takibi icin madde ekle.", bounds.x + 18, bounds.y + 54);
+    return;
+  }
+
+  const maxEnergy = Math.max(...materials.map((item) => item.internalEnergy || 0), 1);
+  materials.forEach((item, index) => {
+    const rowY = bounds.y + 48 + index * 42;
+    const history = Array.isArray(item.history) ? item.history : [];
+    const prev = history[history.length - 2];
+    const delta = prev ? item.temperature - prev.temperature : 0;
+    const trendLabel = delta > 0.02 ? "artiyor" : delta < -0.02 ? "azaliyor" : "sabit";
+    const trendColor = delta > 0.02 ? "#ffb454" : delta < -0.02 ? "#59b4ff" : "#9faecb";
+    const barWidth = ((item.internalEnergy || 0) / maxEnergy) * (bounds.width - 84);
+
+    ctx.fillStyle = "rgba(239, 244, 255, 0.95)";
+    ctx.font = "700 12px Space Grotesk";
+    ctx.fillText(`${heatMaterialLabel(item)} • ${item.temperature.toFixed(1)}°C`, bounds.x + 18, rowY);
+
+    roundedRectPath(bounds.x + 18, rowY + 8, bounds.width - 36, 12, 6);
+    ctx.fillStyle = "rgba(255,255,255,0.07)";
+    ctx.fill();
+    roundedRectPath(bounds.x + 18, rowY + 8, Math.max(barWidth, 18), 12, 6);
+    ctx.fillStyle = item.liquidColor || "#4fd1c5";
+    ctx.fill();
+
+    ctx.fillStyle = trendColor;
+    ctx.font = "500 11px IBM Plex Sans";
+    ctx.fillText(`${trendLabel} • ${Math.round(item.internalEnergy)} br`, bounds.x + 18, rowY + 34);
+  });
+}
+
+function drawHeatCup(cup, label, accent, subtitle = "") {
+  const left = cup.x - cup.width / 2;
+  const top = cup.y - cup.height / 2;
+  roundedRectPath(left, top, cup.width, cup.height, 26);
+  ctx.fillStyle = "rgba(21, 35, 58, 0.24)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(196, 233, 255, 0.72)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.fillStyle = accent;
+  ctx.font = "700 12px Space Grotesk";
+  ctx.textAlign = "center";
+  ctx.fillText(label, cup.x, top - 10);
+  if (subtitle) {
+    ctx.fillStyle = "rgba(159, 174, 203, 0.88)";
+    ctx.font = "500 10px IBM Plex Sans";
+    ctx.fillText(subtitle, cup.x, top + cup.height + 18);
+  }
+}
+
 function drawHeatGraph(graphTarget, graphBounds) {
   roundedRectPath(graphBounds.x, graphBounds.y, graphBounds.width, graphBounds.height, 24);
   ctx.fillStyle = "rgba(9, 15, 27, 0.84)";
@@ -2350,7 +2583,9 @@ function drawHeatGraph(graphTarget, graphBounds) {
   ctx.textAlign = "left";
   ctx.fillText("Sicaklik - zaman grafigi", graphBounds.x + 18, graphBounds.y + 24);
 
-  if (!graphTarget) {
+  const materials = heatMaterials();
+
+  if (!graphTarget && !materials.length) {
     ctx.fillStyle = "rgba(159, 174, 203, 0.86)";
     ctx.font = "500 13px IBM Plex Sans";
     ctx.fillText("Grafik icin once kaba bir madde ekle.", graphBounds.x + 18, graphBounds.y + 52);
@@ -2364,10 +2599,15 @@ function drawHeatGraph(graphTarget, graphBounds) {
     width: graphBounds.width - 62,
     height: graphBounds.height - 48
   };
-  const maxTime = Math.max(history[history.length - 1]?.time || 10, 10);
-  const temps = history.map((entry) => entry.temperature);
-  const maxTemp = Math.max(graphTarget.boilingPoint + 20, ...temps, 100);
-  const minTemp = Math.min(...temps, 0);
+  const histories = state.heat.mode === "mixing" ? materials.map((item) => item.history || []) : [history];
+  const flattenedTemps = histories.flat().map((entry) => entry.temperature);
+  const maxTime = Math.max(...histories.map((entries) => entries[entries.length - 1]?.time || 10), 10);
+  const maxTemp = Math.max(
+    state.heat.mode === "mixing" ? (state.heat.equilibriumTemperature || 0) + 20 : graphTarget.boilingPoint + 20,
+    ...flattenedTemps,
+    100
+  );
+  const minTemp = Math.min(...flattenedTemps, 0);
 
   for (let index = 0; index <= 4; index += 1) {
     const y = inner.y + (inner.height / 4) * index;
@@ -2409,14 +2649,19 @@ function drawHeatGraph(graphTarget, graphBounds) {
     ctx.fillText(label, inner.x + inner.width - 46, y - 6);
   };
 
-  drawMarker(graphTarget.meltingPoint, "Erime", "rgba(255, 180, 84, 0.95)");
-  drawMarker(graphTarget.boilingPoint, "Kaynama", "rgba(79, 209, 197, 0.95)");
+  if (state.heat.mode === "heating") {
+    drawMarker(graphTarget.meltingPoint, "Erime", "rgba(255, 180, 84, 0.95)");
+    drawMarker(graphTarget.boilingPoint, "Kaynama", "rgba(79, 209, 197, 0.95)");
+  } else if (state.heat.equilibriumTemperature !== null) {
+    drawMarker(state.heat.equilibriumTemperature, "Denge", "rgba(255, 180, 84, 0.95)");
+  }
 
-  if (history.length > 1) {
-    ctx.strokeStyle = "#ffb454";
+  const drawHistory = (entries, color) => {
+    if (entries.length <= 1) return;
+    ctx.strokeStyle = color;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    history.forEach((entry, index) => {
+    entries.forEach((entry, index) => {
       const x = inner.x + (entry.time / Math.max(maxTime, 1)) * inner.width;
       const y = inner.y + inner.height - ((entry.temperature - minTemp) / Math.max(maxTemp - minTemp, 1)) * inner.height;
       if (!index) {
@@ -2426,15 +2671,25 @@ function drawHeatGraph(graphTarget, graphBounds) {
       }
     });
     ctx.stroke();
+  };
+
+  if (state.heat.mode === "mixing") {
+    materials.forEach((item, index) => {
+      drawHistory(item.history || [], ["#59b4ff", "#ffb454"][index] || item.liquidColor || "#4fd1c5");
+    });
+  } else {
+    drawHistory(history, "#ffb454");
   }
 
   ctx.fillStyle = "rgba(239, 244, 255, 0.92)";
   ctx.font = "600 12px IBM Plex Sans";
-  ctx.fillText(
-    `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`,
-    inner.x,
-    graphBounds.y + 24
-  );
+  const summaryText =
+    state.heat.mode === "mixing"
+      ? materials.length
+        ? materials.map((item) => `${heatMaterialLabel(item)} ${item.temperature.toFixed(1)}°C`).join(" • ")
+        : "Karisim icin iki madde ekle"
+      : `${heatMaterialLabel(graphTarget)} / ${graphTarget.materialName} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`;
+  ctx.fillText(summaryText, inner.x, graphBounds.y + 24);
 }
 
 function drawHeatMaterial(layout, index) {
@@ -2525,8 +2780,8 @@ function drawHeatMaterial(layout, index) {
   ctx.font = "700 12px Space Grotesk";
   ctx.textAlign = "center";
   ctx.fillText(label, centerX, top - 8);
-  ctx.font = "600 11px IBM Plex Sans";
-  ctx.fillText(`${item.temperature.toFixed(1)}°C • ${heatPhaseLabel(item.phase)}`, centerX, bottom + 18);
+  ctx.font = "600 10px IBM Plex Sans";
+  ctx.fillText(`${item.temperature.toFixed(1)}°C`, centerX, bottom + 16);
 }
 
 function drawThermometer(item) {
@@ -2586,69 +2841,79 @@ function drawHeat() {
   ctx.fillStyle = stageGradient;
   ctx.fillRect(0, 0, viewport.width, viewport.height);
 
-  roundedRectPath(layout.pot.x - layout.pot.width / 2, layout.pot.y - layout.pot.height / 2, layout.pot.width, layout.pot.height, 34);
-  const potGradient = ctx.createLinearGradient(layout.pot.x, layout.pot.y - layout.pot.height / 2, layout.pot.x, layout.pot.y + layout.pot.height / 2);
-  potGradient.addColorStop(0, "rgba(174, 225, 255, 0.26)");
-  potGradient.addColorStop(1, "rgba(64, 121, 183, 0.16)");
-  ctx.fillStyle = potGradient;
-  ctx.fill();
-  ctx.strokeStyle = "rgba(196, 233, 255, 0.72)";
-  ctx.lineWidth = 4;
-  ctx.stroke();
+  if (state.heat.mode === "mixing") {
+    drawHeatCup(layout.leftCup, "Kap A", "#59b4ff", materials[0] ? `${materials[0].temperature.toFixed(1)}°C` : "");
+    drawHeatCup(layout.rightCup, "Kap B", "#ffb454", materials[1] ? `${materials[1].temperature.toFixed(1)}°C` : "");
+    drawHeatCup(layout.mixingCup, state.heat.mixing ? "Ayni ortam" : "Karisim kabi", "#ffd166", state.heat.mixing ? "Isi alisverisi suruyor" : "Iki maddeyi karistir");
 
-  ctx.strokeStyle = "rgba(220, 243, 255, 0.82)";
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(layout.pot.x - layout.pot.width / 2 + 46, layout.pot.y - layout.pot.height / 2 + 10);
-  ctx.lineTo(layout.pot.x + layout.pot.width / 2 - 46, layout.pot.y - layout.pot.height / 2 + 10);
-  ctx.stroke();
-
-  roundedRectPath(layout.heater.x - layout.heater.width / 2, layout.heater.y - layout.heater.height / 2, layout.heater.width, layout.heater.height, 18);
-  ctx.fillStyle = "rgba(99, 54, 22, 0.95)";
-  ctx.fill();
-  ctx.fillStyle = state.running ? "rgba(255, 180, 84, 0.94)" : "rgba(120, 82, 54, 0.65)";
-  roundedRectPath(layout.heater.x - layout.heater.width / 2 + 18, layout.heater.y - 7, layout.heater.width - 36, 14, 9);
-  ctx.fill();
-
-  if (state.running) {
-    for (let flame = 0; flame < 5; flame += 1) {
-      const x = layout.heater.x - 80 + flame * 40;
-      const height = 18 + Math.sin(state.heat.elapsed * 5 + flame) * 6;
-      ctx.fillStyle = flame % 2 ? "rgba(255, 122, 69, 0.86)" : "rgba(255, 209, 102, 0.82)";
+    if (state.heat.mixing) {
+      ctx.strokeStyle = "rgba(255, 209, 102, 0.34)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 8]);
       ctx.beginPath();
-      ctx.moveTo(x, layout.heater.y - 12);
-      ctx.quadraticCurveTo(x + 8, layout.heater.y - 12 - height, x + 16, layout.heater.y - 12);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-
-  if (state.running) {
-    for (let stream = 0; stream < 5; stream += 1) {
-      ctx.strokeStyle = `rgba(255, 180, 84, ${0.18 + stream * 0.06})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(layout.heater.x - 80 + stream * 40, layout.heater.y - 18);
-      ctx.quadraticCurveTo(
-        layout.heater.x - 70 + stream * 40,
-        layout.heater.y - 46 - Math.sin(state.heat.elapsed * 3 + stream) * 10,
-        layout.heater.x - 64 + stream * 40,
-        layout.pot.y + layout.pot.height / 2 - 8
-      );
+      ctx.moveTo(layout.leftCup.x + layout.leftCup.width / 2, layout.leftCup.y);
+      ctx.lineTo(layout.mixingCup.x - layout.mixingCup.width / 2 - 10, layout.mixingCup.y);
+      ctx.moveTo(layout.rightCup.x - layout.rightCup.width / 2, layout.rightCup.y);
+      ctx.lineTo(layout.mixingCup.x + layout.mixingCup.width / 2 + 10, layout.mixingCup.y);
       ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  } else {
+    roundedRectPath(layout.pot.x - layout.pot.width / 2, layout.pot.y - layout.pot.height / 2, layout.pot.width, layout.pot.height, 34);
+    const potGradient = ctx.createLinearGradient(layout.pot.x, layout.pot.y - layout.pot.height / 2, layout.pot.x, layout.pot.y + layout.pot.height / 2);
+    potGradient.addColorStop(0, "rgba(174, 225, 255, 0.26)");
+    potGradient.addColorStop(1, "rgba(64, 121, 183, 0.16)");
+    ctx.fillStyle = potGradient;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(196, 233, 255, 0.72)";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(220, 243, 255, 0.82)";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(layout.pot.x - layout.pot.width / 2 + 46, layout.pot.y - layout.pot.height / 2 + 10);
+    ctx.lineTo(layout.pot.x + layout.pot.width / 2 - 46, layout.pot.y - layout.pot.height / 2 + 10);
+    ctx.stroke();
+
+    roundedRectPath(layout.heater.x - layout.heater.width / 2, layout.heater.y - layout.heater.height / 2, layout.heater.width, layout.heater.height, 18);
+    ctx.fillStyle = "rgba(99, 54, 22, 0.95)";
+    ctx.fill();
+    ctx.fillStyle = state.running ? "rgba(255, 180, 84, 0.94)" : "rgba(120, 82, 54, 0.65)";
+    roundedRectPath(layout.heater.x - layout.heater.width / 2 + 18, layout.heater.y - 7, layout.heater.width - 36, 14, 9);
+    ctx.fill();
+
+    if (state.running) {
+      for (let flame = 0; flame < 5; flame += 1) {
+        const x = layout.heater.x - 80 + flame * 40;
+        const height = 18 + Math.sin(state.heat.elapsed * 5 + flame) * 6;
+        ctx.fillStyle = flame % 2 ? "rgba(255, 122, 69, 0.86)" : "rgba(255, 209, 102, 0.82)";
+        ctx.beginPath();
+        ctx.moveTo(x, layout.heater.y - 12);
+        ctx.quadraticCurveTo(x + 8, layout.heater.y - 12 - height, x + 16, layout.heater.y - 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      for (let stream = 0; stream < 5; stream += 1) {
+        ctx.strokeStyle = `rgba(255, 180, 84, ${0.18 + stream * 0.06})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(layout.heater.x - 80 + stream * 40, layout.heater.y - 18);
+        ctx.quadraticCurveTo(
+          layout.heater.x - 70 + stream * 40,
+          layout.heater.y - 46 - Math.sin(state.heat.elapsed * 3 + stream) * 10,
+          layout.heater.x - 64 + stream * 40,
+          layout.pot.y + layout.pot.height / 2 - 8
+        );
+        ctx.stroke();
+      }
     }
   }
 
   heatMaterialLayouts(materials).forEach((entry, index) => drawHeatMaterial(entry, index));
   thermometers.forEach((thermometer) => drawThermometer(thermometer));
-
-  ctx.fillStyle = "rgba(239, 244, 255, 0.95)";
-  ctx.font = "700 14px Space Grotesk";
-  ctx.textAlign = "left";
-  ctx.fillText("Kap ve isitici", layout.pot.x - layout.pot.width / 2, 34);
-  ctx.font = "500 12px IBM Plex Sans";
-  ctx.fillStyle = "rgba(159, 174, 203, 0.95)";
-  ctx.fillText("Isi verildikce sicaklik, ic enerji ve hal degisimi alttaki grafikle izlenir.", layout.pot.x - layout.pot.width / 2, 54);
+  drawHeatEnergyPanel(materials, layout.energy);
 
   drawHeatGraph(graphTarget, layout.graph);
 }
@@ -3372,11 +3637,23 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
     const materials = heatMaterials(items);
     const graphTarget = heatGraphTarget();
     primary.textContent = `${materials.length} malzeme`;
-    secondary.textContent = state.running ? `Isitici acik • ${state.heat.power} br` : "Isitici beklemede";
+    secondary.textContent =
+      state.heat.mode === "heating"
+        ? state.running
+          ? `Isitici acik • ${state.heat.power} br`
+          : "Isitici beklemede"
+        : state.running
+          ? "Isi alisverisi suruyor"
+          : "Karistirma bekliyor";
     tertiary.textContent = graphTarget
       ? `${heatMaterialLabel(graphTarget)} • ${graphTarget.temperature.toFixed(1)}°C • ${heatPhaseLabel(graphTarget.phase)}`
-      : "Kaba malzeme eklenmeyi bekliyor";
-    sceneState.textContent = state.running ? "Isitiliyor" : "Hazir";
+      : state.heat.mode === "heating"
+        ? "Kaba malzeme eklenmeyi bekliyor"
+        : "Iki madde eklenmeyi bekliyor";
+    sceneState.textContent =
+      state.heat.mode === "heating"
+        ? state.running ? "Isitiliyor" : "Hazir"
+        : state.running ? "Dengeye gidiyor" : "Hazir";
     return;
   }
 
@@ -3443,33 +3720,39 @@ function renderUI() {
       ? "Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla."
       : state.scene === "vectors"
         ? "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas."
-        : "Kap bos. Arac kutusundan malzeme ekleyip isitmayi baslat.";
+        : state.heat.mode === "heating"
+          ? "Kap bos. Malzeme ekleyip isitmayi baslat."
+          : "Iki malzeme ekleyip karistirma deneyini kur.";
   document.getElementById("toolbox-panel").hidden = state.scene === "vectors";
   document.getElementById("toolbox-copy").textContent =
     state.scene === "optics"
       ? "Optik sahneye yeni fizik nesneleri eklenir."
       : state.scene === "vectors"
         ? "Vektor sahnesinde uretilen vektorler mod kontrol panelinden yonetilir."
-        : "Malzemeleri ve termometreyi bu kutudan ekleyebilirsin.";
+        : state.heat.mode === "heating"
+          ? "Malzemeleri ve termometreyi bu kutudan ekleyebilirsin."
+          : "Karistirma icin iki madde ve istersen termometre ekle.";
   document.getElementById("status-text").textContent =
     state.notice ||
     (state.scene === "optics"
       ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
       : state.scene === "vectors"
         ? "Vektörleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla."
-        : "Kap icine madde ekle, isitici gucunu ayarla, termometre ile sicakligi oku ve alttaki grafikten hal degisimini izle.");
+        : state.heat.mode === "heating"
+          ? "Kap icine madde ekle, isitici gucunu ayarla ve grafigi izle."
+          : "Iki farkli sicakliktaki maddeyi ayni ortama getir ve isi alisverisini incele.");
   document.getElementById("run-scene-button").textContent =
-    state.scene === "optics" ? "Isin yolunu hesapla" : state.scene === "heat" ? "Isitmayi baslat" : "Bileskeyi goster";
+    state.scene === "optics" ? "Isin yolunu hesapla" : state.scene === "heat" ? (state.heat.mode === "heating" ? "Isitmayi baslat" : "Karistir") : "Bileskeyi goster";
   document.getElementById("pause-scene-button").textContent =
-    state.scene === "optics" ? "Duraklat" : state.scene === "heat" ? "Isitmayi durdur" : "Yardimcilari gizle";
+    state.scene === "optics" ? "Duraklat" : state.scene === "heat" ? (state.heat.mode === "heating" ? "Isitmayi durdur" : "Karistirmayi durdur") : "Yardimcilari gizle";
   document.getElementById("run-scene-button").style.display = state.scene === "vectors" ? "none" : "";
   document.getElementById("pause-scene-button").style.display = state.scene === "vectors" ? "none" : "";
 }
 
 function addItem(type) {
   if (state.scene === "heat") {
-    if (isHeatMaterial({ type }) && heatMaterials().length >= 3) {
-      state.notice = "Kapta en fazla 3 malzeme kullanilabilir.";
+    if (isHeatMaterial({ type }) && heatMaterials().length >= heatMaterialLimit()) {
+      state.notice = `Bu duzende en fazla ${heatMaterialLimit()} malzeme kullanilabilir.`;
       renderUI();
       return;
     }
@@ -3499,6 +3782,8 @@ function clearScene() {
   }
   if (state.scene === "heat") {
     state.heat.elapsed = 0;
+    state.heat.mixing = false;
+    state.heat.equilibriumTemperature = null;
   }
   selectedId = null;
   state.notice = "Sahne temizlendi. Yeni duzenek kurabilirsin.";
@@ -3548,12 +3833,18 @@ function runScene() {
   }
   if (state.scene === "heat") {
     if (!heatMaterials().length) {
-      state.notice = "Isitmadan once kaba en az bir malzeme ekle.";
+      state.notice = state.heat.mode === "heating" ? "Isitmadan once kaba en az bir malzeme ekle." : "Karistirmadan once iki madde ekle.";
+      renderUI();
+      return;
+    }
+    if (state.heat.mode === "mixing" && heatMaterials().length !== 2) {
+      state.notice = "Karistirma deneyi icin iki madde gerekli.";
       renderUI();
       return;
     }
     state.running = true;
-    state.notice = "Isitici calismaya basladi.";
+    state.heat.mixing = state.heat.mode === "mixing";
+    state.notice = state.heat.mode === "heating" ? "Isitici calismaya basladi." : "Maddeler ayni ortama alindi, isi alisverisi basladi.";
     if (!animationFrame) {
       animationFrame = requestAnimationFrame(runHeatLoop);
     }
@@ -3577,7 +3868,7 @@ function pauseScene() {
   if (state.scene === "heat") {
     stopAnimationLoop();
     state.running = false;
-    state.notice = "Isitici durduruldu.";
+    state.notice = state.heat.mode === "heating" ? "Isitici durduruldu." : "Karistirma durduruldu.";
     saveState();
     renderUI();
     return;
@@ -3843,6 +4134,22 @@ function initEvents() {
 
   document.getElementById("module-controls").addEventListener("click", (event) => {
     if (state.scene === "heat") {
+      const modeButton = event.target.closest("[data-heat-mode]");
+      if (modeButton) {
+        stopAnimationLoop();
+        state.running = false;
+        state.heat.mode = modeButton.dataset.heatMode === "mixing" ? "mixing" : "heating";
+        state.heat.mixing = false;
+        state.heat.equilibriumTemperature = null;
+        state.heat.items = [];
+        state.heat.elapsed = 0;
+        selectedId = null;
+        state.notice = `${heatModeLabel()} gorunumu acildi.`;
+        saveState();
+        renderUI();
+        return;
+      }
+
       const action = event.target.closest("[data-heat-action]");
       if (!action) {
         return;
