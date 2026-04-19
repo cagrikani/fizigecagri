@@ -3805,13 +3805,14 @@ function restoreFocusedInput(snapshot) {
 function arrangePanelsForScene() {
   const stageSide = document.getElementById("stage-side");
   const bottomStrip = document.getElementById("bottom-panel-strip");
+  const workspaceSlot = document.getElementById("workspace-slot");
   const toolboxPanel = document.getElementById("toolbox-panel");
   const navigationPanel = document.getElementById("navigation-panel");
   const moduleControlsPanel = document.getElementById("module-controls-panel");
   const inspectorPanel = document.getElementById("inspector-panel");
   const objectPanel = document.querySelector(".object-panel");
 
-  if (!stageSide || !bottomStrip || !toolboxPanel || !navigationPanel || !moduleControlsPanel || !inspectorPanel || !objectPanel) {
+  if (!stageSide || !bottomStrip || !workspaceSlot || !toolboxPanel || !navigationPanel || !moduleControlsPanel || !inspectorPanel || !objectPanel) {
     return;
   }
 
@@ -3828,7 +3829,8 @@ function arrangePanelsForScene() {
   }
 
   stageSide.append(toolboxPanel, navigationPanel);
-  bottomStrip.append(moduleControlsPanel, inspectorPanel, objectPanel);
+  workspaceSlot.append(moduleControlsPanel);
+  bottomStrip.append(inspectorPanel, objectPanel);
 }
 
 function renderUI() {

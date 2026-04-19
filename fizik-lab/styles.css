@@ -425,6 +425,7 @@ h1 {
 .workspace,
 .workspace-main,
 .stage-side,
+.workspace-slot,
 .control-strip {
   display: grid;
   gap: 14px;
@@ -465,7 +466,11 @@ h1 {
 }
 
 #lab-screen[data-scene="heat"] .control-strip-bottom {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(280px, 0.92fr) minmax(280px, 1.08fr);
+}
+
+#lab-screen[data-scene="heat"] .workspace-slot {
+  margin-top: -2px;
 }
 
 .panel {
@@ -537,16 +542,17 @@ h1 {
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel {
-  grid-column: 1 / -1;
+  padding: 14px 16px;
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel .vector-controls {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: start;
+  gap: 10px;
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel .scene-switch {
-  grid-column: span 4;
+  grid-column: span 3;
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel .field {
@@ -554,8 +560,9 @@ h1 {
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel .inline-actions {
-  grid-column: span 4;
+  grid-column: span 5;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note:not(.subtle) {
@@ -564,6 +571,26 @@ h1 {
 
 #lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note.subtle {
   grid-column: span 5;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .panel-head {
+  margin-bottom: 10px;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .panel-head p {
+  line-height: 1.45;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .scene-button,
+#lab-screen[data-scene="heat"] #module-controls-panel .primary-button,
+#lab-screen[data-scene="heat"] #module-controls-panel .secondary-button {
+  padding: 11px 16px;
+}
+
+#lab-screen[data-scene="heat"] #module-controls-panel .vector-mode-note {
+  padding: 10px 12px;
+  line-height: 1.45;
+  margin: 0;
 }
 
 .tool-card,
@@ -1194,6 +1221,10 @@ h1 {
 
   .control-strip-bottom {
     grid-template-columns: 1fr;
+  }
+
+  #lab-screen[data-scene="heat"] .workspace-slot {
+    margin-top: 0;
   }
 
   #lab-screen[data-scene="optics"] #toolbox-panel .tool-grid {
