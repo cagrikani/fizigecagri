@@ -122,6 +122,7 @@ let dragState = null;
 let animationFrame = null;
 let lastTick = 0;
 let shouldRevealInspector = false;
+let inspectorModalOpen = false;
 
 function loadState() {
   localStorage.removeItem(STORAGE_KEY);
@@ -1906,18 +1907,14 @@ function selectField(label, prop, value, options, full = false) {
   `;
 }
 
-function renderInspector() {
-  const inspector = document.getElementById("inspector");
-  const item = selectedItem();
-
+function inspectorMarkup(item) {
   if (!item) {
-    inspector.innerHTML = `
+    return `
       <div class="inspector-note">
         Sahne uzerinden bir nesne secildiginde burada o nesnenin sayisal
         degerlerini degistirebilirsin.
       </div>
     `;
-    return;
   }
 
   const fields = isVector(item) || isHeatMaterial(item)
@@ -2054,7 +2051,7 @@ function renderInspector() {
     fields.push(numberField("Kuvvet Y", "dy", item.dy, -220, 220, 1));
   }
 
-  inspector.innerHTML = `
+  return `
     <div>
       <strong>${isVector(item) ? `${vectorLabel(item)} • ${itemTitle(item)}` : isHeatMaterial(item) ? `${heatMaterialLabel(item)} • ${itemTitle(item)}` : itemTitle(item)}</strong>
       <div class="inspector-note">${itemMeta(item)}</div>
@@ -2091,6 +2088,17 @@ function renderInspector() {
       <button class="secondary-button compact" type="button" data-action="delete">Secili nesneyi sil</button>
     </div>
   `;
+}
+
+function renderInspector() {
+  const inspector = document.getElementById("inspector");
+  const modalInspector = document.getElementById("modal-inspector");
+  const item = selectedItem();
+  const markup = inspectorMarkup(item);
+  inspector.innerHTML = markup;
+  if (modalInspector) {
+    modalInspector.innerHTML = markup;
+  }
 }
 
 function renderObjectList() {
@@ -3874,7 +3882,7 @@ function captureFocusedInput() {
     return null;
   }
 
-  const container = active.closest("#inspector, #module-controls");
+  const container = active.closest("#inspector, #module-controls, #modal-inspector");
   if (!container) {
     return null;
   }
@@ -3978,6 +3986,26 @@ function revealInspectorIfNeeded() {
   shouldRevealInspector = false;
 }
 
+function openInspectorModal() {
+  if (!selectedItem()) {
+    return;
+  }
+
+  inspectorModalOpen = true;
+  const modal = document.getElementById("inspector-modal");
+  if (modal) {
+    modal.hidden = false;
+  }
+}
+
+function closeInspectorModal() {
+  inspectorModalOpen = false;
+  const modal = document.getElementById("inspector-modal");
+  if (modal) {
+    modal.hidden = true;
+  }
+}
+
 function renderUI() {
   const focusSnapshot = captureFocusedInput();
   document.getElementById("home-screen").hidden = state.view !== "home";
@@ -3992,6 +4020,7 @@ function renderUI() {
   }
 
   document.getElementById("lab-screen").dataset.scene = state.scene;
+  document.getElementById("inspector-modal").hidden = !inspectorModalOpen;
   arrangePanelsForScene();
   trimVectorsToModeLimit();
   ensureSelection();
@@ -4410,6 +4439,16 @@ function initCanvasInteractions() {
   canvas.addEventListener("pointerup", release);
   canvas.addEventListener("pointercancel", release);
   canvas.addEventListener("pointerleave", release);
+  canvas.addEventListener("dblclick", (event) => {
+    const point = canvasPoint(event);
+    const hit = hitItem(point);
+    if (!hit) return;
+    selectedId = hit.id;
+    shouldRevealInspector = false;
+    openInspectorModal();
+    state.notice = `${itemTitle(hit)} özellik penceresi açıldı.`;
+    renderUI();
+  });
 }
 
 function initEvents() {
@@ -4531,7 +4570,17 @@ function initEvents() {
     renderUI();
   });
 
-  document.getElementById("inspector").addEventListener("input", (event) => {
+  document.getElementById("object-list").addEventListener("dblclick", (event) => {
+    const button = event.target.closest("[data-select]");
+    if (!button) return;
+    selectedId = button.dataset.select;
+    shouldRevealInspector = false;
+    openInspectorModal();
+    state.notice = `${itemTitle(selectedItem())} özellik penceresi açıldı.`;
+    renderUI();
+  });
+
+  const handleInspectorInput = (event) => {
     const input = event.target.closest("[data-prop]");
     if (!input) return;
 
@@ -4549,9 +4598,9 @@ function initEvents() {
     state.notice = `${itemTitle(item)} guncellendi.`;
     saveState();
     renderUI();
-  });
+  };
 
-  document.getElementById("inspector").addEventListener("click", (event) => {
+  const handleInspectorClick = (event) => {
     const button = event.target.closest("[data-action]");
     if (!button) return;
 
@@ -4569,6 +4618,7 @@ function initEvents() {
         state.heat.elapsed = 0;
       }
       selectedId = null;
+      closeInspectorModal();
       state.notice = `${itemTitle(item)} silindi.`;
     }
 
@@ -4580,6 +4630,25 @@ function initEvents() {
 
     saveState();
     renderUI();
+  };
+
+  document.getElementById("inspector").addEventListener("input", handleInspectorInput);
+  document.getElementById("modal-inspector").addEventListener("input", handleInspectorInput);
+  document.getElementById("inspector").addEventListener("click", handleInspectorClick);
+  document.getElementById("modal-inspector").addEventListener("click", handleInspectorClick);
+
+  document.getElementById("close-inspector-modal").addEventListener("click", closeInspectorModal);
+  document.getElementById("inspector-modal").addEventListener("click", (event) => {
+    if (event.target.closest("[data-close-modal=\"inspector\"]")) {
+      closeInspectorModal();
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && inspectorModalOpen) {
+      closeInspectorModal();
+      renderUI();
+    }
   });
 
   document.getElementById("run-scene-button").addEventListener("click", runScene);

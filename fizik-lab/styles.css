@@ -449,6 +449,56 @@ h1 {
   box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.18), var(--shadow);
 }
 
+.modal-shell[hidden] {
+  display: none !important;
+}
+
+.modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 10, 18, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.modal-card {
+  position: relative;
+  width: min(760px, calc(100vw - 28px));
+  max-height: min(88vh, 920px);
+  overflow: auto;
+  padding: 20px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(18, 30, 53, 0.96), rgba(10, 18, 31, 0.98));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.modal-head h2 {
+  margin: 0 0 6px;
+}
+
+.modal-head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .control-strip-bottom {
   grid-template-columns: minmax(300px, 1.15fr) minmax(280px, 0.95fr) minmax(280px, 1fr);
   align-items: start;
@@ -1210,7 +1260,8 @@ h1 {
   .panel,
   .stage-panel,
   .hero-stat,
-  .readout-card {
+  .readout-card,
+  .modal-card {
     border-radius: 22px;
   }
 
@@ -1272,5 +1323,9 @@ h1 {
     right: 14px;
     max-width: none;
     top: 14px;
+  }
+
+  .modal-head {
+    flex-direction: column;
   }
 }

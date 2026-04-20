@@ -236,6 +236,20 @@
     </div>
   </div>
 
+  <div class="modal-shell" id="inspector-modal" hidden>
+    <div class="modal-backdrop" data-close-modal="inspector"></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-inspector-title">
+      <div class="modal-head">
+        <div>
+          <h2 id="modal-inspector-title">Nesne Özellikleri</h2>
+          <p>Seçili nesnenin değerlerini buradan düzenleyebilirsin.</p>
+        </div>
+        <button class="secondary-button compact" id="close-inspector-modal" type="button">Kapat</button>
+      </div>
+      <div id="modal-inspector"></div>
+    </section>
+  </div>
+
   <script src="./script.js"></script>
 </body>
 </html>
