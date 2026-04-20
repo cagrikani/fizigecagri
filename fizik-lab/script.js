@@ -1212,9 +1212,39 @@ function centerPoints(item) {
   ];
 }
 
+function sphericalMirrorCenter(item) {
+  if (!isMirror(item) || item.type === "plane-mirror") {
+    return null;
+  }
+
+  return fromLocal({ x: mirrorMode(item) === "concave" ? -item.radius : item.radius, y: 0 }, item);
+}
+
 function isInFrontOfPlaneMirror(mirror, point) {
   const back = mirrorBackDirection(mirror);
   return dot({ x: point.x - mirror.x, y: point.y - mirror.y }, back) <= 0;
+}
+
+function reflectFromNormal(direction, normal) {
+  let adjusted = normalizeVector(normal);
+  if (dot(direction, adjusted) > 0) {
+    adjusted = { x: -adjusted.x, y: -adjusted.y };
+  }
+
+  return normalizeVector({
+    x: direction.x - 2 * dot(direction, adjusted) * adjusted.x,
+    y: direction.y - 2 * dot(direction, adjusted) * adjusted.y
+  });
+}
+
+function reflectiveNormalForSphericalMirror(item, point) {
+  const center = sphericalMirrorCenter(item);
+  if (!center) {
+    return null;
+  }
+
+  const outward = normalizeVector({ x: point.x - center.x, y: point.y - center.y });
+  return mirrorMode(item) === "concave" ? { x: -outward.x, y: -outward.y } : outward;
 }
 
 function toPlaneMirrorLocal(point, mirror) {
@@ -2458,12 +2488,22 @@ function closestOpticsHit(origin, direction, laser) {
           continue;
         }
 
+        if (item.type === "spherical-mirror" && hit) {
+          const reflectiveNormal = reflectiveNormalForSphericalMirror(item, hit.point);
+          if (!reflectiveNormal || dot(direction, reflectiveNormal) >= 0) {
+            continue;
+          }
+        }
+
         if (hit && (!closest || hit.t < closest.t)) {
           closest = {
             t: hit.t,
             item,
             point: hit.point,
-            nextDirection: reflectFromTangent(direction, { x: end.x - start.x, y: end.y - start.y })
+            nextDirection:
+              item.type === "spherical-mirror"
+                ? reflectFromNormal(direction, reflectiveNormalForSphericalMirror(item, hit.point))
+                : reflectFromTangent(direction, { x: end.x - start.x, y: end.y - start.y })
           };
         }
       }
@@ -3345,22 +3385,37 @@ function drawOptics(trace) {
 
   const drawMirrorBody = (item, isSelected) => {
     const points = mirrorPolyline(item);
-    const back = mirrorBackDirection(item);
-    const backOffset = 10;
-    const backPoints = points.map((point) => ({
-      x: point.x + back.x * backOffset,
-      y: point.y + back.y * backOffset
-    }));
 
-    ctx.beginPath();
-    backPoints.forEach((point, index) => {
-      if (index === 0) ctx.moveTo(point.x, point.y);
-      else ctx.lineTo(point.x, point.y);
-    });
-    ctx.strokeStyle = isSelected ? "#875433" : "#5e3921";
-    ctx.lineWidth = item.type === "plane-mirror" ? 10 : 12;
-    ctx.lineCap = "round";
-    ctx.stroke();
+    if (item.type === "spherical-mirror") {
+      const center = sphericalMirrorCenter(item);
+      if (center) {
+        ctx.save();
+        ctx.setLineDash([8, 8]);
+        ctx.strokeStyle = "rgba(184, 204, 235, 0.22)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, item.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else {
+      const back = mirrorBackDirection(item);
+      const backOffset = 10;
+      const backPoints = points.map((point) => ({
+        x: point.x + back.x * backOffset,
+        y: point.y + back.y * backOffset
+      }));
+
+      ctx.beginPath();
+      backPoints.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.strokeStyle = isSelected ? "#875433" : "#5e3921";
+      ctx.lineWidth = 10;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
 
     ctx.beginPath();
     points.forEach((point, index) => {
@@ -3373,7 +3428,11 @@ function drawOptics(trace) {
     ctx.lineCap = "round";
     ctx.stroke();
 
-    if (item.type !== "plane-mirror") {
+    if (item.type === "spherical-mirror") {
+      ctx.strokeStyle = mirrorMode(item) === "concave" ? "rgba(255, 214, 102, 0.95)" : "rgba(102, 224, 255, 0.92)";
+      ctx.lineWidth = isSelected ? 3.5 : 3;
+      ctx.stroke();
+    } else if (item.type !== "plane-mirror") {
       ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
       ctx.lineWidth = 1.75;
       ctx.stroke();
