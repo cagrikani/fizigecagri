@@ -440,6 +440,15 @@ h1 {
   grid-auto-rows: min-content;
 }
 
+#inspector-panel {
+  scroll-margin-top: 16px;
+}
+
+.panel-pop {
+  border-color: rgba(79, 209, 197, 0.42);
+  box-shadow: 0 0 0 1px rgba(79, 209, 197, 0.18), var(--shadow);
+}
+
 .control-strip-bottom {
   grid-template-columns: minmax(300px, 1.15fr) minmax(280px, 0.95fr) minmax(280px, 1fr);
   align-items: start;
@@ -539,6 +548,12 @@ h1 {
 
 #lab-screen[data-scene="vectors"] #module-controls-panel {
   min-height: 100%;
+}
+
+#lab-screen[data-scene="vectors"] #inspector-panel,
+#lab-screen[data-scene="optics"] #inspector-panel,
+#lab-screen[data-scene="heat"] #inspector-panel {
+  align-self: start;
 }
 
 #lab-screen[data-scene="heat"] #module-controls-panel {

@@ -121,6 +121,7 @@ let selectedId = null;
 let dragState = null;
 let animationFrame = null;
 let lastTick = 0;
+let shouldRevealInspector = false;
 
 function loadState() {
   localStorage.removeItem(STORAGE_KEY);
@@ -3882,20 +3883,40 @@ function arrangePanelsForScene() {
   }
 
   if (state.scene === "optics") {
-    stageSide.append(moduleControlsPanel, navigationPanel);
-    bottomStrip.append(toolboxPanel, inspectorPanel, objectPanel);
+    stageSide.append(inspectorPanel, moduleControlsPanel, navigationPanel);
+    bottomStrip.append(toolboxPanel, objectPanel);
     return;
   }
 
   if (state.scene === "vectors") {
-    stageSide.append(moduleControlsPanel, navigationPanel);
-    bottomStrip.append(inspectorPanel, objectPanel, toolboxPanel);
+    stageSide.append(inspectorPanel, moduleControlsPanel, navigationPanel);
+    bottomStrip.append(objectPanel, toolboxPanel);
     return;
   }
 
-  stageSide.append(toolboxPanel, navigationPanel);
+  stageSide.append(inspectorPanel, toolboxPanel, navigationPanel);
   workspaceSlot.append(moduleControlsPanel);
-  bottomStrip.append(inspectorPanel, objectPanel);
+  bottomStrip.append(objectPanel);
+}
+
+function revealInspectorIfNeeded() {
+  if (!shouldRevealInspector || state.view !== "lab" || !selectedId) {
+    shouldRevealInspector = false;
+    return;
+  }
+
+  const panel = document.getElementById("inspector-panel");
+  if (!panel) {
+    shouldRevealInspector = false;
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    panel.classList.add("panel-pop");
+    window.setTimeout(() => panel.classList.remove("panel-pop"), 700);
+  });
+  shouldRevealInspector = false;
 }
 
 function renderUI() {
@@ -3963,6 +3984,7 @@ function renderUI() {
   document.getElementById("run-scene-button").style.display = state.scene === "vectors" ? "none" : "";
   document.getElementById("pause-scene-button").style.display = state.scene === "vectors" ? "none" : "";
   restoreFocusedInput(focusSnapshot);
+  revealInspectorIfNeeded();
 }
 
 function addItem(type) {
@@ -3983,6 +4005,7 @@ function addItem(type) {
   const item = makeItem(type);
   currentItems().push(item);
   selectedId = item.id;
+  shouldRevealInspector = true;
   state.notice = `${itemTitle(item)} sahneye eklendi.`;
   saveState();
   renderUI();
@@ -4271,6 +4294,7 @@ function initCanvasInteractions() {
     const point = canvasPoint(event);
     const hit = hitItem(point);
     selectedId = hit?.id || null;
+    shouldRevealInspector = Boolean(hit);
 
     if (hit) {
       const draggable = !(state.scene === "heat" && isHeatMaterial(hit));
@@ -4443,6 +4467,7 @@ function initEvents() {
     const button = event.target.closest("[data-select]");
     if (!button) return;
     selectedId = button.dataset.select;
+    shouldRevealInspector = true;
     state.notice = `${itemTitle(selectedItem())} secildi.`;
     renderUI();
   });
