@@ -2,18 +2,17 @@ const STORAGE_KEY = "fizik-lab-state-v1";
 
 const toolCatalog = {
   optics: [
-    { type: "laser", label: "Lazer", description: "Tek bir isik kaynagi ekler." },
-    { type: "optical-object", label: "Cisim", description: "Goruntusu olusan ok seklinde cisim ekler." },
-    { type: "round-object", label: "Yuvarlak Cisim", description: "Goz ve aynada kullanilabilen yuvarlak cisim ekler." },
-    { type: "eye", label: "Goz", description: "Aynada ve ortamda gorulen noktayi izleyen goz ekler." },
-    { type: "depth-tank", label: "Gorunur Derinlik", description: "Iki ortamdaki cismin gorunur derinligini gosterir." },
-    { type: "fiber", label: "Fiber Optik", description: "Tam yansima ile isigi ileten fiber kablo ekler." },
-    { type: "prism", label: "Prizma", description: "Kirilan ve ayrisan isigi gosterir." },
-    { type: "plane-mirror", label: "Duz Ayna", description: "Standart dogrusal yansima yapar." },
-    { type: "concave-mirror", label: "Cukur Ayna", description: "Isini odaga toplayan icbukey ayna." },
-    { type: "convex-mirror", label: "Tumsek Ayna", description: "Isini dagitan disbukey ayna." },
-    { type: "convex-lens", label: "Ince Kenarli Mercek", description: "Ortasi kalin, isigi odaga toplar." },
-    { type: "concave-lens", label: "Kalin Kenarli Mercek", description: "Ortasi ince, isigi dagitir." }
+    { type: "laser", label: "Lazer", description: "Tek bir ışık kaynağı ekler." },
+    { type: "optical-object", label: "Cisim", description: "Görüntüsü oluşan ok şeklinde cisim ekler." },
+    { type: "round-object", label: "Yuvarlak Cisim", description: "Göz ve aynada kullanılabilen yuvarlak cisim ekler." },
+    { type: "eye", label: "Göz", description: "Aynada ve ortamda görülen noktayı izleyen göz ekler." },
+    { type: "depth-tank", label: "Görünür Derinlik", description: "İki ortamdaki cismin görünür derinliğini gösterir." },
+    { type: "fiber", label: "Fiber Optik", description: "Tam yansıma ile ışığı ileten fiber kablo ekler." },
+    { type: "prism", label: "Prizma", description: "Kırılan ve ayrışan ışığı gösterir." },
+    { type: "plane-mirror", label: "Düz Ayna", description: "Tek yönlü düz ayna ekler." },
+    { type: "spherical-mirror", label: "Küresel Ayna", description: "Çukur veya tümsek olarak kullanılabilen küresel ayna ekler." },
+    { type: "convex-lens", label: "İnce Kenarlı Mercek", description: "Ortası kalın, ışığı odağa toplar." },
+    { type: "concave-lens", label: "Kalın Kenarlı Mercek", description: "Ortası ince, ışığı dağıtır." }
   ],
   vectors: [
     { type: "vector", label: "Vektor", description: "Ucu, boyu ve acisi ayarlanabilen yeni vektor ekler." }
@@ -137,6 +136,14 @@ function normalizeState(raw) {
     items.map((item) => {
       if (item.type === "mirror") {
         return { ...item, type: "plane-mirror" };
+      }
+
+      if (item.type === "concave-mirror") {
+        return { ...item, type: "spherical-mirror", mirrorMode: "concave" };
+      }
+
+      if (item.type === "convex-mirror") {
+        return { ...item, type: "spherical-mirror", mirrorMode: "convex" };
       }
 
       if (item.type === "lens") {
@@ -283,7 +290,7 @@ function mirrorProfileX(item, y) {
   const limitedY = clamp(y, -item.length / 2 + 0.01, item.length / 2 - 0.01);
   const sagitta = radius - Math.sqrt(Math.max(radius * radius - limitedY * limitedY, 0));
 
-  if (item.type === "concave-mirror") {
+  if (mirrorMode(item) === "concave") {
     return -sagitta;
   }
 
@@ -321,7 +328,13 @@ function lensHalfWidth(item, localY) {
 }
 
 function isMirror(item) {
-  return item.type === "plane-mirror" || item.type === "concave-mirror" || item.type === "convex-mirror";
+  return item.type === "plane-mirror" || item.type === "spherical-mirror" || item.type === "concave-mirror" || item.type === "convex-mirror";
+}
+
+function mirrorMode(item) {
+  if (item.type === "concave-mirror") return "concave";
+  if (item.type === "convex-mirror") return "convex";
+  return item.mirrorMode === "convex" ? "convex" : "concave";
 }
 
 function isLens(item) {
@@ -1170,8 +1183,11 @@ function focusPoints(item) {
     return [];
   }
 
-  const focalLength = -item.radius / 2;
-  return [{ label: "F", point: fromLocal({ x: focalLength, y: 0 }, item) }];
+  const focalLength = item.radius / 2;
+  return [
+    { label: "F", point: fromLocal({ x: -focalLength, y: 0 }, item) },
+    { label: "F", point: fromLocal({ x: focalLength, y: 0 }, item) }
+  ];
 }
 
 function centerPoints(item) {
@@ -1187,11 +1203,17 @@ function centerPoints(item) {
     return [{ label: "V", point: principalPoint(item) }];
   }
 
-  const radius = -item.radius;
+  const radius = item.radius;
   return [
     { label: "V", point: principalPoint(item) },
+    { label: "C", point: fromLocal({ x: -radius, y: 0 }, item) },
     { label: "C", point: fromLocal({ x: radius, y: 0 }, item) }
   ];
+}
+
+function isInFrontOfPlaneMirror(mirror, point) {
+  const back = mirrorBackDirection(mirror);
+  return dot({ x: point.x - mirror.x, y: point.y - mirror.y }, back) <= 0;
 }
 
 function toPlaneMirrorLocal(point, mirror) {
@@ -1257,6 +1279,10 @@ function opticalObjectEndpoints(item) {
 }
 
 function planeMirrorImageForOpticalObject(mirror, objectItem) {
+  if (!isInFrontOfPlaneMirror(mirror, objectItem)) {
+    return null;
+  }
+
   const endpoints = opticalObjectEndpoints(objectItem);
   const imageBase = planeMirrorImagePoint(mirror, endpoints.base);
   const imageTop = planeMirrorImagePoint(mirror, endpoints.top);
@@ -1308,6 +1334,10 @@ function imageForElement(item, objectItem) {
 
   if (isMirror(item)) {
     if (item.type === "plane-mirror") {
+      if (!isInFrontOfPlaneMirror(item, objectItem)) {
+        return null;
+      }
+
       const imagePoint = planeMirrorImagePoint(item, objectItem);
       if (!imagePoint) {
         return null;
@@ -1325,7 +1355,7 @@ function imageForElement(item, objectItem) {
       return null;
     }
 
-    const f = item.type === "concave-mirror" ? item.radius / 2 : -item.radius / 2;
+    const f = mirrorMode(item) === "concave" ? item.radius / 2 : -item.radius / 2;
     const denominator = (1 / f) - (1 / doValue);
     if (Math.abs(denominator) < 0.00001) {
       return null;
@@ -1422,8 +1452,17 @@ function makeItem(type) {
     return { id: uid("mirror"), type, x: 420 + offset, y: 250, angle: 90, length: 140, radius: 0 };
   }
 
-  if (type === "concave-mirror" || type === "convex-mirror") {
-    return { id: uid("mirror"), type, x: 440 + offset, y: 250, angle: 0, length: 150, radius: 180 };
+  if (type === "spherical-mirror" || type === "concave-mirror" || type === "convex-mirror") {
+    return {
+      id: uid("mirror"),
+      type: "spherical-mirror",
+      mirrorMode: type === "convex-mirror" ? "convex" : "concave",
+      x: 440 + offset,
+      y: 250,
+      angle: 0,
+      length: 150,
+      radius: 180
+    };
   }
 
   if (type === "convex-lens") {
@@ -1543,6 +1582,10 @@ function constrainItem(item) {
     item.angle = clamp(Number(item.angle) || 0, -180, 180);
     item.length = clamp(Number(item.length) || 140, 60, 240);
     item.radius = item.type === "plane-mirror" ? 0 : clamp(Number(item.radius) || 180, 90, 320);
+    if (item.type !== "plane-mirror") {
+      item.type = "spherical-mirror";
+      item.mirrorMode = mirrorMode(item);
+    }
   }
 
   if (isLens(item)) {
@@ -1579,20 +1622,19 @@ function itemTitle(item) {
   if (item.type === "laser") return "Lazer kaynagi";
   if (item.type === "optical-object") return "Optik cisim";
   if (item.type === "round-object") return "Yuvarlak cisim";
-  if (item.type === "eye") return "Goz";
+  if (item.type === "eye") return "Göz";
   if (item.type === "vector") return "Vektor";
   if (item.type === "molecular-sample") return "Molekullu ornek madde";
   if (item.type === "heat-solid") return "Kati madde";
   if (item.type === "heat-liquid") return "Sivi madde";
   if (item.type === "thermometer") return "Termometre";
-  if (item.type === "depth-tank") return "Gorunur derinlik kabi";
+  if (item.type === "depth-tank") return "Görünür derinlik kabı";
   if (item.type === "fiber") return "Fiber optik kablo";
   if (item.type === "prism") return "Prizma";
-  if (item.type === "plane-mirror") return "Duz ayna";
-  if (item.type === "concave-mirror") return "Cukur ayna";
-  if (item.type === "convex-mirror") return "Tumsek ayna";
-  if (item.type === "convex-lens") return "Ince kenarli mercek";
-  if (item.type === "concave-lens") return "Kalin kenarli mercek";
+  if (item.type === "plane-mirror") return "Düz ayna";
+  if (item.type === "spherical-mirror") return mirrorMode(item) === "concave" ? "Küresel ayna • Çukur" : "Küresel ayna • Tümsek";
+  if (item.type === "convex-lens") return "İnce kenarlı mercek";
+  if (item.type === "concave-lens") return "Kalın kenarlı mercek";
   if (item.type === "block") return "Cisim";
   return "Kuvvet oku";
 }
@@ -1600,11 +1642,11 @@ function itemTitle(item) {
 function itemMeta(item) {
   if (item.type === "laser") {
     const color = laserColorData(item.colorMode, item.color);
-    return `${Math.round(item.angle)} derece • ${color.label} isik`;
+    return `${Math.round(item.angle)} derece • ${color.label} ışık`;
   }
   if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
   if (item.type === "round-object") return `${Math.round(item.radius)} px yaricap`;
-  if (item.type === "eye") return `${Math.round(item.angle)} derece bakis`;
+  if (item.type === "eye") return `${Math.round(item.angle)} derece bakış`;
   if (item.type === "vector") {
     return `${vectorLabel(item)} • ${Math.round(vectorMagnitude(item))} br • ${vectorAngle(item)} derece`;
   }
@@ -1620,17 +1662,17 @@ function itemMeta(item) {
   if (item.type === "depth-tank") {
     return `n1 ${item.topIndex.toFixed(2)} • n2 ${item.bottomIndex.toFixed(2)} • ${Math.round(item.height)} px`;
   }
-  if (item.type === "fiber") return `${Math.round(item.length)} px • ${item.bounces} ic yansima`;
+  if (item.type === "fiber") return `${Math.round(item.length)} px • ${item.bounces} iç yansıma`;
   if (item.type === "prism") {
     return `${Math.round(item.size)} px • dagilim ${Math.round(item.dispersion)} derece • n ${item.index.toFixed(2)}`;
   }
   if (isMirror(item)) {
-    const radiusText = item.type === "plane-mirror" ? "duz yuzey" : `R ${Math.round(item.radius)}`;
+    const radiusText = item.type === "plane-mirror" ? "düz yüzey" : `${mirrorMode(item) === "concave" ? "Çukur" : "Tümsek"} • R ${Math.round(item.radius)}`;
     return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px • ${radiusText}`;
   }
 
   if (isLens(item)) {
-    return `${Math.round(item.focalLength)} px odak • yukseklik ${Math.round(item.height)} px`;
+    return `${Math.round(item.focalLength)} px odak • yükseklik ${Math.round(item.height)} px`;
   }
 
   if (item.type === "block") return `${item.mass} kg • hiz ${item.vx.toFixed(1)}, ${item.vy.toFixed(1)}`;
@@ -1652,8 +1694,7 @@ function toolGlyph(type) {
     "heat-liquid": '<span class="tool-glyph heat-liquid"><span></span></span>',
     thermometer: '<span class="tool-glyph thermometer"><span></span></span>',
     "plane-mirror": '<span class="tool-glyph plane-mirror"><span></span></span>',
-    "concave-mirror": '<span class="tool-glyph concave-mirror"><span></span></span>',
-    "convex-mirror": '<span class="tool-glyph convex-mirror"><span></span></span>',
+    "spherical-mirror": '<span class="tool-glyph concave-mirror"><span></span></span>',
     "convex-lens": '<span class="tool-glyph convex-lens"><span></span></span>',
     "concave-lens": '<span class="tool-glyph concave-lens"><span></span></span>',
     block: '<span class="tool-glyph block"><span></span></span>',
@@ -1682,9 +1723,9 @@ function renderLegend() {
   const legend = document.getElementById("legend");
   if (state.scene === "vectors") {
     legend.innerHTML = `
-      <span class="legend-chip laser">Girilen vektor</span>
-      <span class="legend-chip mirror">Yontem cizgileri</span>
-      <span class="legend-chip force">Bileske vektor</span>
+      <span class="legend-chip laser">Girilen vektör</span>
+      <span class="legend-chip mirror">Yöntem çizgileri</span>
+      <span class="legend-chip force">Bileşke vektör</span>
     `;
     return;
   }
@@ -1697,10 +1738,10 @@ function renderLegend() {
     return;
   }
   legend.innerHTML = `
-    <span class="legend-chip laser">Beyaz isik</span>
-    <span class="legend-chip mirror">Duz ve egrisel aynalar</span>
-    <span class="legend-chip lens">Gercek gorunumlu mercek</span>
-    <span class="legend-chip block">Cisim, goz ve goruntu</span>
+    <span class="legend-chip laser">Beyaz ışık</span>
+    <span class="legend-chip mirror">Düz ve küresel aynalar</span>
+    <span class="legend-chip lens">Gerçek görünümlü mercek</span>
+    <span class="legend-chip block">Cisim, göz ve görüntü</span>
     <span class="legend-chip force">Prizma, fiber ve iki ortam</span>
   `;
 }
@@ -1798,7 +1839,7 @@ function renderModuleControls() {
   copy.textContent = "Aktif modula gore yardimci islemler burada gorunur.";
   controls.innerHTML = `
     <div class="inspector-note">
-      Optik modulde yardimci noktalar ve isik yolu sahnede otomatik gosterilir.
+      Optik modülde yardımcı noktalar ve ışık yolu sahnede otomatik gösterilir.
     </div>
   `;
 }
@@ -1856,7 +1897,7 @@ function renderInspector() {
       ];
 
   if (item.type === "laser") {
-    fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1, true));
+    fields.push(numberField("Açı", "angle", item.angle, -180, 180, 1, true));
     fields.push(
       selectField(
         "Isik Turu",
@@ -1907,18 +1948,18 @@ function renderInspector() {
   }
 
   if (isRoundObject(item)) {
-    fields.push(numberField("Yaricap", "radius", item.radius, 10, 40, 1, true));
+    fields.push(numberField("Yarıçap", "radius", item.radius, 10, 40, 1, true));
   }
 
   if (isEye(item)) {
-    fields.push(numberField("Bakis Acisi", "angle", item.angle, -180, 180, 1, true));
+    fields.push(numberField("Bakış Açısı", "angle", item.angle, -180, 180, 1, true));
   }
 
   if (isDepthTank(item)) {
     fields.push(numberField("Genislik", "width", item.width, 140, 340, 1));
     fields.push(numberField("Yukseklik", "height", item.height, 140, 320, 1));
-    fields.push(numberField("Ara Yuzey", "interfaceLevel", item.interfaceLevel, 40, item.height - 40, 1));
-    fields.push(numberField("Ust Ortam n", "topIndex", item.topIndex, 1, 2, 0.01));
+    fields.push(numberField("Ara Yüzey", "interfaceLevel", item.interfaceLevel, 40, item.height - 40, 1));
+    fields.push(numberField("Üst Ortam n", "topIndex", item.topIndex, 1, 2, 0.01));
     fields.push(numberField("Alt Ortam n", "bottomIndex", item.bottomIndex, 1, 2.4, 0.01));
   }
 
@@ -1929,17 +1970,29 @@ function renderInspector() {
   }
 
   if (isPrism(item)) {
-    fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1));
+    fields.push(numberField("Açı", "angle", item.angle, -180, 180, 1));
     fields.push(numberField("Boyut", "size", item.size, 70, 180, 1));
     fields.push(numberField("Dagilim", "dispersion", item.dispersion, 6, 36, 1));
     fields.push(numberField("Kiricilik", "index", item.index || 1.52, 1.1, 2.2, 0.01));
   }
 
   if (isMirror(item)) {
-    fields.push(numberField("Aci", "angle", item.angle, -180, 180, 1));
+    fields.push(numberField("Açı", "angle", item.angle, -180, 180, 1));
     fields.push(numberField("Uzunluk", "length", item.length, 60, 240, 1));
     if (item.type !== "plane-mirror") {
-      fields.push(numberField("Egrilik Yaricapi", "radius", item.radius, 90, 320, 1));
+      fields.push(
+        selectField(
+          "Ayna Türü",
+          "mirrorMode",
+          mirrorMode(item),
+          [
+            { value: "concave", label: "Çukur" },
+            { value: "convex", label: "Tümsek" }
+          ],
+          true
+        )
+      );
+      fields.push(numberField("Eğrilik Yarıçapı", "radius", item.radius, 90, 320, 1));
     }
   }
 
@@ -2205,6 +2258,10 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
     return null;
   }
 
+  if (!isInFrontOfPlaneMirror(mirror, eye) || !isInFrontOfPlaneMirror(mirror, objectItem)) {
+    return null;
+  }
+
   const endpoints = mirrorEndpoints(mirror);
   const imagePoint = planeMirrorImagePoint(mirror, objectItem);
   const hitPoint = segmentIntersection(eye, imagePoint, endpoints.start, endpoints.end);
@@ -2227,6 +2284,10 @@ function planeMirrorViewForEye(mirror, eye, objectItem) {
 
 function planeMirrorFieldForEye(mirror, eye) {
   if (mirror.type !== "plane-mirror") {
+    return null;
+  }
+
+  if (!isInFrontOfPlaneMirror(mirror, eye)) {
     return null;
   }
 
@@ -2391,6 +2452,10 @@ function closestOpticsHit(origin, direction, laser) {
         const start = points[index];
         const end = points[index + 1];
         const hit = raySegmentIntersection(origin, direction, start, end);
+
+        if (item.type === "plane-mirror" && dot(direction, mirrorBackDirection(item)) <= 0) {
+          continue;
+        }
 
         if (hit && (!closest || hit.t < closest.t)) {
           closest = {
@@ -3717,7 +3782,7 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
   primary.textContent = `${items.length} nesne`;
   secondary.textContent = state.opticsVisible ? `${trace.interactions} etkilesim` : "Isin gizli";
   tertiary.textContent = items.some((item) => item.type === "laser")
-    ? `${trace.segments.length} isik parcasi izlendi`
+    ? `${trace.segments.length} ışık parçası izlendi`
     : "Lazer kaynagi bekleniyor";
   sceneState.textContent = state.opticsVisible ? "Isin gosteriliyor" : "Hazir";
 }
