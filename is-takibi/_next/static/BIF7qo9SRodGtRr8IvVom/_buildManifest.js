@@ -3,8 +3,8 @@ self.__BUILD_MANIFEST = {
     "afterFiles": [],
     "beforeFiles": [
       {
-        "source": "/fizigecagri//_next/:path+",
-        "destination": "/fizigecagri/_next/:path+"
+        "source": "/fizigecagri/is-takibi//_next/:path+",
+        "destination": "/fizigecagri/is-takibi/_next/:path+"
       }
     ],
     "fallback": []
