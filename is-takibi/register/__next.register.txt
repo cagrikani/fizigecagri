@@ -2,4 +2,4 @@
 2:I[39756,["/fizigecagri/is-takibi/_next/static/chunks/0dbhjjzl8qfwv.js"],"default"]
 3:I[37457,["/fizigecagri/is-takibi/_next/static/chunks/0dbhjjzl8qfwv.js"],"default"]
 4:[]
-0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"VbVP9F5YLV3O1x43Je0C3"}
+0:{"rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"isPartial":false,"staleTime":300,"varyParams":"$W4","buildId":"Hj81E74cMTm_GSZs2zCCs"}

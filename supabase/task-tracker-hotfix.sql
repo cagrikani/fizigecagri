@@ -276,6 +276,64 @@ $$;
 
 grant execute on function public.remove_task_assignee(uuid, uuid) to authenticated;
 
+create or replace function public.get_dashboard_bootstrap()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_workspace_id uuid;
+begin
+  current_workspace_id := public.ensure_default_workspace();
+
+  return jsonb_build_object(
+    'workspace',
+    (
+      select to_jsonb(w)
+      from (
+        select id, slug, name, description
+        from public.workspaces
+        where id = current_workspace_id
+        limit 1
+      ) w
+    ),
+    'projects',
+    (
+      select coalesce(jsonb_agg(to_jsonb(p) order by p.created_at asc), '[]'::jsonb)
+      from (
+        select id, workspace_id, slug, name, description, color, status, created_at
+        from public.projects
+        where workspace_id = current_workspace_id
+      ) p
+    ),
+    'columns',
+    (
+      select coalesce(jsonb_agg(to_jsonb(c) order by c.sort_order asc), '[]'::jsonb)
+      from (
+        select pc.id, pc.project_id, pc.title, pc.status_key, pc.sort_order
+        from public.project_columns pc
+        join public.projects p on p.id = pc.project_id
+        where p.workspace_id = current_workspace_id
+      ) c
+    ),
+    'tasks',
+    (
+      select coalesce(jsonb_agg(to_jsonb(t) order by t.sort_order asc), '[]'::jsonb)
+      from (
+        select id, project_id, column_id, title, description, status, priority, due_date, estimated_minutes, spent_minutes, updated_at, sort_order
+        from public.tasks
+        where project_id in (
+          select id from public.projects where workspace_id = current_workspace_id
+        )
+      ) t
+    )
+  );
+end;
+$$;
+
+grant execute on function public.get_dashboard_bootstrap() to authenticated;
+
 update public.workspaces
 set owner_user_id = (
   select id from auth.users where email = 'cagrikani@gmail.com' limit 1

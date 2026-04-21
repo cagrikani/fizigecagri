@@ -88,6 +88,13 @@ type BoardPayload = {
   tasks: Task[];
 };
 
+type DashboardBootstrapResponse = {
+  workspace: Workspace | null;
+  projects: Project[];
+  columns: Column[];
+  tasks: (Task & { sort_order?: number })[];
+};
+
 const STATUS_LABELS: Record<string, string> = {
   backlog: "Backlog",
   todo: "Yapilacak",
@@ -177,45 +184,24 @@ export default function HomePage() {
   const [assigneeMessage, setAssigneeMessage] = useState("");
 
   async function fetchBoardData(): Promise<BoardPayload> {
-    const [workspaceResponse, projectsResponse, columnsResponse, tasksResponse] =
-      await Promise.all([
-        supabase
-          .from("workspaces")
-          .select("id, slug, name, description")
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("projects")
-          .select("id, workspace_id, slug, name, description, color, status")
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("project_columns")
-          .select("id, project_id, title, status_key, sort_order")
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("tasks")
-          .select(
-            "id, project_id, column_id, title, description, status, priority, due_date, estimated_minutes, spent_minutes, updated_at",
-          )
-          .order("sort_order", { ascending: true }),
-      ]);
-
-    const error =
-      workspaceResponse.error ??
-      projectsResponse.error ??
-      columnsResponse.error ??
-      tasksResponse.error;
+    const { data, error } = await supabase.rpc("get_dashboard_bootstrap");
 
     if (error) {
       throw error;
     }
 
+    const payload = (data ?? {
+      workspace: null,
+      projects: [],
+      columns: [],
+      tasks: [],
+    }) as DashboardBootstrapResponse;
+
     return {
-      workspace: workspaceResponse.data,
-      projects: (projectsResponse.data ?? []) as Project[],
-      columns: (columnsResponse.data ?? []) as Column[],
-      tasks: (tasksResponse.data ?? []) as Task[],
+      workspace: payload.workspace,
+      projects: payload.projects ?? [],
+      columns: payload.columns ?? [],
+      tasks: (payload.tasks ?? []).map(({ sort_order: _sortOrder, ...task }) => task),
     };
   }
 
@@ -367,16 +353,6 @@ export default function HomePage() {
     setBoardError("");
     try {
       let payload = await fetchBoardData();
-
-      if (!payload.workspace || payload.projects.length === 0 || payload.columns.length === 0) {
-        const bootstrapResponse = await supabase.rpc("ensure_default_workspace");
-
-        if (bootstrapResponse.error) {
-          throw bootstrapResponse.error;
-        }
-
-        payload = await fetchBoardData();
-      }
 
       const nextWorkspace = payload.workspace;
       const nextProjects = payload.projects;
