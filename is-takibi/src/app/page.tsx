@@ -368,7 +368,7 @@ export default function HomePage() {
     try {
       let payload = await fetchBoardData();
 
-      if (!payload.workspace) {
+      if (!payload.workspace || payload.projects.length === 0 || payload.columns.length === 0) {
         const bootstrapResponse = await supabase.rpc("ensure_default_workspace");
 
         if (bootstrapResponse.error) {
