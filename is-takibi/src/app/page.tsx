@@ -70,6 +70,13 @@ type TaskAttachment = {
   created_at: string;
 };
 
+type BoardPayload = {
+  workspace: Workspace | null;
+  projects: Project[];
+  columns: Column[];
+  tasks: Task[];
+};
+
 const STATUS_LABELS: Record<string, string> = {
   backlog: "Backlog",
   todo: "Yapilacak",
@@ -151,6 +158,49 @@ export default function HomePage() {
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  async function fetchBoardData(): Promise<BoardPayload> {
+    const [workspaceResponse, projectsResponse, columnsResponse, tasksResponse] =
+      await Promise.all([
+        supabase
+          .from("workspaces")
+          .select("id, slug, name, description")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("projects")
+          .select("id, workspace_id, slug, name, description, color, status")
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("project_columns")
+          .select("id, project_id, title, status_key, sort_order")
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("tasks")
+          .select(
+            "id, project_id, column_id, title, description, status, priority, due_date, estimated_minutes, spent_minutes, updated_at",
+          )
+          .order("sort_order", { ascending: true }),
+      ]);
+
+    const error =
+      workspaceResponse.error ??
+      projectsResponse.error ??
+      columnsResponse.error ??
+      tasksResponse.error;
+
+    if (error) {
+      throw error;
+    }
+
+    return {
+      workspace: workspaceResponse.data,
+      projects: (projectsResponse.data ?? []) as Project[],
+      columns: (columnsResponse.data ?? []) as Column[],
+      tasks: (tasksResponse.data ?? []) as Task[],
+    };
+  }
 
   function resetBoardState() {
     setWorkspace(null);
@@ -294,65 +344,45 @@ export default function HomePage() {
   async function loadBoard() {
     setBusy(true);
     setBoardError("");
+    try {
+      let payload = await fetchBoardData();
 
-    const [workspaceResponse, projectsResponse, columnsResponse, tasksResponse] =
-      await Promise.all([
-        supabase
-          .from("workspaces")
-          .select("id, slug, name, description")
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle(),
-        supabase
-          .from("projects")
-          .select("id, workspace_id, slug, name, description, color, status")
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("project_columns")
-          .select("id, project_id, title, status_key, sort_order")
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("tasks")
-          .select(
-            "id, project_id, column_id, title, description, status, priority, due_date, estimated_minutes, spent_minutes, updated_at",
-          )
-          .order("sort_order", { ascending: true }),
-      ]);
+      if (!payload.workspace) {
+        const bootstrapResponse = await supabase.rpc("ensure_default_workspace");
 
-    setBusy(false);
+        if (bootstrapResponse.error) {
+          throw bootstrapResponse.error;
+        }
 
-    const error =
-      workspaceResponse.error ??
-      projectsResponse.error ??
-      columnsResponse.error ??
-      tasksResponse.error;
+        payload = await fetchBoardData();
+      }
 
-    if (error) {
-      setBoardError(error.message);
-      return;
+      const nextWorkspace = payload.workspace;
+      const nextProjects = payload.projects;
+      const nextColumns = payload.columns;
+      const nextTasks = payload.tasks;
+
+      setWorkspace(nextWorkspace);
+      setProjects(nextProjects);
+      setColumns(nextColumns);
+      setTasks(nextTasks);
+      setSelectedProjectId((current) => {
+        if (current && nextProjects.some((project) => project.id === current)) {
+          return current;
+        }
+        return nextProjects[0]?.id ?? null;
+      });
+      setSelectedTaskId((current) => {
+        if (current && nextTasks.some((task) => task.id === current)) {
+          return current;
+        }
+        return null;
+      });
+    } catch (error) {
+      setBoardError(error instanceof Error ? error.message : "Pano verileri alinamadi.");
+    } finally {
+      setBusy(false);
     }
-
-    const nextWorkspace = workspaceResponse.data;
-    const nextProjects = (projectsResponse.data ?? []) as Project[];
-    const nextColumns = (columnsResponse.data ?? []) as Column[];
-    const nextTasks = (tasksResponse.data ?? []) as Task[];
-
-    setWorkspace(nextWorkspace);
-    setProjects(nextProjects);
-    setColumns(nextColumns);
-    setTasks(nextTasks);
-    setSelectedProjectId((current) => {
-      if (current && nextProjects.some((project) => project.id === current)) {
-        return current;
-      }
-      return nextProjects[0]?.id ?? null;
-    });
-    setSelectedTaskId((current) => {
-      if (current && nextTasks.some((task) => task.id === current)) {
-        return current;
-      }
-      return null;
-    });
   }
 
   async function loadComments(taskId: string) {
@@ -913,8 +943,8 @@ export default function HomePage() {
 
             {!workspace && !busy ? (
               <div className="empty-state" style={{ marginTop: 18 }}>
-                Workspace kaydi bulunamadi. `task-tracker-seed.sql` dosyasini tekrar
-                calistirmak iyi olur.
+                Workspace henuz hazir degil. Sayfayi yenileyin; uygulama giris yaptiginiz
+                hesap icin gerekli temel yapilari otomatik kurmaya calisir.
               </div>
             ) : null}
           </header>
