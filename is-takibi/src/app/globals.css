@@ -314,6 +314,46 @@ a {
   margin-top: 18px;
 }
 
+.member-section {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.member-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.member-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+}
+
+.member-chip strong,
+.member-chip span {
+  display: block;
+}
+
+.member-chip span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-top: 4px;
+}
+
+.small-button {
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+}
+
 .project-card {
   width: 100%;
   text-align: left;

@@ -70,6 +70,17 @@ type TaskAttachment = {
   created_at: string;
 };
 
+type WorkspaceMember = {
+  user_id: string;
+  email: string;
+  role: string;
+};
+
+type TaskAssignee = {
+  user_id: string;
+  email: string;
+};
+
 type BoardPayload = {
   workspace: Workspace | null;
   projects: Project[];
@@ -141,6 +152,7 @@ export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [columns, setColumns] = useState<Column[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [detailDraft, setDetailDraft] = useState({
@@ -151,6 +163,7 @@ export default function HomePage() {
   });
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [assignees, setAssignees] = useState<TaskAssignee[]>([]);
   const [commentDraft, setCommentDraft] = useState("");
   const [createMessage, setCreateMessage] = useState("");
   const [boardError, setBoardError] = useState("");
@@ -158,6 +171,10 @@ export default function HomePage() {
   const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [memberEmailDraft, setMemberEmailDraft] = useState("");
+  const [memberMessage, setMemberMessage] = useState("");
+  const [assigneeEmailDraft, setAssigneeEmailDraft] = useState("");
+  const [assigneeMessage, setAssigneeMessage] = useState("");
 
   async function fetchBoardData(): Promise<BoardPayload> {
     const [workspaceResponse, projectsResponse, columnsResponse, tasksResponse] =
@@ -207,10 +224,12 @@ export default function HomePage() {
     setProjects([]);
     setColumns([]);
     setTasks([]);
+    setWorkspaceMembers([]);
     setSelectedProjectId(null);
     setSelectedTaskId(null);
     setComments([]);
     setAttachments([]);
+    setAssignees([]);
     setCommentDraft("");
   }
 
@@ -219,6 +238,7 @@ export default function HomePage() {
       setSelectedTaskId(null);
       setComments([]);
       setAttachments([]);
+      setAssignees([]);
       setCommentDraft("");
       return;
     }
@@ -232,6 +252,7 @@ export default function HomePage() {
     });
     void loadComments(task.id);
     void loadAttachments(task.id);
+    void loadAssignees(task.id);
   }
 
   useEffect(() => {
@@ -366,6 +387,11 @@ export default function HomePage() {
       setProjects(nextProjects);
       setColumns(nextColumns);
       setTasks(nextTasks);
+      if (nextWorkspace) {
+        await loadWorkspaceMembers(nextWorkspace.id);
+      } else {
+        setWorkspaceMembers([]);
+      }
       setSelectedProjectId((current) => {
         if (current && nextProjects.some((project) => project.id === current)) {
           return current;
@@ -400,6 +426,19 @@ export default function HomePage() {
     setComments((data ?? []) as TaskComment[]);
   }
 
+  async function loadWorkspaceMembers(targetWorkspaceId: string) {
+    const { data, error } = await supabase.rpc("list_workspace_members", {
+      target_workspace_id: targetWorkspaceId,
+    });
+
+    if (error) {
+      setBoardError(error.message);
+      return;
+    }
+
+    setWorkspaceMembers((data ?? []) as WorkspaceMember[]);
+  }
+
   async function loadAttachments(taskId: string) {
     const { data, error } = await supabase
       .from("task_attachments")
@@ -415,6 +454,19 @@ export default function HomePage() {
     }
 
     setAttachments((data ?? []) as TaskAttachment[]);
+  }
+
+  async function loadAssignees(taskId: string) {
+    const { data, error } = await supabase.rpc("list_task_assignees", {
+      target_task_id: taskId,
+    });
+
+    if (error) {
+      setBoardError(error.message);
+      return;
+    }
+
+    setAssignees((data ?? []) as TaskAssignee[]);
   }
 
   async function handleAuthSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -526,6 +578,7 @@ export default function HomePage() {
     await loadBoard();
     await loadComments(selectedTask.id);
     await loadAttachments(selectedTask.id);
+    await loadAssignees(selectedTask.id);
   }
 
   async function handleAddComment(event: React.FormEvent<HTMLFormElement>) {
@@ -646,6 +699,78 @@ export default function HomePage() {
     if (data?.signedUrl) {
       window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     }
+  }
+
+  async function handleAddWorkspaceMember(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!workspace || !memberEmailDraft.trim()) {
+      return;
+    }
+
+    setMemberMessage("");
+
+    const { error } = await supabase.rpc("add_workspace_member_by_email", {
+      target_workspace_id: workspace.id,
+      target_email: memberEmailDraft.trim(),
+      target_role: "member",
+    });
+
+    if (error) {
+      setMemberMessage(error.message);
+      return;
+    }
+
+    setMemberEmailDraft("");
+    setMemberMessage("Kullanici workspace'e eklendi.");
+    await loadWorkspaceMembers(workspace.id);
+  }
+
+  async function handleAssignTask(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!selectedTask || !assigneeEmailDraft.trim()) {
+      return;
+    }
+
+    setAssigneeMessage("");
+
+    const { error } = await supabase.rpc("assign_task_by_email", {
+      target_task_id: selectedTask.id,
+      target_email: assigneeEmailDraft.trim(),
+    });
+
+    if (error) {
+      setAssigneeMessage(error.message);
+      return;
+    }
+
+    setAssigneeEmailDraft("");
+    setAssigneeMessage("Kullanici goreve atandi.");
+    await loadAssignees(selectedTask.id);
+    if (workspace) {
+      await loadWorkspaceMembers(workspace.id);
+    }
+  }
+
+  async function handleRemoveAssignee(userId: string) {
+    if (!selectedTask) {
+      return;
+    }
+
+    setAssigneeMessage("");
+
+    const { error } = await supabase.rpc("remove_task_assignee", {
+      target_task_id: selectedTask.id,
+      target_user_id: userId,
+    });
+
+    if (error) {
+      setAssigneeMessage(error.message);
+      return;
+    }
+
+    await loadAssignees(selectedTask.id);
   }
 
   if (booting) {
@@ -821,6 +946,39 @@ export default function HomePage() {
                   </p>
                 </button>
               ))}
+            </div>
+
+            <div className="member-section">
+              <div className="sidebar-header" style={{ marginTop: 18 }}>
+                <div>
+                  <p className="eyebrow">Ekip</p>
+                  <h3 style={{ margin: 0 }}>Workspace Uyeleri</h3>
+                </div>
+                <Plus size={18} />
+              </div>
+
+              <form className="create-form" onSubmit={handleAddWorkspaceMember}>
+                <input
+                  type="email"
+                  value={memberEmailDraft}
+                  onChange={(event) => setMemberEmailDraft(event.target.value)}
+                  placeholder="uye@mail.com"
+                />
+                <button className="secondary-button" type="submit">
+                  Uye Ekle
+                </button>
+              </form>
+
+              {memberMessage ? <div className="info-box">{memberMessage}</div> : null}
+
+              <div className="member-list">
+                {workspaceMembers.map((member) => (
+                  <div className="member-chip" key={member.user_id}>
+                    <strong>{member.email}</strong>
+                    <span>{member.role}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -1127,6 +1285,54 @@ export default function HomePage() {
                   <button className="primary-button" onClick={handleSaveTask} type="button">
                     Gorevi Kaydet
                   </button>
+                </div>
+
+                <div>
+                  <div className="sidebar-header" style={{ marginBottom: 12 }}>
+                    <div>
+                      <p className="eyebrow">Atananlar</p>
+                      <h3 style={{ margin: 0 }}>Gorev Sorumlulari</h3>
+                    </div>
+                    <Plus size={18} />
+                  </div>
+
+                  <form className="create-form" onSubmit={handleAssignTask}>
+                    <input
+                      type="email"
+                      value={assigneeEmailDraft}
+                      onChange={(event) => setAssigneeEmailDraft(event.target.value)}
+                      placeholder="gorev verilecek e-posta"
+                    />
+                    <button className="secondary-button" type="submit">
+                      Goreve Ata
+                    </button>
+                  </form>
+
+                  {assigneeMessage ? <div className="info-box">{assigneeMessage}</div> : null}
+
+                  <div className="member-list" style={{ marginTop: 14 }}>
+                    {assignees.map((assignee) => (
+                      <div className="member-chip" key={assignee.user_id}>
+                        <div>
+                          <strong>{assignee.email}</strong>
+                          <span>atanmis</span>
+                        </div>
+                        <button
+                          className="ghost-button small-button"
+                          onClick={() => void handleRemoveAssignee(assignee.user_id)}
+                          type="button"
+                        >
+                          Kaldir
+                        </button>
+                      </div>
+                    ))}
+
+                    {assignees.length === 0 ? (
+                      <div className="empty-state">
+                        Bu goreve henuz kimse atanmamis.
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div>

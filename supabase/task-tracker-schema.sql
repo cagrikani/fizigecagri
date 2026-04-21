@@ -334,6 +334,181 @@ $$;
 
 grant execute on function public.ensure_default_workspace() to authenticated;
 
+create or replace function public.list_workspace_members(target_workspace_id uuid)
+returns table (
+  user_id uuid,
+  email text,
+  role public.workspace_role
+)
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if not public.is_workspace_member(target_workspace_id) then
+    raise exception 'Bu workspace icin erisim izniniz yok.';
+  end if;
+
+  return query
+  select wm.user_id, u.email::text, wm.role
+  from public.workspace_members wm
+  join auth.users u on u.id = wm.user_id
+  where wm.workspace_id = target_workspace_id
+  order by u.email asc;
+end;
+$$;
+
+grant execute on function public.list_workspace_members(uuid) to authenticated;
+
+create or replace function public.list_task_assignees(target_task_id uuid)
+returns table (
+  user_id uuid,
+  email text
+)
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_workspace_id uuid;
+begin
+  select p.workspace_id
+  into target_workspace_id
+  from public.tasks t
+  join public.projects p on p.id = t.project_id
+  where t.id = target_task_id;
+
+  if target_workspace_id is null then
+    raise exception 'Gorev bulunamadi.';
+  end if;
+
+  if not public.is_workspace_member(target_workspace_id) then
+    raise exception 'Bu gorev icin erisim izniniz yok.';
+  end if;
+
+  return query
+  select ta.user_id, u.email::text
+  from public.task_assignees ta
+  join auth.users u on u.id = ta.user_id
+  where ta.task_id = target_task_id
+  order by u.email asc;
+end;
+$$;
+
+grant execute on function public.list_task_assignees(uuid) to authenticated;
+
+create or replace function public.add_workspace_member_by_email(
+  target_workspace_id uuid,
+  target_email text,
+  target_role public.workspace_role default 'member'
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  member_user_id uuid;
+begin
+  if not public.is_workspace_admin(target_workspace_id) then
+    raise exception 'Bu workspace icin uye ekleme izniniz yok.';
+  end if;
+
+  select id
+  into member_user_id
+  from auth.users
+  where lower(email) = lower(trim(target_email))
+  limit 1;
+
+  if member_user_id is null then
+    raise exception 'Bu e-posta ile kayitli kullanici bulunamadi.';
+  end if;
+
+  insert into public.workspace_members (workspace_id, user_id, role)
+  values (target_workspace_id, member_user_id, target_role)
+  on conflict (workspace_id, user_id) do update
+  set role = excluded.role;
+
+  return member_user_id;
+end;
+$$;
+
+grant execute on function public.add_workspace_member_by_email(uuid, text, public.workspace_role) to authenticated;
+
+create or replace function public.assign_task_by_email(
+  target_task_id uuid,
+  target_email text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  assignee_user_id uuid;
+  target_workspace_id uuid;
+begin
+  select p.workspace_id
+  into target_workspace_id
+  from public.tasks t
+  join public.projects p on p.id = t.project_id
+  where t.id = target_task_id;
+
+  if target_workspace_id is null then
+    raise exception 'Gorev bulunamadi.';
+  end if;
+
+  if not public.is_workspace_member(target_workspace_id) then
+    raise exception 'Bu gorev icin atama izniniz yok.';
+  end if;
+
+  select public.add_workspace_member_by_email(target_workspace_id, target_email, 'member')
+  into assignee_user_id;
+
+  insert into public.task_assignees (task_id, user_id)
+  values (target_task_id, assignee_user_id)
+  on conflict (task_id, user_id) do nothing;
+
+  return assignee_user_id;
+end;
+$$;
+
+grant execute on function public.assign_task_by_email(uuid, text) to authenticated;
+
+create or replace function public.remove_task_assignee(
+  target_task_id uuid,
+  target_user_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_workspace_id uuid;
+begin
+  select p.workspace_id
+  into target_workspace_id
+  from public.tasks t
+  join public.projects p on p.id = t.project_id
+  where t.id = target_task_id;
+
+  if target_workspace_id is null then
+    raise exception 'Gorev bulunamadi.';
+  end if;
+
+  if not public.is_workspace_member(target_workspace_id) then
+    raise exception 'Bu gorev icin atama izniniz yok.';
+  end if;
+
+  delete from public.task_assignees
+  where task_id = target_task_id
+    and user_id = target_user_id;
+end;
+$$;
+
+grant execute on function public.remove_task_assignee(uuid, uuid) to authenticated;
+
 drop trigger if exists workspaces_touch_updated_at on public.workspaces;
 create trigger workspaces_touch_updated_at
 before update on public.workspaces
