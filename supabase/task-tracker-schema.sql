@@ -1,19 +1,63 @@
 create extension if not exists pgcrypto;
 
-create type public.workspace_role as enum ('owner', 'admin', 'member', 'viewer');
-create type public.project_status as enum ('planning', 'active', 'paused', 'completed', 'archived');
-create type public.task_priority as enum ('low', 'medium', 'high', 'urgent');
-create type public.task_status as enum ('backlog', 'todo', 'in_progress', 'review', 'blocked', 'done');
-create type public.task_activity_type as enum (
-  'task_created',
-  'task_updated',
-  'status_changed',
-  'priority_changed',
-  'assignee_added',
-  'assignee_removed',
-  'comment_added',
-  'attachment_added'
-);
+do $$
+begin
+  if not exists (
+    select 1 from pg_type where typnamespace = 'public'::regnamespace and typname = 'workspace_role'
+  ) then
+    create type public.workspace_role as enum ('owner', 'admin', 'member', 'viewer');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_type where typnamespace = 'public'::regnamespace and typname = 'project_status'
+  ) then
+    create type public.project_status as enum ('planning', 'active', 'paused', 'completed', 'archived');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_type where typnamespace = 'public'::regnamespace and typname = 'task_priority'
+  ) then
+    create type public.task_priority as enum ('low', 'medium', 'high', 'urgent');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_type where typnamespace = 'public'::regnamespace and typname = 'task_status'
+  ) then
+    create type public.task_status as enum ('backlog', 'todo', 'in_progress', 'review', 'blocked', 'done');
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_type where typnamespace = 'public'::regnamespace and typname = 'task_activity_type'
+  ) then
+    create type public.task_activity_type as enum (
+      'task_created',
+      'task_updated',
+      'status_changed',
+      'priority_changed',
+      'assignee_added',
+      'assignee_removed',
+      'comment_added',
+      'attachment_added'
+    );
+  end if;
+end
+$$;
 
 create table if not exists public.workspaces (
   id uuid primary key default gen_random_uuid(),
