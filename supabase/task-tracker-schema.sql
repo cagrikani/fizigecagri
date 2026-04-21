@@ -205,6 +205,8 @@ create or replace function public.is_workspace_member(target_workspace_id uuid)
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1
@@ -218,6 +220,8 @@ create or replace function public.is_workspace_admin(target_workspace_id uuid)
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1
@@ -232,6 +236,8 @@ create or replace function public.is_workspace_owner(target_workspace_id uuid)
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1

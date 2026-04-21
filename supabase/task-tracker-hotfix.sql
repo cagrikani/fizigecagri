@@ -2,12 +2,45 @@ create or replace function public.is_workspace_owner(target_workspace_id uuid)
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1
     from public.workspaces w
     where w.id = target_workspace_id
       and w.owner_user_id = auth.uid()
+  )
+$$;
+
+create or replace function public.is_workspace_member(target_workspace_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.workspace_members wm
+    where wm.workspace_id = target_workspace_id
+      and wm.user_id = auth.uid()
+  )
+$$;
+
+create or replace function public.is_workspace_admin(target_workspace_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.workspace_members wm
+    where wm.workspace_id = target_workspace_id
+      and wm.user_id = auth.uid()
+      and wm.role in ('owner', 'admin')
   )
 $$;
 
