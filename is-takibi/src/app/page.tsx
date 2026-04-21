@@ -405,7 +405,15 @@ export default function HomePage() {
         return null;
       });
     } catch (error) {
-      setBoardError(error instanceof Error ? error.message : "Pano verileri alinamadi.");
+      if (error && typeof error === "object") {
+        const maybeMessage =
+          "message" in error && typeof error.message === "string"
+            ? error.message
+            : JSON.stringify(error);
+        setBoardError(maybeMessage || "Pano verileri alinamadi.");
+      } else {
+        setBoardError("Pano verileri alinamadi.");
+      }
     } finally {
       setBusy(false);
     }
