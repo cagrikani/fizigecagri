@@ -184,6 +184,19 @@ as $$
   )
 $$;
 
+create or replace function public.is_workspace_owner(target_workspace_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select exists (
+    select 1
+    from public.workspaces w
+    where w.id = target_workspace_id
+      and w.owner_user_id = auth.uid()
+  )
+$$;
+
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
@@ -264,13 +277,14 @@ as $$
 declare
   current_user_id uuid := auth.uid();
   current_workspace_id uuid;
+  current_owner_user_id uuid;
 begin
   if current_user_id is null then
     raise exception 'Oturum acmis bir kullanici gerekiyor.';
   end if;
 
-  select id
-  into current_workspace_id
+  select id, owner_user_id
+  into current_workspace_id, current_owner_user_id
   from public.workspaces
   where slug = 'benim-site'
   limit 1;
@@ -285,17 +299,27 @@ begin
       false
     )
     returning id into current_workspace_id;
+    current_owner_user_id := current_user_id;
+
+    insert into public.workspace_members (workspace_id, user_id, role)
+    values (current_workspace_id, current_user_id, 'owner')
+    on conflict (workspace_id, user_id) do update
+    set role = 'owner';
+  elsif current_owner_user_id = current_user_id then
+    insert into public.workspace_members (workspace_id, user_id, role)
+    values (current_workspace_id, current_user_id, 'owner')
+    on conflict (workspace_id, user_id) do update
+    set role = 'owner';
+  elsif exists (
+    select 1
+    from public.workspace_members wm
+    where wm.workspace_id = current_workspace_id
+      and wm.user_id = current_user_id
+  ) then
+    null;
+  else
+    raise exception 'Bu workspace''e giris icin owner tarafindan uye olarak eklenmeniz gerekiyor.';
   end if;
-
-  update public.workspaces
-  set owner_user_id = current_user_id
-  where id = current_workspace_id
-    and owner_user_id is distinct from current_user_id;
-
-  insert into public.workspace_members (workspace_id, user_id, role)
-  values (current_workspace_id, current_user_id, 'owner')
-  on conflict (workspace_id, user_id) do update
-  set role = 'owner';
 
   insert into public.projects (workspace_id, slug, name, description, color, status, created_by)
   values
@@ -410,7 +434,7 @@ as $$
 declare
   member_user_id uuid;
 begin
-  if not public.is_workspace_admin(target_workspace_id) then
+  if not public.is_workspace_owner(target_workspace_id) then
     raise exception 'Bu workspace icin uye ekleme izniniz yok.';
   end if;
 
@@ -601,15 +625,15 @@ create policy "workspace_admins_can_update_workspaces"
 on public.workspaces
 for update
 to authenticated
-using (public.is_workspace_admin(id))
-with check (public.is_workspace_admin(id));
+using (public.is_workspace_owner(id))
+with check (public.is_workspace_owner(id));
 
 drop policy if exists "workspace_admins_can_delete_workspaces" on public.workspaces;
 create policy "workspace_admins_can_delete_workspaces"
 on public.workspaces
 for delete
 to authenticated
-using (public.is_workspace_admin(id));
+using (public.is_workspace_owner(id));
 
 drop policy if exists "members_can_view_workspace_members" on public.workspace_members;
 create policy "members_can_view_workspace_members"
@@ -623,8 +647,8 @@ create policy "admins_can_manage_workspace_members"
 on public.workspace_members
 for all
 to authenticated
-using (public.is_workspace_admin(workspace_id))
-with check (public.is_workspace_admin(workspace_id));
+using (public.is_workspace_owner(workspace_id))
+with check (public.is_workspace_owner(workspace_id));
 
 drop policy if exists "members_can_view_projects" on public.projects;
 create policy "members_can_view_projects"
@@ -648,15 +672,15 @@ create policy "members_can_update_projects"
 on public.projects
 for update
 to authenticated
-using (public.is_workspace_member(workspace_id))
-with check (public.is_workspace_member(workspace_id));
+using (public.is_workspace_owner(workspace_id))
+with check (public.is_workspace_owner(workspace_id));
 
 drop policy if exists "admins_can_delete_projects" on public.projects;
 create policy "admins_can_delete_projects"
 on public.projects
 for delete
 to authenticated
-using (public.is_workspace_admin(workspace_id));
+using (public.is_workspace_owner(workspace_id));
 
 drop policy if exists "members_can_view_project_columns" on public.project_columns;
 create policy "members_can_view_project_columns"
@@ -682,7 +706,7 @@ using (
     select 1
     from public.projects p
     where p.id = project_id
-      and public.is_workspace_member(p.workspace_id)
+      and public.is_workspace_owner(p.workspace_id)
   )
 )
 with check (
@@ -690,7 +714,7 @@ with check (
     select 1
     from public.projects p
     where p.id = project_id
-      and public.is_workspace_member(p.workspace_id)
+      and public.is_workspace_owner(p.workspace_id)
   )
 );
 
