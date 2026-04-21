@@ -66,9 +66,7 @@ begin
 
   insert into public.projects (workspace_id, slug, name, description, color, status, created_by)
   values
-    (current_workspace_id, 'fizik-lab', 'Fizik Lab', 'Fizik simulasyonlari ve egitim modulleri.', '#0ea5e9', 'active', current_user_id),
-    (current_workspace_id, 'yds-kocum', 'YDS Kocum', 'Dil egitimi ve soru yonetimi uygulamasi.', '#22c55e', 'active', current_user_id),
-    (current_workspace_id, 'is-takibi', 'Is Takibi', 'Gorev ve surec yonetimi icin ana proje.', '#f97316', 'active', current_user_id)
+    (current_workspace_id, 'is-takibi', 'İş Takibi', 'PDF görev paylaşımı ve süreç yönetimi için ana pano.', '#f97316', 'active', current_user_id)
   on conflict (workspace_id, slug) do nothing;
 
   insert into public.project_columns (project_id, title, status_key, sort_order, wip_limit)
