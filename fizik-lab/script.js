@@ -115,6 +115,8 @@ const defaultState = {
     wires: [],
     toolMode: "select",
     pendingTerminal: null,
+    hoveredTerminal: null,
+    selectedWireId: null,
     solution: null
   }
 };
@@ -198,6 +200,8 @@ function normalizeState(raw) {
       wires: Array.isArray(raw.electricity?.wires) ? raw.electricity.wires : [],
       toolMode: raw.electricity?.toolMode === "wire" ? "wire" : "select",
       pendingTerminal: null,
+      hoveredTerminal: null,
+      selectedWireId: null,
       solution: null
     }
   };
@@ -318,8 +322,16 @@ function electricalPendingPoint() {
 }
 
 function addElectricalWire(from, to) {
-  if (!from || !to || sameTerminal(from, to)) {
-    return false;
+  if (!from || !to) {
+    return { ok: false, reason: "Baglanti noktasi secilemedi." };
+  }
+
+  if (sameTerminal(from, to)) {
+    return { ok: false, reason: "Ayni terminale iki kez tikladiniz." };
+  }
+
+  if (from.itemId === to.itemId) {
+    return { ok: false, reason: "Ayni elemanin iki ucunu kabloyla birbirine baglayamazsin." };
   }
 
   const exists = state.electricity.wires.some(
@@ -329,7 +341,7 @@ function addElectricalWire(from, to) {
   );
 
   if (exists) {
-    return false;
+    return { ok: false, reason: "Bu iki terminal zaten bagli." };
   }
 
   state.electricity.wires.push({
@@ -337,8 +349,9 @@ function addElectricalWire(from, to) {
     from: { ...from },
     to: { ...to }
   });
+  state.electricity.selectedWireId = state.electricity.wires[state.electricity.wires.length - 1].id;
   state.electricity.solution = null;
-  return true;
+  return { ok: true };
 }
 
 function cleanElectricalWires() {
@@ -361,6 +374,32 @@ function removeElectricalWiresForItem(itemId) {
   if (state.electricity.pendingTerminal?.itemId === itemId) {
     state.electricity.pendingTerminal = null;
   }
+  if (
+    state.electricity.selectedWireId &&
+    !state.electricity.wires.some((wire) => wire.id === state.electricity.selectedWireId)
+  ) {
+    state.electricity.selectedWireId = null;
+  }
+}
+
+function hitElectricalWire(point) {
+  for (const wire of [...state.electricity.wires].reverse()) {
+    const endpoints = getElectricalWireEndpoints(wire);
+    if (!endpoints) continue;
+    const midX = (endpoints.from.x + endpoints.to.x) / 2;
+    const path = [
+      endpoints.from,
+      { x: midX, y: endpoints.from.y },
+      { x: midX, y: endpoints.to.y },
+      endpoints.to
+    ];
+    for (let index = 0; index < path.length - 1; index += 1) {
+      if (distanceToSegment(point, path[index], path[index + 1]) <= 10) {
+        return wire;
+      }
+    }
+  }
+  return null;
 }
 
 function solveLinearSystem(matrix, vector) {
@@ -3873,9 +3912,10 @@ function drawElectricComponent(item, measurement) {
 
   terminals.forEach((terminal) => {
     const pending = sameTerminal(state.electricity.pendingTerminal, { itemId: item.id, terminal: terminal.key });
-    ctx.fillStyle = pending ? "#ffd977" : "#57e39c";
+    const hovered = sameTerminal(state.electricity.hoveredTerminal, { itemId: item.id, terminal: terminal.key });
+    ctx.fillStyle = pending ? "#ffd977" : hovered ? "#ff8f6b" : "#57e39c";
     ctx.beginPath();
-    ctx.arc(terminal.x, terminal.y, pending ? 8 : 7, 0, Math.PI * 2);
+    ctx.arc(terminal.x, terminal.y, pending ? 8 : hovered ? 8 : 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "rgba(8, 15, 28, 0.9)";
     ctx.lineWidth = 2;
@@ -3915,7 +3955,7 @@ function drawElectricity() {
   electricWires().forEach((wire) => {
     const endpoints = getElectricalWireEndpoints(wire);
     if (!endpoints) return;
-    drawElectricWirePath(endpoints.from, endpoints.to);
+    drawElectricWirePath(endpoints.from, endpoints.to, wire.id === state.electricity.selectedWireId);
   });
 
   const pendingPoint = electricalPendingPoint();
@@ -5023,6 +5063,8 @@ function clearScene() {
   if (state.scene === "electricity") {
     state.electricity.wires = [];
     state.electricity.pendingTerminal = null;
+    state.electricity.hoveredTerminal = null;
+    state.electricity.selectedWireId = null;
     state.electricity.solution = null;
     state.electricity.toolMode = "select";
   }
@@ -5041,6 +5083,8 @@ function openScene(scene) {
   if (state.scene === "electricity") {
     state.electricity.toolMode = "select";
     state.electricity.pendingTerminal = null;
+    state.electricity.hoveredTerminal = null;
+    state.electricity.selectedWireId = null;
     state.electricity.solution = computeElectricalSolution();
   }
   state.notice = `${sceneLabel()} modul acildi.`;
@@ -5340,22 +5384,38 @@ function initCanvasInteractions() {
       const terminalHit = hitElectricalTerminal(point);
       if (terminalHit) {
         selectedId = terminalHit.itemId;
+        state.electricity.selectedWireId = null;
         shouldRevealInspector = true;
         if (!state.electricity.pendingTerminal) {
           state.electricity.pendingTerminal = terminalHit;
           dragState = { mode: "wire-preview", previewPoint: point };
           state.notice = "Kablonun ilk ucu secildi.";
-        } else if (addElectricalWire(state.electricity.pendingTerminal, terminalHit)) {
-          state.electricity.pendingTerminal = null;
-          dragState = null;
-          state.electricity.solution = computeElectricalSolution();
-          state.notice = "Kablo baglandi.";
         } else {
-          state.notice = "Bu iki terminal zaten bagli ya da ayni noktadasin.";
+          const result = addElectricalWire(state.electricity.pendingTerminal, terminalHit);
+          if (result.ok) {
+            state.electricity.pendingTerminal = null;
+            dragState = null;
+            state.electricity.solution = computeElectricalSolution();
+            state.notice = "Kablo baglandi.";
+          } else {
+            state.notice = result.reason;
+          }
         }
         renderUI();
         return;
       }
+    }
+
+    if (state.scene === "electricity" && state.electricity.toolMode === "select") {
+      const wireHit = hitElectricalWire(point);
+      if (wireHit) {
+        selectedId = null;
+        state.electricity.selectedWireId = wireHit.id;
+        state.notice = "Kablo secildi. Silmek icin Delete tusuna basabilirsin.";
+        renderUI();
+        return;
+      }
+      state.electricity.selectedWireId = null;
     }
 
     const hit = hitItem(point);
@@ -5381,10 +5441,21 @@ function initCanvasInteractions() {
   });
 
   canvas.addEventListener("pointermove", (event) => {
-    if (!dragState) return;
+    const point = canvasPoint(event);
+
+    if (state.scene === "electricity") {
+      state.electricity.hoveredTerminal = hitElectricalTerminal(point);
+    }
+
+    if (!dragState) {
+      if (state.scene === "electricity") {
+        renderUI();
+      }
+      return;
+    }
 
     if (dragState.mode === "wire-preview") {
-      dragState.previewPoint = canvasPoint(event);
+      dragState.previewPoint = point;
       renderUI();
       return;
     }
@@ -5392,7 +5463,6 @@ function initCanvasInteractions() {
     const item = currentItems().find((entry) => entry.id === dragState.id);
     if (!item) return;
 
-    const point = canvasPoint(event);
     if (dragState.mode === "vector-end" && isVector(item)) {
       const anchor = state.vectors.mode === "components" ? { x: viewport.width / 2, y: viewport.height / 2 } : vectorTail(item);
       item.dx = point.x - anchor.x;
@@ -5694,6 +5764,22 @@ function initEvents() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && inspectorModalOpen) {
       closeInspectorModal();
+      renderUI();
+    }
+
+    if (
+      state.view === "lab" &&
+      state.scene === "electricity" &&
+      (event.key === "Delete" || event.key === "Backspace") &&
+      state.electricity.selectedWireId
+    ) {
+      state.electricity.wires = state.electricity.wires.filter(
+        (wire) => wire.id !== state.electricity.selectedWireId,
+      );
+      state.electricity.selectedWireId = null;
+      state.electricity.solution = computeElectricalSolution();
+      state.notice = "Secili kablo silindi.";
+      saveState();
       renderUI();
     }
   });
