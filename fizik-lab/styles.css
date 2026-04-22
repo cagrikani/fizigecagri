@@ -979,6 +979,22 @@ h1 {
   border: 2px solid #ffd977;
 }
 
+.tool-glyph.bulb::before {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #ffd977;
+  box-shadow: 0 0 14px rgba(255, 217, 119, 0.28);
+}
+
+.tool-glyph.bulb::after {
+  width: 12px;
+  height: 8px;
+  border-radius: 0 0 6px 6px;
+  background: #dce7ff;
+  top: 31px;
+}
+
 .tool-glyph.ammeter::before,
 .tool-glyph.voltmeter::before {
   width: 28px;

@@ -26,6 +26,7 @@ const toolCatalog = {
   electricity: [
     { type: "battery", label: "Pil", description: "Devreye gerilim kaynagi ekler." },
     { type: "resistor", label: "Direnc", description: "Ohm kanununa gore akimi sinirlayan direnc ekler." },
+    { type: "bulb", label: "Ampul", description: "Akima gore parlakligi degisen ampul ekler." },
     { type: "ammeter", label: "Ampermetre", description: "Seri baglandiginda devre akimini gosterir." },
     { type: "voltmeter", label: "Voltmetre", description: "Iki nokta arasindaki gerilimi olcer." },
     { type: "switch", label: "Anahtar", description: "Acik veya kapali konum ile devreyi tamamlar." },
@@ -214,6 +215,7 @@ function electricalConfigForType(type) {
   const configs = {
     battery: { width: 104, height: 54, terminals: ["left", "right"] },
     resistor: { width: 130, height: 34, terminals: ["left", "right"] },
+    bulb: { width: 88, height: 88, terminals: ["left", "right"] },
     ammeter: { width: 84, height: 84, terminals: ["left", "right"] },
     voltmeter: { width: 84, height: 84, terminals: ["left", "right"] },
     switch: { width: 120, height: 42, terminals: ["left", "right"] },
@@ -395,7 +397,8 @@ function computeElectricalSolution() {
     totalCurrent: 0,
     equivalentVoltage: 0,
     measurements: {},
-    nodeVoltages: {}
+    nodeVoltages: {},
+    warnings: []
   };
 
   if (!components.length) {
@@ -464,7 +467,7 @@ function computeElectricalSolution() {
 
   const batteries = branches.filter((branch) => branch.item.type === "battery");
   if (!batteries.length) {
-    return defaultSolution;
+    return { ...defaultSolution, warnings: ["Devrede pil yok."] };
   }
 
   const relevantNodes = new Set();
@@ -523,7 +526,7 @@ function computeElectricalSolution() {
     }
 
     let resistance = null;
-    if (item.type === "resistor") resistance = Math.max(item.resistance || 100, 0.001);
+    if (item.type === "resistor" || item.type === "bulb") resistance = Math.max(item.resistance || 100, 0.001);
     if (item.type === "ammeter") resistance = 0.001;
     if (item.type === "switch") resistance = item.closed ? 0.001 : null;
 
@@ -572,7 +575,7 @@ function computeElectricalSolution() {
     const voltage = va - vb;
     let current = 0;
 
-    if (item.type === "resistor") {
+    if (item.type === "resistor" || item.type === "bulb") {
       current = voltage / Math.max(item.resistance || 100, 0.001);
       measurements[item.id] = {
         current,
@@ -612,7 +615,7 @@ function computeElectricalSolution() {
   });
 
   const totalResistance = filteredBranches
-    .filter((branch) => branch.item.type === "resistor")
+    .filter((branch) => branch.item.type === "resistor" || branch.item.type === "bulb")
     .reduce((sum, branch) => sum + Math.max(branch.item.resistance || 100, 0.001), 0);
   const totalCurrent = batteries.reduce(
     (sum, branch) => sum + Math.abs(measurements[branch.item.id]?.current || 0),
@@ -623,6 +626,20 @@ function computeElectricalSolution() {
     0,
   );
 
+  const warnings = [];
+  if (!filteredBranches.some((branch) => branch.item.type === "ground")) {
+    warnings.push("Topraklama bagli degil.");
+  }
+  if (filteredBranches.some((branch) => branch.item.type === "switch" && !branch.item.closed)) {
+    warnings.push("Anahtar acik; devre tamamlanmiyor.");
+  }
+  if (totalCurrent <= 1e-4) {
+    warnings.push("Kapali bir akim yolu bulunamadi.");
+  }
+  if (totalResistance !== null && totalResistance < 5 && totalCurrent > 0.2) {
+    warnings.push("Kisa devre riski: toplam direnç cok dusuk.");
+  }
+
   return {
     valid: true,
     circuitClosed: totalCurrent > 1e-4,
@@ -630,7 +647,8 @@ function computeElectricalSolution() {
     totalCurrent,
     equivalentVoltage,
     measurements,
-    nodeVoltages
+    nodeVoltages,
+    warnings
   };
 }
 
@@ -1955,6 +1973,10 @@ function makeItem(type) {
     return { id: uid("resistor"), type, x: 380 + offset, y: 220, resistance: 100 };
   }
 
+  if (type === "bulb") {
+    return { id: uid("bulb"), type, x: 460 + offset, y: 360, resistance: 60, name: "L1" };
+  }
+
   if (type === "ammeter") {
     return { id: uid("ammeter"), type, x: 320 + offset, y: 360, name: "A1" };
   }
@@ -2106,7 +2128,7 @@ function constrainItem(item) {
     if (item.type === "battery") {
       item.voltage = clamp(Number(item.voltage) || 9, 1, 24);
     }
-    if (item.type === "resistor") {
+    if (item.type === "resistor" || item.type === "bulb") {
       item.resistance = clamp(Number(item.resistance) || 100, 1, 1000);
     }
     if (item.type === "switch") {
@@ -2168,6 +2190,7 @@ function itemTitle(item) {
   if (item.type === "thermometer") return "Termometre";
   if (item.type === "battery") return "Pil";
   if (item.type === "resistor") return "Direnç";
+  if (item.type === "bulb") return "Ampul";
   if (item.type === "ammeter") return "Ampermetre";
   if (item.type === "voltmeter") return "Voltmetre";
   if (item.type === "switch") return "Anahtar";
@@ -2210,6 +2233,9 @@ function itemMeta(item) {
     }
     if (item.type === "resistor") {
       return `${item.resistance.toFixed(0)} Ω • uzerindeki gerilim ${Math.abs(measure?.voltage || 0).toFixed(2)} V`;
+    }
+    if (item.type === "bulb") {
+      return `${item.name || "L"} • ${item.resistance.toFixed(0)} Ω • parlaklik ${Math.min(Math.abs(measure?.power || 0) / 2, 100).toFixed(0)}%`;
     }
     if (item.type === "ammeter") {
       return `${item.name || "A"} • ${Math.abs(measure?.current || 0).toFixed(3)} A`;
@@ -2258,6 +2284,7 @@ function toolGlyph(type) {
     thermometer: '<span class="tool-glyph thermometer"><span></span></span>',
     battery: '<span class="tool-glyph battery"><span></span></span>',
     resistor: '<span class="tool-glyph resistor"><span></span></span>',
+    bulb: '<span class="tool-glyph bulb"><span></span></span>',
     ammeter: '<span class="tool-glyph ammeter"><span></span></span>',
     voltmeter: '<span class="tool-glyph voltmeter"><span></span></span>',
     switch: '<span class="tool-glyph switch"><span></span></span>',
@@ -2438,6 +2465,11 @@ function renderModuleControls() {
               : "Hesap icin bagli en az bir pil gereklidir."
           }
         </div>
+        ${
+          solution.warnings?.length
+            ? `<div class="vector-mode-note subtle">${solution.warnings.join(" • ")}</div>`
+            : ""
+        }
         <div class="inline-actions">
           <button class="primary-button compact-action" type="button" data-electricity-action="solve" ${components.some((item) => item.type === "battery") ? "" : "disabled"}>Devreyi cozdur</button>
           <button class="secondary-button compact-action" type="button" data-electricity-action="clear-pending" ${state.electricity.pendingTerminal ? "" : "disabled"}>Secimi sifirla</button>
@@ -2557,10 +2589,10 @@ function inspectorMarkup(item) {
     if (item.type === "battery") {
       fields.push(numberField("Gerilim", "voltage", item.voltage, 1, 24, 0.1, true));
     }
-    if (item.type === "resistor") {
+    if (item.type === "resistor" || item.type === "bulb") {
       fields.push(numberField("Direnc", "resistance", item.resistance, 1, 1000, 1, true));
     }
-    if (item.type === "ammeter" || item.type === "voltmeter" || item.type === "ground") {
+    if (item.type === "ammeter" || item.type === "voltmeter" || item.type === "ground" || item.type === "bulb") {
       fields.push(`
         <div class="field full">
           <label>Etiket</label>
@@ -3792,6 +3824,24 @@ function drawElectricComponent(item, measurement) {
     ctx.moveTo(item.x - 6, top + 38);
     ctx.lineTo(item.x + 6, top + 38);
     ctx.stroke();
+  } else if (item.type === "bulb") {
+    const power = Math.abs(measurement?.power || 0);
+    const glow = Math.min(power / 2.5, 1);
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 217, 119, ${0.18 + glow * 0.42})`;
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, 22 + glow * 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, 22, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(item.x - 10, item.y + 12);
+    ctx.lineTo(item.x + 10, item.y - 12);
+    ctx.moveTo(item.x - 10, item.y - 12);
+    ctx.lineTo(item.x + 10, item.y + 12);
+    ctx.stroke();
   } else {
     ctx.beginPath();
     ctx.arc(item.x, item.y, 24, 0, Math.PI * 2);
@@ -4966,6 +5016,11 @@ function openScene(scene) {
   state.scene = ["optics", "vectors", "heat", "electricity"].includes(scene) ? scene : "optics";
   state.view = "lab";
   selectedId = null;
+  if (state.scene === "electricity") {
+    state.electricity.toolMode = "select";
+    state.electricity.pendingTerminal = null;
+    state.electricity.solution = computeElectricalSolution();
+  }
   state.notice = `${sceneLabel()} modul acildi.`;
   saveState();
   renderUI();
