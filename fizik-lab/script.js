@@ -255,10 +255,29 @@ function hitElectricalTerminal(point) {
   const components = [...electricalComponents()].reverse();
 
   for (const item of components) {
+    let nearestTerminal = null;
+    let nearestDistance = Infinity;
+
     for (const terminal of electricalTerminals(item)) {
-      if (Math.hypot(point.x - terminal.x, point.y - terminal.y) <= 12) {
+      const distance = Math.hypot(point.x - terminal.x, point.y - terminal.y);
+      if (distance <= 22) {
         return { itemId: item.id, terminal: terminal.key };
       }
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestTerminal = terminal;
+      }
+    }
+
+    const config = electricalConfigForType(item.type);
+    const insideComponent =
+      point.x >= item.x - config.width / 2 - 6 &&
+      point.x <= item.x + config.width / 2 + 6 &&
+      point.y >= item.y - config.height / 2 - 6 &&
+      point.y <= item.y + config.height / 2 + 6;
+
+    if (insideComponent && nearestTerminal) {
+      return { itemId: item.id, terminal: nearestTerminal.key };
     }
   }
 
@@ -3856,8 +3875,11 @@ function drawElectricComponent(item, measurement) {
     const pending = sameTerminal(state.electricity.pendingTerminal, { itemId: item.id, terminal: terminal.key });
     ctx.fillStyle = pending ? "#ffd977" : "#57e39c";
     ctx.beginPath();
-    ctx.arc(terminal.x, terminal.y, 6, 0, Math.PI * 2);
+    ctx.arc(terminal.x, terminal.y, pending ? 8 : 7, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = "rgba(8, 15, 28, 0.9)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   });
 
   ctx.textAlign = "left";
@@ -5452,7 +5474,7 @@ function initEvents() {
           state.electricity.pendingTerminal = null;
         }
         state.notice = state.electricity.toolMode === "wire"
-          ? "Kablo modu acildi. Terminallere tiklayarak baglanti kur."
+          ? "Kablo modu acildi. Terminale ya da elemanin ucuna yakin bir noktaya tiklayarak baglanti kur."
           : "Secme modu acildi.";
         saveState();
         renderUI();
