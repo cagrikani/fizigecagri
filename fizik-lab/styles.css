@@ -330,6 +330,11 @@ h1 {
   border-color: rgba(255, 180, 84, 0.28);
 }
 
+.electricity-card {
+  background: linear-gradient(135deg, rgba(123, 208, 255, 0.18), rgba(87, 227, 156, 0.12));
+  border-color: rgba(123, 208, 255, 0.28);
+}
+
 .scene-button.module-card.active.optics-card {
   background: linear-gradient(135deg, rgba(255, 208, 102, 0.28), rgba(110, 168, 254, 0.18));
   border-color: rgba(255, 208, 102, 0.44);
@@ -348,6 +353,12 @@ h1 {
   color: var(--text);
 }
 
+.scene-button.module-card.active.electricity-card {
+  background: linear-gradient(135deg, rgba(123, 208, 255, 0.28), rgba(87, 227, 156, 0.18));
+  border-color: rgba(123, 208, 255, 0.42);
+  color: var(--text);
+}
+
 .home-module-button.optics-card {
   background: linear-gradient(135deg, rgba(255, 208, 102, 0.24), rgba(110, 168, 254, 0.14));
 }
@@ -358,6 +369,10 @@ h1 {
 
 .home-module-button.heat-card {
   background: linear-gradient(135deg, rgba(255, 180, 84, 0.24), rgba(255, 122, 69, 0.14));
+}
+
+.home-module-button.electricity-card {
+  background: linear-gradient(135deg, rgba(123, 208, 255, 0.24), rgba(87, 227, 156, 0.14));
 }
 
 .optics-icon {
@@ -379,6 +394,13 @@ h1 {
     radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.18), transparent 26%),
     linear-gradient(145deg, rgba(255, 180, 84, 0.22), rgba(255, 122, 69, 0.18)),
     rgba(24, 13, 8, 0.72);
+}
+
+.electricity-icon {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.18), transparent 26%),
+    linear-gradient(145deg, rgba(123, 208, 255, 0.22), rgba(87, 227, 156, 0.18)),
+    rgba(9, 18, 34, 0.78);
 }
 
 .hero-panel {
@@ -516,6 +538,10 @@ h1 {
   grid-template-columns: minmax(0, 1fr) 300px;
 }
 
+#lab-screen[data-scene="electricity"] .workspace-main {
+  grid-template-columns: minmax(0, 1fr) 300px;
+}
+
 #lab-screen[data-scene="optics"] .control-strip-bottom {
   grid-template-columns: minmax(0, 1.7fr) minmax(270px, 0.9fr) minmax(270px, 1fr);
 }
@@ -525,6 +551,10 @@ h1 {
 }
 
 #lab-screen[data-scene="heat"] .control-strip-bottom {
+  grid-template-columns: minmax(280px, 0.92fr) minmax(280px, 1.08fr);
+}
+
+#lab-screen[data-scene="electricity"] .control-strip-bottom {
   grid-template-columns: minmax(280px, 0.92fr) minmax(280px, 1.08fr);
 }
 
@@ -924,6 +954,111 @@ h1 {
   border-radius: 50%;
   background: #ff7a45;
   bottom: 6px;
+}
+
+.tool-glyph.battery::before {
+  width: 7px;
+  height: 24px;
+  background: #ffd977;
+  left: 17px;
+  top: 12px;
+}
+
+.tool-glyph.battery::after {
+  width: 4px;
+  height: 32px;
+  background: #7bd0ff;
+  left: 28px;
+  top: 8px;
+}
+
+.tool-glyph.resistor::before {
+  width: 28px;
+  height: 14px;
+  border-radius: 8px;
+  border: 2px solid #ffd977;
+}
+
+.tool-glyph.ammeter::before,
+.tool-glyph.voltmeter::before {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #dce7ff;
+}
+
+.tool-glyph.ammeter::after,
+.tool-glyph.voltmeter::after {
+  width: auto;
+  height: auto;
+  background: transparent;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #dce7ff;
+}
+
+.tool-glyph.ammeter::after {
+  content: "A";
+}
+
+.tool-glyph.voltmeter::after {
+  content: "V";
+}
+
+.tool-glyph.switch::before {
+  width: 30px;
+  height: 2px;
+  background: #dce7ff;
+  transform: rotate(-18deg);
+  transform-origin: left center;
+}
+
+.tool-glyph.switch::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #57e39c;
+  left: 33px;
+  top: 19px;
+}
+
+.tool-glyph.ground::before {
+  width: 2px;
+  height: 14px;
+  background: #dce7ff;
+  top: 10px;
+}
+
+.tool-glyph.ground::after {
+  width: 22px;
+  height: 12px;
+  background:
+    linear-gradient(#dce7ff, #dce7ff) center top / 22px 2px no-repeat,
+    linear-gradient(#dce7ff, #dce7ff) center center / 14px 2px no-repeat,
+    linear-gradient(#dce7ff, #dce7ff) center bottom / 8px 2px no-repeat;
+  top: 22px;
+}
+
+.tool-glyph.wire::before {
+  width: 30px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: #57e39c;
+  border-right-color: #57e39c;
+  border-radius: 0 12px 0 0;
+  left: 10px;
+  top: 15px;
+}
+
+.tool-glyph.wire::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #57e39c;
+  left: 36px;
+  top: 14px;
+  box-shadow: -26px 16px 0 #57e39c;
 }
 
 .tool-card strong,
