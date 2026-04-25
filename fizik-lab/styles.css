@@ -453,6 +453,10 @@ h1 {
   gap: 14px;
 }
 
+.workspace-slot:empty {
+  display: none;
+}
+
 .workspace-main {
   grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
@@ -543,7 +547,28 @@ h1 {
 }
 
 #lab-screen[data-scene="optics"] .control-strip-bottom {
-  grid-template-columns: minmax(0, 1.7fr) minmax(270px, 0.9fr) minmax(270px, 1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+}
+
+#lab-screen[data-scene="optics"] .workspace-slot {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#lab-screen[data-scene="optics"] #module-controls-panel {
+  padding: 16px 18px;
+}
+
+#lab-screen[data-scene="optics"] #module-controls-panel .panel-head {
+  margin-bottom: 12px;
+}
+
+#lab-screen[data-scene="optics"] #module-controls-panel .vector-mode-note {
+  margin: 0;
+}
+
+#lab-screen[data-scene="optics"] #module-controls-panel #module-controls {
+  display: grid;
+  gap: 12px;
 }
 
 #lab-screen[data-scene="vectors"] .control-strip-bottom {

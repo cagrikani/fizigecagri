@@ -5440,7 +5440,8 @@ function arrangePanelsForScene() {
   }
 
   if (state.scene === "optics") {
-    stageSide.append(inspectorPanel, moduleControlsPanel, navigationPanel);
+    stageSide.append(inspectorPanel, navigationPanel);
+    workspaceSlot.append(moduleControlsPanel);
     bottomStrip.append(toolboxPanel, objectPanel);
     return;
   }
