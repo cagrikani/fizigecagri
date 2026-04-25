@@ -688,6 +688,70 @@ h1 {
   margin: 0;
 }
 
+.tool-grid-note {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(122, 162, 255, 0.28);
+  background: rgba(12, 22, 42, 0.68);
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.outcome-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.outcome-card {
+  padding: 14px 15px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 214, 102, 0.08), rgba(110, 168, 254, 0.05)),
+    rgba(16, 28, 52, 0.88);
+  color: var(--text);
+  display: grid;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+.outcome-card strong {
+  font-size: 0.9rem;
+  color: #ffd977;
+  letter-spacing: 0.04em;
+}
+
+.outcome-card span {
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.outcome-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 214, 102, 0.28);
+}
+
+.outcome-card.active {
+  border-color: rgba(79, 209, 197, 0.44);
+  background:
+    linear-gradient(180deg, rgba(79, 209, 197, 0.16), rgba(110, 168, 254, 0.08)),
+    rgba(14, 30, 54, 0.94);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
+}
+
+.outcome-card.active strong,
+.outcome-card.active span {
+  color: var(--text);
+}
+
 .tool-card,
 .object-item {
   border: 1px solid var(--border);
@@ -736,6 +800,40 @@ h1 {
   height: 2px;
   background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0));
   right: 8px;
+}
+
+.tool-glyph.point-light::before {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8cf 0%, #ffd977 55%, #ff9f43 100%);
+  box-shadow: 0 0 16px rgba(255, 217, 119, 0.42);
+}
+
+.tool-glyph.point-light::after {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 217, 119, 0.48);
+}
+
+.tool-glyph.light-surface::before {
+  width: 30px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(194, 234, 255, 0.2), #c8f0ff, rgba(194, 234, 255, 0.2));
+  transform: rotate(-18deg);
+}
+
+.tool-glyph.light-surface::after {
+  width: 22px;
+  height: 18px;
+  border-top: 2px solid rgba(255, 217, 119, 0.78);
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+  top: 8px;
+  left: 9px;
+  transform: rotate(-18deg);
 }
 
 .tool-glyph.optical-object::before {
@@ -820,6 +918,22 @@ h1 {
   right: 4px;
   bottom: 10px;
   transform: rotate(-18deg);
+}
+
+.tool-glyph.refraction-block::before {
+  width: 28px;
+  height: 22px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(123, 208, 255, 0.34), rgba(194, 234, 255, 0.16));
+  border: 2px solid rgba(194, 234, 255, 0.5);
+}
+
+.tool-glyph.refraction-block::after {
+  width: 24px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff8f70, #ffd977, rgba(255, 255, 255, 0));
+  right: 6px;
+  transform: rotate(-22deg);
 }
 
 .tool-glyph.plane-mirror::before {

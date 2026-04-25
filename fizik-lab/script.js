@@ -1,7 +1,94 @@
 const STORAGE_KEY = "fizik-lab-state-v1";
 
+const OPTICS_OUTCOMES = [
+  {
+    id: "FIZ.11.4.1",
+    code: "FİZ.11.4.1",
+    title: "Işık şiddeti, ışık akısı ve aydınlanma",
+    shortTitle: "Işık şiddeti ve aydınlanma",
+    description:
+      "Noktasal ışık kaynağı ile ışık akısı ve yüzey üzerindeki aydınlanma şiddetini uzaklığa göre incele.",
+    tools: ["point-light", "light-surface"]
+  },
+  {
+    id: "FIZ.11.4.2",
+    code: "FİZ.11.4.2",
+    title: "Düzlem aynalarla model oluşturma",
+    shortTitle: "Düzlem aynalar",
+    description: "Düzlem ayna, cisim ve lazer ile yansıma ve görüntü özelliklerini incele.",
+    tools: ["plane-mirror", "optical-object", "round-object", "eye", "laser"]
+  },
+  {
+    id: "FIZ.11.4.3",
+    code: "FİZ.11.4.3",
+    title: "Küresel aynaların özellikleri",
+    shortTitle: "Küresel aynalar",
+    description: "Çukur ve tümsek aynaları cisim ve lazer ile karşılaştır.",
+    tools: ["spherical-mirror", "optical-object", "round-object", "laser"]
+  },
+  {
+    id: "FIZ.11.4.4",
+    code: "FİZ.11.4.4",
+    title: "Küresel aynalarda görüntü oluşumu",
+    shortTitle: "Küresel aynalarda görüntü",
+    description: "Küresel aynalarda cismin konumuna göre oluşan görüntüyü deneyle incele.",
+    tools: ["spherical-mirror", "optical-object", "round-object", "laser"]
+  },
+  {
+    id: "FIZ.11.4.5",
+    code: "FİZ.11.4.5",
+    title: "Saydam ortamlarda ışığın davranışı",
+    shortTitle: "Kırılma ve Snell yasası",
+    description:
+      "Lazer, saydam blok ve prizma ile kırılma, Snell yasası, sınır açısı ve tam yansımayı incele.",
+    tools: ["laser", "refraction-block", "prism"]
+  },
+  {
+    id: "FIZ.11.4.6",
+    code: "FİZ.11.4.6",
+    title: "Görünür derinlik gözlemi",
+    shortTitle: "Görünür derinlik",
+    description: "Göz, farklı ortamlar ve cisim ile görünür derinliğin nasıl değiştiğini incele.",
+    tools: ["depth-tank", "eye", "optical-object", "round-object"]
+  },
+  {
+    id: "FIZ.11.4.7",
+    code: "FİZ.11.4.7",
+    title: "Fiber optik malzemeler",
+    shortTitle: "Fiber optik",
+    description: "Lazer ve fiber optik kablo ile tam yansımalı ışık iletimini gözlemle.",
+    tools: ["laser", "fiber"]
+  },
+  {
+    id: "FIZ.11.4.8",
+    code: "FİZ.11.4.8",
+    title: "Prizmalar ve birleşik sistemler",
+    shortTitle: "Prizma sistemleri",
+    description: "Prizma ve lazer ile ışığın izlediği yolu ve renk ayrışmasını incele.",
+    tools: ["laser", "prism"]
+  },
+  {
+    id: "FIZ.11.4.9",
+    code: "FİZ.11.4.9",
+    title: "Merceklerin özellikleri",
+    shortTitle: "Mercek özellikleri",
+    description: "İnce ve kalın kenarlı mercekleri cisim ve lazer ile karşılaştır.",
+    tools: ["convex-lens", "concave-lens", "optical-object", "round-object", "laser"]
+  },
+  {
+    id: "FIZ.11.4.10",
+    code: "FİZ.11.4.10",
+    title: "Merceklerde görüntü oluşumu",
+    shortTitle: "Merceklerde görüntü",
+    description: "Merceklerde cismin konumuna göre görüntü oluşumunu deneyle incele.",
+    tools: ["convex-lens", "concave-lens", "optical-object", "round-object", "laser"]
+  }
+];
+
 const toolCatalog = {
   optics: [
+    { type: "point-light", label: "Noktasal Işık Kaynağı", description: "Işık şiddeti ve ışık akısı gösteren kaynak ekler." },
+    { type: "light-surface", label: "Aydınlanan Yüzey", description: "Kaynağa göre aydınlanma şiddetini ölçen yüzey ekler." },
     { type: "laser", label: "Lazer", description: "Tek bir ışık kaynağı ekler." },
     { type: "optical-object", label: "Cisim", description: "Görüntüsü oluşan ok şeklinde cisim ekler." },
     { type: "round-object", label: "Yuvarlak Cisim", description: "Göz ve aynada kullanılabilen yuvarlak cisim ekler." },
@@ -9,6 +96,7 @@ const toolCatalog = {
     { type: "depth-tank", label: "Görünür Derinlik", description: "İki ortamdaki cismin görünür derinliğini gösterir." },
     { type: "fiber", label: "Fiber Optik", description: "Tam yansıma ile ışığı ileten fiber kablo ekler." },
     { type: "prism", label: "Prizma", description: "Kırılan ve ayrışan ışığı gösterir." },
+    { type: "refraction-block", label: "Saydam Ortam Bloğu", description: "Snell yasasını incelemek için saydam blok ekler." },
     { type: "plane-mirror", label: "Düz Ayna", description: "Tek yönlü düz ayna ekler." },
     { type: "spherical-mirror", label: "Küresel Ayna", description: "Çukur veya tümsek olarak kullanılabilen küresel ayna ekler." },
     { type: "convex-lens", label: "İnce Kenarlı Mercek", description: "Ortası kalın, ışığı odağa toplar." },
@@ -93,6 +181,7 @@ const HEAT_MATERIAL_LIBRARY = {
 const defaultState = {
   view: "home",
   scene: "optics",
+  opticsOutcome: null,
   opticsVisible: true,
   running: false,
   notice: "",
@@ -178,6 +267,10 @@ function normalizeState(raw) {
   return {
     view: raw.view === "lab" ? "lab" : "home",
     scene: ["optics", "vectors", "heat", "electricity"].includes(raw.scene) ? raw.scene : "optics",
+    opticsOutcome:
+      raw.opticsOutcome && OPTICS_OUTCOMES.some((outcome) => outcome.id === raw.opticsOutcome)
+        ? raw.opticsOutcome
+        : null,
     opticsVisible: raw.opticsVisible !== false,
     running: false,
     notice: typeof raw.notice === "string" ? raw.notice : "",
@@ -209,6 +302,15 @@ function normalizeState(raw) {
 
 function saveState() {
   return state;
+}
+
+function activeOpticsOutcome() {
+  return OPTICS_OUTCOMES.find((outcome) => outcome.id === state.opticsOutcome) || null;
+}
+
+function activeOpticsTools() {
+  const outcome = activeOpticsOutcome();
+  return outcome ? toolCatalog.optics.filter((tool) => outcome.tools.includes(tool.type)) : [];
 }
 
 function currentItems() {
@@ -877,6 +979,18 @@ function isEye(item) {
 
 function isRoundObject(item) {
   return item.type === "round-object";
+}
+
+function isPointLight(item) {
+  return item.type === "point-light";
+}
+
+function isLightSurface(item) {
+  return item.type === "light-surface";
+}
+
+function isRefractionBlock(item) {
+  return item.type === "refraction-block";
 }
 
 function isFiber(item) {
@@ -1700,6 +1814,162 @@ function fiberBounds(item) {
   };
 }
 
+function lightSurfaceEndpoints(item) {
+  const angle = degToRad(item.angle || 0);
+  const half = item.length / 2;
+  return {
+    start: { x: item.x - Math.cos(angle) * half, y: item.y - Math.sin(angle) * half },
+    end: { x: item.x + Math.cos(angle) * half, y: item.y + Math.sin(angle) * half }
+  };
+}
+
+function pointInsideLightSurface(point, item, padding = 12) {
+  const endpoints = lightSurfaceEndpoints(item);
+  return distanceToSegment(point, endpoints.start, endpoints.end) <= padding;
+}
+
+function pointLightFlux(item) {
+  return 4 * Math.PI * item.intensity;
+}
+
+function illuminanceMeasurement(source, surface) {
+  const sourceToSurface = { x: surface.x - source.x, y: surface.y - source.y };
+  const distancePx = Math.max(Math.hypot(sourceToSurface.x, sourceToSurface.y), 12);
+  const distanceMeters = distancePx * 0.01;
+  const surfaceAngle = degToRad(surface.angle || 0);
+  const normal = { x: -Math.sin(surfaceAngle), y: Math.cos(surfaceAngle) };
+  const lightDirection = normalizeVector(sourceToSurface);
+  const cosine = Math.max(dot(normal, { x: -lightDirection.x, y: -lightDirection.y }), 0);
+  const illuminance = (source.intensity * cosine) / Math.max(distanceMeters * distanceMeters, 0.01);
+  return {
+    distancePx,
+    distanceMeters,
+    cosine,
+    illuminance
+  };
+}
+
+function activePointLightForSurface(surface) {
+  const sources = currentItems().filter((item) => isPointLight(item));
+  if (!sources.length) {
+    return null;
+  }
+
+  return [...sources]
+    .map((source) => ({ source, measurement: illuminanceMeasurement(source, surface) }))
+    .sort((a, b) => a.measurement.distancePx - b.measurement.distancePx)[0];
+}
+
+function refractionBlockBounds(item) {
+  return {
+    left: item.x - item.width / 2,
+    right: item.x + item.width / 2,
+    top: item.y - item.height / 2,
+    bottom: item.y + item.height / 2
+  };
+}
+
+function pointInsideRefractionBlock(point, item) {
+  const bounds = refractionBlockBounds(item);
+  return (
+    point.x >= bounds.left &&
+    point.x <= bounds.right &&
+    point.y >= bounds.top &&
+    point.y <= bounds.bottom
+  );
+}
+
+function refract(direction, normal, n1, n2) {
+  let adjustedNormal = normalizeVector(normal);
+  let cosi = clamp(dot(direction, adjustedNormal), -1, 1);
+  if (cosi > 0) {
+    adjustedNormal = { x: -adjustedNormal.x, y: -adjustedNormal.y };
+    cosi = clamp(dot(direction, adjustedNormal), -1, 1);
+  }
+
+  const eta = n1 / n2;
+  const cosIncident = -cosi;
+  const k = 1 - eta * eta * (1 - cosIncident * cosIncident);
+  if (k < 0) {
+    return { totalInternalReflection: true, direction: reflectFromNormal(direction, adjustedNormal) };
+  }
+
+  return {
+    totalInternalReflection: false,
+    direction: normalizeVector({
+      x: eta * direction.x + (eta * cosIncident - Math.sqrt(k)) * adjustedNormal.x,
+      y: eta * direction.y + (eta * cosIncident - Math.sqrt(k)) * adjustedNormal.y
+    })
+  };
+}
+
+function refractionHit(item, origin, direction) {
+  const bounds = refractionBlockBounds(item);
+  const edges = [
+    {
+      start: { x: bounds.left, y: bounds.top },
+      end: { x: bounds.right, y: bounds.top },
+      normal: { x: 0, y: -1 }
+    },
+    {
+      start: { x: bounds.right, y: bounds.top },
+      end: { x: bounds.right, y: bounds.bottom },
+      normal: { x: 1, y: 0 }
+    },
+    {
+      start: { x: bounds.right, y: bounds.bottom },
+      end: { x: bounds.left, y: bounds.bottom },
+      normal: { x: 0, y: 1 }
+    },
+    {
+      start: { x: bounds.left, y: bounds.bottom },
+      end: { x: bounds.left, y: bounds.top },
+      normal: { x: -1, y: 0 }
+    }
+  ];
+
+  let closest = null;
+  edges.forEach((edge) => {
+    const hit = raySegmentIntersection(origin, direction, edge.start, edge.end);
+    if (hit && (!closest || hit.t < closest.t)) {
+      closest = { ...hit, normal: edge.normal };
+    }
+  });
+
+  if (!closest) {
+    return null;
+  }
+
+  const inside = pointInsideRefractionBlock(origin, item);
+  const n1 = inside ? item.index : 1;
+  const n2 = inside ? 1 : item.index;
+  const refracted = refract(direction, closest.normal, n1, n2);
+
+  return {
+    t: closest.t,
+    item,
+    point: closest.point,
+    nextDirection: refracted.direction,
+    beamColor: "#9fe7ff",
+    extraSegments: [
+      {
+        from: {
+          x: closest.point.x - closest.normal.x * 22,
+          y: closest.point.y - closest.normal.y * 22
+        },
+        to: {
+          x: closest.point.x + closest.normal.x * 22,
+          y: closest.point.y + closest.normal.y * 22
+        },
+        kind: "normal",
+        color: "rgba(255,255,255,0.42)"
+      }
+    ],
+    stop: false,
+    totalInternalReflection: refracted.totalInternalReflection
+  };
+}
+
 function forceEnd(item) {
   return { x: item.x + item.dx, y: item.y + item.dy };
 }
@@ -1956,6 +2226,27 @@ function makeItem(type) {
     return { id: uid("laser"), type, x: 120 + offset, y: 280, angle: 0, colorMode: "white", color: "red" };
   }
 
+  if (type === "point-light") {
+    return {
+      id: uid("point-light"),
+      type,
+      x: 220 + offset,
+      y: 240,
+      intensity: 120
+    };
+  }
+
+  if (type === "light-surface") {
+    return {
+      id: uid("light-surface"),
+      type,
+      x: 520 + offset,
+      y: 260,
+      angle: 90,
+      length: 150
+    };
+  }
+
   if (type === "optical-object") {
     return { id: uid("object"), type, x: 250 + offset, y: 300, height: 120 };
   }
@@ -1996,6 +2287,18 @@ function makeItem(type) {
 
   if (type === "prism") {
     return { id: uid("prism"), type, x: 700, y: 240, angle: 0, size: 130, dispersion: 18, index: 1.52 };
+  }
+
+  if (type === "refraction-block") {
+    return {
+      id: uid("refraction-block"),
+      type,
+      x: 540 + offset,
+      y: 280,
+      width: 160,
+      height: 200,
+      index: 1.5
+    };
   }
 
   if (type === "vector") {
@@ -2112,6 +2415,19 @@ function constrainItem(item) {
     item.color = LASER_COLORS[item.color] ? item.color : "red";
   }
 
+  if (isPointLight(item)) {
+    item.x = clamp(Number(item.x) || 0, 24, width - 24);
+    item.y = clamp(Number(item.y) || 0, 24, height - 24);
+    item.intensity = clamp(Number(item.intensity) || 120, 20, 600);
+  }
+
+  if (isLightSurface(item)) {
+    item.x = clamp(Number(item.x) || 0, 30, width - 30);
+    item.y = clamp(Number(item.y) || 0, 30, height - 30);
+    item.angle = clamp(Number(item.angle) || 0, -180, 180);
+    item.length = clamp(Number(item.length) || 150, 60, 260);
+  }
+
   if (item.type === "optical-object") {
     item.x = clamp(Number(item.x) || 0, 40, width - 40);
     item.y = clamp(Number(item.y) || 0, 60, height - 40);
@@ -2155,6 +2471,14 @@ function constrainItem(item) {
     item.size = clamp(Number(item.size) || 130, 70, 180);
     item.dispersion = clamp(Number(item.dispersion) || 18, 6, 36);
     item.index = clamp(Number(item.index) || 1.52, 1.1, 2.2);
+  }
+
+  if (isRefractionBlock(item)) {
+    item.x = clamp(Number(item.x) || 0, 80, width - 80);
+    item.y = clamp(Number(item.y) || 0, 80, height - 80);
+    item.width = clamp(Number(item.width) || 160, 80, 260);
+    item.height = clamp(Number(item.height) || 200, 100, 280);
+    item.index = clamp(Number(item.index) || 1.5, 1, 2.4);
   }
 
   if (isVector(item)) {
@@ -2238,6 +2562,8 @@ function constrainItem(item) {
 
 function itemTitle(item) {
   if (item.type === "laser") return "Lazer kaynagi";
+  if (item.type === "point-light") return "Noktasal ışık kaynağı";
+  if (item.type === "light-surface") return "Aydınlanan yüzey";
   if (item.type === "optical-object") return "Optik cisim";
   if (item.type === "round-object") return "Yuvarlak cisim";
   if (item.type === "eye") return "Göz";
@@ -2256,6 +2582,7 @@ function itemTitle(item) {
   if (item.type === "depth-tank") return "Görünür derinlik kabı";
   if (item.type === "fiber") return "Fiber optik kablo";
   if (item.type === "prism") return "Prizma";
+  if (item.type === "refraction-block") return "Saydam ortam bloğu";
   if (item.type === "plane-mirror") return "Düz ayna";
   if (item.type === "spherical-mirror") return mirrorMode(item) === "concave" ? "Küresel ayna • Çukur" : "Küresel ayna • Tümsek";
   if (item.type === "convex-lens") return "İnce kenarlı mercek";
@@ -2268,6 +2595,15 @@ function itemMeta(item) {
   if (item.type === "laser") {
     const color = laserColorData(item.colorMode, item.color);
     return `${Math.round(item.angle)} derece • ${color.label} ışık`;
+  }
+  if (item.type === "point-light") {
+    return `${item.intensity.toFixed(0)} cd • Φ ${pointLightFlux(item).toFixed(0)} lm`;
+  }
+  if (item.type === "light-surface") {
+    const active = activePointLightForSurface(item);
+    return active
+      ? `${Math.round(item.angle)} derece • ${active.measurement.distanceMeters.toFixed(2)} m • ${active.measurement.illuminance.toFixed(1)} lx`
+      : `${Math.round(item.angle)} derece • ışık kaynağı bekleniyor`;
   }
   if (item.type === "optical-object") return `${Math.round(item.height)} px boy`;
   if (item.type === "round-object") return `${Math.round(item.radius)} px yaricap`;
@@ -2313,6 +2649,9 @@ function itemMeta(item) {
   if (item.type === "prism") {
     return `${Math.round(item.size)} px • dagilim ${Math.round(item.dispersion)} derece • n ${item.index.toFixed(2)}`;
   }
+  if (item.type === "refraction-block") {
+    return `${Math.round(item.width)}×${Math.round(item.height)} px • n ${item.index.toFixed(2)}`;
+  }
   if (isMirror(item)) {
     const radiusText = item.type === "plane-mirror" ? "düz yüzey" : `${mirrorMode(item) === "concave" ? "Çukur" : "Tümsek"} • R ${Math.round(item.radius)}`;
     return `${Math.round(item.angle)} derece • ${Math.round(item.length)} px • ${radiusText}`;
@@ -2329,12 +2668,15 @@ function itemMeta(item) {
 function toolGlyph(type) {
   const glyphs = {
     laser: '<span class="tool-glyph laser"><span></span></span>',
+    "point-light": '<span class="tool-glyph point-light"><span></span></span>',
+    "light-surface": '<span class="tool-glyph light-surface"><span></span></span>',
     "optical-object": '<span class="tool-glyph optical-object"><span></span></span>',
     "round-object": '<span class="tool-glyph round-object"><span></span></span>',
     eye: '<span class="tool-glyph eye"><span></span></span>',
     "depth-tank": '<span class="tool-glyph depth-tank"><span></span></span>',
     fiber: '<span class="tool-glyph fiber"><span></span></span>',
     prism: '<span class="tool-glyph prism"><span></span></span>',
+    "refraction-block": '<span class="tool-glyph refraction-block"><span></span></span>',
     vector: '<span class="tool-glyph vector"><span></span></span>',
     "molecular-sample": '<span class="tool-glyph molecular-sample"><span></span></span>',
     "heat-solid": '<span class="tool-glyph heat-solid"><span></span></span>',
@@ -2361,7 +2703,18 @@ function toolGlyph(type) {
 
 function renderToolGrid() {
   const grid = document.getElementById("tool-grid");
-  grid.innerHTML = toolCatalog[state.scene]
+  const tools = state.scene === "optics" ? activeOpticsTools() : toolCatalog[state.scene];
+
+  if (state.scene === "optics" && !tools.length) {
+    grid.innerHTML = `
+      <div class="tool-grid-note">
+        Önce çalışmak istediğin çıktıyı seç. Araç kutusu yalnızca seçtiğin kazanıma uygun araçları gösterecek.
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = tools
     .map(
       (tool) => `
         <button class="tool-card" type="button" data-add="${tool.type}">
@@ -2376,6 +2729,25 @@ function renderToolGrid() {
 
 function renderLegend() {
   const legend = document.getElementById("legend");
+  if (state.scene === "optics") {
+    const outcome = activeOpticsOutcome();
+    if (!outcome) {
+      legend.innerHTML = `
+        <span class="legend-chip laser">Çıktı seçimi</span>
+        <span class="legend-chip mirror">Araç filtreleme</span>
+        <span class="legend-chip force">Kazanıma özel deney</span>
+      `;
+      return;
+    }
+
+    legend.innerHTML = `
+      <span class="legend-chip laser">${outcome.code}</span>
+      <span class="legend-chip mirror">${outcome.shortTitle}</span>
+      <span class="legend-chip force">${outcome.tools.length} araç aktif</span>
+    `;
+    return;
+  }
+
   if (state.scene === "vectors") {
     legend.innerHTML = `
       <span class="legend-chip laser">Girilen vektör</span>
@@ -2412,6 +2784,40 @@ function renderLegend() {
 function renderModuleControls() {
   const copy = document.getElementById("module-controls-copy");
   const controls = document.getElementById("module-controls");
+
+  if (state.scene === "optics") {
+    const outcome = activeOpticsOutcome();
+    copy.textContent = "Önce optik çıktısını seç, sonra yalnızca o çıktıya uygun araçlarla düzenek kur.";
+    controls.innerHTML = `
+      <div class="outcome-selector">
+        ${OPTICS_OUTCOMES.map((entry) => `
+          <button
+            class="outcome-card ${entry.id === state.opticsOutcome ? "active" : ""}"
+            type="button"
+            data-optics-outcome="${entry.id}"
+          >
+            <strong>${entry.code}</strong>
+            <span>${entry.title}</span>
+          </button>
+        `).join("")}
+      </div>
+      <div class="vector-mode-note">
+        ${
+          outcome
+            ? `<strong>${outcome.shortTitle}</strong> seçili. ${outcome.description}`
+            : "Optik modülünde çalışmaya başlamadan önce yukarıdan bir çıktı seç."
+        }
+      </div>
+      ${
+        outcome
+          ? `<div class="vector-mode-note subtle">Aktif araçlar: ${outcome.tools
+              .map((type) => toolCatalog.optics.find((tool) => tool.type === type)?.label || type)
+              .join(" • ")}</div>`
+          : ""
+      }
+    `;
+    return;
+  }
 
   if (state.scene === "vectors") {
     const vectors = currentItems().filter((item) => isVector(item));
@@ -2621,6 +3027,19 @@ function inspectorMarkup(item) {
     }
   }
 
+  if (isPointLight(item)) {
+    fields.push(numberField("Konum X", "x", item.x, 0, viewport.width, 1));
+    fields.push(numberField("Konum Y", "y", item.y, 0, viewport.height, 1));
+    fields.push(numberField("Işık Şiddeti (cd)", "intensity", item.intensity, 20, 600, 1, true));
+  }
+
+  if (isLightSurface(item)) {
+    fields.push(numberField("Konum X", "x", item.x, 0, viewport.width, 1));
+    fields.push(numberField("Konum Y", "y", item.y, 0, viewport.height, 1));
+    fields.push(numberField("Açı", "angle", item.angle, -180, 180, 1));
+    fields.push(numberField("Yüzey Uzunluğu", "length", item.length, 60, 260, 1));
+  }
+
   if (isVector(item)) {
     fields.push(numberField("Bilesen X", "dx", item.dx, -300, 300, 1));
     fields.push(numberField("Bilesen Y", "dy", item.dy, -300, 300, 1));
@@ -2707,6 +3126,12 @@ function inspectorMarkup(item) {
     fields.push(numberField("Kiricilik", "index", item.index || 1.52, 1.1, 2.2, 0.01));
   }
 
+  if (isRefractionBlock(item)) {
+    fields.push(numberField("Genişlik", "width", item.width, 80, 260, 1));
+    fields.push(numberField("Yükseklik", "height", item.height, 100, 280, 1));
+    fields.push(numberField("Kırılma İndisi", "index", item.index || 1.5, 1, 2.4, 0.01, true));
+  }
+
   if (isMirror(item)) {
     fields.push(numberField("Açı", "angle", item.angle, -180, 180, 1));
     fields.push(numberField("Uzunluk", "length", item.length, 60, 240, 1));
@@ -2791,6 +3216,33 @@ function inspectorMarkup(item) {
               <span>Akim <strong>${Math.abs(state.electricity.solution?.measurements?.[item.id]?.current || 0).toFixed(3)} A</strong></span>
               <span>Baglanti <strong>${electricalTerminals(item).length} terminal</strong></span>
             </div>`
+          : ""
+      }
+      ${
+        isPointLight(item)
+          ? `<div class="vector-stats">
+              <span>Işık şiddeti <strong>${item.intensity.toFixed(0)} cd</strong></span>
+              <span>Işık akısı <strong>${pointLightFlux(item).toFixed(0)} lm</strong></span>
+              <span>Yayılım <strong>izotropik</strong></span>
+            </div>`
+          : ""
+      }
+      ${
+        isLightSurface(item)
+          ? (() => {
+              const active = activePointLightForSurface(item);
+              return active
+                ? `<div class="vector-stats">
+                    <span>Uzaklık <strong>${active.measurement.distanceMeters.toFixed(2)} m</strong></span>
+                    <span>Açı etkisi <strong>${(active.measurement.cosine * 100).toFixed(0)}%</strong></span>
+                    <span>Aydınlanma <strong>${active.measurement.illuminance.toFixed(1)} lx</strong></span>
+                  </div>`
+                : `<div class="vector-stats">
+                    <span>Aydınlanma <strong>--</strong></span>
+                    <span>Kaynak <strong>bekleniyor</strong></span>
+                    <span>Ölçüm <strong>hazır</strong></span>
+                  </div>`;
+            })()
           : ""
       }
     </div>
@@ -3193,6 +3645,13 @@ function closestOpticsHit(origin, direction, laser) {
             extraSegments: [...prismRays.insideSegments, ...prismRays.outgoing]
           };
         }
+      }
+    }
+
+    if (isRefractionBlock(item)) {
+      const hit = refractionHit(item, origin, direction);
+      if (hit && (!closest || hit.t < closest.t)) {
+        closest = hit;
       }
     }
 
@@ -4244,6 +4703,91 @@ function drawOptics(trace) {
     ctx.restore();
   };
 
+  const drawPointLight = (item, isSelected) => {
+    ctx.save();
+    const glow = ctx.createRadialGradient(item.x, item.y, 6, item.x, item.y, 60);
+    glow.addColorStop(0, "rgba(255, 231, 153, 0.95)");
+    glow.addColorStop(0.45, "rgba(255, 205, 102, 0.35)");
+    glow.addColorStop(1, "rgba(255, 205, 102, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, 60, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
+      ctx.strokeStyle = "rgba(255, 221, 120, 0.36)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(item.x + Math.cos(angle) * 12, item.y + Math.sin(angle) * 12);
+      ctx.lineTo(item.x + Math.cos(angle) * 38, item.y + Math.sin(angle) * 38);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = isSelected ? "#fff1a6" : "#ffe49a";
+    ctx.beginPath();
+    ctx.arc(item.x, item.y, isSelected ? 12 : 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(239, 244, 255, 0.94)";
+    ctx.font = "600 12px Space Grotesk";
+    ctx.textAlign = "left";
+    ctx.fillText(`I=${item.intensity.toFixed(0)} cd`, item.x + 18, item.y - 10);
+    ctx.fillText(`Φ=${pointLightFlux(item).toFixed(0)} lm`, item.x + 18, item.y + 8);
+    ctx.restore();
+  };
+
+  const drawLightSurface = (item, isSelected) => {
+    const endpoints = lightSurfaceEndpoints(item);
+    const active = activePointLightForSurface(item);
+    ctx.save();
+    ctx.strokeStyle = isSelected ? "#9fe7ff" : "rgba(172, 226, 255, 0.88)";
+    ctx.lineWidth = isSelected ? 7 : 5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(endpoints.start.x, endpoints.start.y);
+    ctx.lineTo(endpoints.end.x, endpoints.end.y);
+    ctx.stroke();
+
+    if (active) {
+      const normalAngle = degToRad(item.angle || 0) - Math.PI / 2;
+      const normalEnd = {
+        x: item.x + Math.cos(normalAngle) * 34,
+        y: item.y + Math.sin(normalAngle) * 34
+      };
+      drawArrow(active.source, { x: item.x, y: item.y }, "rgba(255, 214, 102, 0.72)", 2.5);
+      drawArrow({ x: item.x, y: item.y }, normalEnd, "rgba(159, 231, 255, 0.72)", 2);
+      ctx.fillStyle = "rgba(239, 244, 255, 0.94)";
+      ctx.font = "600 12px Space Grotesk";
+      ctx.textAlign = "left";
+      ctx.fillText(`E=${active.measurement.illuminance.toFixed(1)} lx`, item.x + 16, item.y - 14);
+      ctx.fillText(`r=${active.measurement.distanceMeters.toFixed(2)} m`, item.x + 16, item.y + 4);
+    }
+    ctx.restore();
+  };
+
+  const drawRefractionBlock = (item, isSelected) => {
+    const bounds = refractionBlockBounds(item);
+    ctx.save();
+    roundedRectPath(bounds.left, bounds.top, item.width, item.height, 24);
+    ctx.fillStyle = "rgba(147, 216, 255, 0.16)";
+    ctx.fill();
+    ctx.strokeStyle = isSelected ? "#d5f3ff" : "rgba(180, 226, 255, 0.72)";
+    ctx.lineWidth = isSelected ? 4 : 3;
+    ctx.stroke();
+    ctx.setLineDash([8, 6]);
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.beginPath();
+    ctx.moveTo(item.x, bounds.top + 12);
+    ctx.lineTo(item.x, bounds.bottom - 12);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(239, 244, 255, 0.94)";
+    ctx.font = "600 12px Space Grotesk";
+    ctx.textAlign = "center";
+    ctx.fillText(`n=${item.index.toFixed(2)}`, item.x, bounds.top - 10);
+    ctx.restore();
+  };
+
   const drawLensBody = (item, isSelected) => {
     const top = item.y - item.height / 2;
     const bottom = item.y + item.height / 2;
@@ -4369,6 +4913,14 @@ function drawOptics(trace) {
       drawArrow({ x: item.x + Math.cos(degToRad(item.angle)) * 6, y: item.y + Math.sin(degToRad(item.angle)) * 6 }, beamEnd, beamColor, 2);
     }
 
+    if (isPointLight(item)) {
+      drawPointLight(item, isSelected);
+    }
+
+    if (isLightSurface(item)) {
+      drawLightSurface(item, isSelected);
+    }
+
     if (item.type === "optical-object") {
       drawVerticalObject({ x: item.x, y: item.y }, item.height, isSelected ? "#8ef6d7" : "#7bd389");
       ctx.fillStyle = "rgba(123, 211, 137, 0.18)";
@@ -4393,6 +4945,10 @@ function drawOptics(trace) {
 
     if (isPrism(item)) {
       drawPrism(item, isSelected);
+    }
+
+    if (isRefractionBlock(item)) {
+      drawRefractionBlock(item, isSelected);
     }
 
     if (isMirror(item)) {
@@ -4697,10 +5253,30 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
   const sceneState = document.getElementById("scene-state-chip");
 
   if (!items.length) {
+    if (state.scene === "optics") {
+      const outcome = activeOpticsOutcome();
+      primary.textContent = outcome ? outcome.code : "Çıktı seç";
+      secondary.textContent = outcome ? outcome.shortTitle : "Optik kazanımı bekleniyor";
+      tertiary.textContent = outcome ? "0 nesne • düzenek kurulmayı bekliyor" : "Önce optik çıktısını seç";
+      sceneState.textContent = outcome ? "Hazır" : "Çıktı seç";
+      return;
+    }
+
     primary.textContent = "0 nesne";
     secondary.textContent = "Hazir";
     tertiary.textContent = "Bos calisma alani";
     sceneState.textContent = "Hazir";
+    return;
+  }
+
+  if (state.scene === "optics") {
+    const outcome = activeOpticsOutcome();
+    primary.textContent = outcome ? outcome.code : `${items.length} nesne`;
+    secondary.textContent = outcome ? outcome.shortTitle : "Optik";
+    tertiary.textContent = outcome
+      ? `${items.length} nesne • ${activeOpticsTools().length} araç aktif`
+      : `${items.length} nesne`;
+    sceneState.textContent = state.opticsVisible ? "Işın gösteriliyor" : "Hazır";
     return;
   }
 
@@ -4960,7 +5536,9 @@ function renderUI() {
   document.getElementById("empty-note").style.display = isEmptyScene ? "block" : "none";
   document.getElementById("empty-note").textContent =
     state.scene === "optics"
-      ? "Sahne su an bos. Bir arac sec ve kendi fizik duzenegini sifirdan tasarla."
+      ? activeOpticsOutcome()
+        ? "Seçilen çıktı için araç kutusundan nesne ekleyip düzeneği kur."
+        : "Önce optik çıktısını seç. Sonra yalnızca o çıktıya uygun araçlar görünecek."
       : state.scene === "vectors"
         ? "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas."
         : state.scene === "heat"
@@ -4971,7 +5549,9 @@ function renderUI() {
   document.getElementById("toolbox-panel").hidden = state.scene === "vectors";
   document.getElementById("toolbox-copy").textContent =
     state.scene === "optics"
-      ? "Optik sahneye yeni fizik nesneleri eklenir."
+      ? activeOpticsOutcome()
+        ? `${activeOpticsOutcome().code} için kullanılabilecek araçlar burada listelenir.`
+        : "Araç kutusu kazanım seçimine göre açılır."
       : state.scene === "vectors"
         ? "Vektor sahnesinde uretilen vektorler mod kontrol panelinden yonetilir."
         : state.scene === "heat"
@@ -4982,7 +5562,9 @@ function renderUI() {
   document.getElementById("status-text").textContent =
     state.notice ||
     (state.scene === "optics"
-      ? "Ayna, mercek, prizma, fiber ve iki ortam duzeneklerinde isigi ve goruntuyu incele."
+      ? activeOpticsOutcome()
+        ? `${activeOpticsOutcome().code} • ${activeOpticsOutcome().description}`
+        : "Optik modülünde önce çalışmak istediğin çıktıyı seç."
       : state.scene === "vectors"
         ? "Vektörleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla."
         : state.scene === "heat"
@@ -5013,6 +5595,18 @@ function renderUI() {
 }
 
 function addItem(type) {
+  if (state.scene === "optics" && !activeOpticsOutcome()) {
+    state.notice = "Önce optik çıktısını seçmelisin.";
+    renderUI();
+    return;
+  }
+
+  if (state.scene === "optics" && !activeOpticsTools().some((tool) => tool.type === type)) {
+    state.notice = "Bu araç seçili optik çıktısında kullanılamaz.";
+    renderUI();
+    return;
+  }
+
   if (state.scene === "electricity" && type === "wire") {
     state.electricity.toolMode = "wire";
     state.electricity.pendingTerminal = null;
@@ -5078,6 +5672,10 @@ function openScene(scene) {
   stopAnimationLoop();
   state.running = false;
   state.scene = ["optics", "vectors", "heat", "electricity"].includes(scene) ? scene : "optics";
+  if (state.scene === "optics") {
+    state.opticsOutcome = null;
+    state.optics.items = [];
+  }
   state.view = "lab";
   selectedId = null;
   if (state.scene === "electricity") {
@@ -5107,6 +5705,10 @@ function setScene(scene) {
   stopAnimationLoop();
   state.running = false;
   state.scene = ["optics", "vectors", "heat", "electricity"].includes(scene) ? scene : "optics";
+  if (state.scene === "optics") {
+    state.opticsOutcome = null;
+    state.optics.items = [];
+  }
   selectedId = null;
   if (state.scene === "vectors") {
     state.vectors.resultVisible = false;
@@ -5319,6 +5921,14 @@ function hitItem(point) {
       return Math.hypot(point.x - item.x, point.y - item.y) <= item.radius + 4;
     }
 
+    if (isPointLight(item)) {
+      return Math.hypot(point.x - item.x, point.y - item.y) <= 24;
+    }
+
+    if (isLightSurface(item)) {
+      return pointInsideLightSurface(point, item, 14);
+    }
+
     if (isEye(item)) {
       return Math.hypot(point.x - item.x, point.y - item.y) <= 22;
     }
@@ -5335,6 +5945,10 @@ function hitItem(point) {
 
     if (isPrism(item)) {
       return pointInPolygon(point, prismVertices(item));
+    }
+
+    if (isRefractionBlock(item)) {
+      return pointInsideRefractionBlock(point, item);
     }
 
     if (isVector(item)) {
@@ -5536,6 +6150,21 @@ function initEvents() {
   document.getElementById("back-home-button").addEventListener("click", goHome);
 
   document.getElementById("module-controls").addEventListener("click", (event) => {
+    if (state.scene === "optics") {
+      const outcomeButton = event.target.closest("[data-optics-outcome]");
+      if (outcomeButton) {
+        state.opticsOutcome = outcomeButton.dataset.opticsOutcome;
+        state.optics.items = [];
+        selectedId = null;
+        state.opticsVisible = true;
+        const outcome = activeOpticsOutcome();
+        state.notice = `${outcome.code} seçildi. Araç kutusu bu çıktıya göre güncellendi.`;
+        saveState();
+        renderUI();
+        return;
+      }
+    }
+
     if (state.scene === "electricity") {
       const toolButton = event.target.closest("[data-electricity-tool]");
       if (toolButton) {
