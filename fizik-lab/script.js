@@ -85,6 +85,25 @@ const OPTICS_OUTCOMES = [
   }
 ];
 
+const VECTOR_OUTCOMES = [
+  {
+    id: "FIZ.9.2.3",
+    code: "FİZ.9.2.3",
+    title: "Aynı doğrultuda vektörlerin yön ve büyüklükleri",
+    shortTitle: "Vektör özellikleri",
+    description:
+      "Aynı doğrultuda vektör oluştur, yönlerini ve büyüklüklerini karşılaştır; eşit ve zıt vektör ilişkilerini incele."
+  },
+  {
+    id: "FIZ.9.2.4",
+    code: "FİZ.9.2.4",
+    title: "Vektörlerin toplanması ve bileşenlerine ayrılması",
+    shortTitle: "Toplama ve bileşenler",
+    description:
+      "Uç uca ekleme, paralelkenar yöntemi ve bileşenlerine ayırma ile vektör bileşkesini bul."
+  }
+];
+
 const toolCatalog = {
   optics: [
     { type: "point-light", label: "Noktasal Işık Kaynağı", description: "Işık şiddeti ve ışık akısı gösteren kaynak ekler." },
@@ -182,6 +201,7 @@ const defaultState = {
   view: "home",
   scene: "optics",
   opticsOutcome: null,
+  vectorsOutcome: null,
   opticsVisible: true,
   running: false,
   notice: "",
@@ -271,6 +291,10 @@ function normalizeState(raw) {
       raw.opticsOutcome && OPTICS_OUTCOMES.some((outcome) => outcome.id === raw.opticsOutcome)
         ? raw.opticsOutcome
         : null,
+    vectorsOutcome:
+      raw.vectorsOutcome && VECTOR_OUTCOMES.some((outcome) => outcome.id === raw.vectorsOutcome)
+        ? raw.vectorsOutcome
+        : null,
     opticsVisible: raw.opticsVisible !== false,
     running: false,
     notice: typeof raw.notice === "string" ? raw.notice : "",
@@ -306,6 +330,14 @@ function saveState() {
 
 function activeOpticsOutcome() {
   return OPTICS_OUTCOMES.find((outcome) => outcome.id === state.opticsOutcome) || null;
+}
+
+function activeVectorsOutcome() {
+  return VECTOR_OUTCOMES.find((outcome) => outcome.id === state.vectorsOutcome) || null;
+}
+
+function vectorsAllowsResultMethods() {
+  return state.vectorsOutcome === "FIZ.9.2.4";
 }
 
 function activeOpticsTools() {
@@ -1239,6 +1271,12 @@ function snapVectorForMode(item) {
 }
 
 function addVectorFromComponents(dx, dy) {
+  if (state.scene !== "vectors" || !activeVectorsOutcome()) {
+    state.notice = "Önce vektör çıktısını seçmelisin.";
+    renderUI();
+    return;
+  }
+
   const numericDx = Number(dx);
   const numericDy = Number(dy);
 
@@ -1276,6 +1314,18 @@ function addVectorFromComponents(dx, dy) {
 }
 
 function calculateVectors() {
+  if (!activeVectorsOutcome()) {
+    state.notice = "Önce vektör çıktısını seçmelisin.";
+    renderUI();
+    return;
+  }
+
+  if (!vectorsAllowsResultMethods()) {
+    state.notice = "Bu çıktıda vektör özellikleri incelenir; bileşke hesabı ikinci çıktıda açılır.";
+    renderUI();
+    return;
+  }
+
   const scenario = vectorScenario();
   if (!scenario.canCalculate) {
     state.notice =
@@ -2749,10 +2799,20 @@ function renderLegend() {
   }
 
   if (state.scene === "vectors") {
+    const outcome = activeVectorsOutcome();
+    if (!outcome) {
+      legend.innerHTML = `
+        <span class="legend-chip laser">Çıktı seçimi</span>
+        <span class="legend-chip mirror">Temel vektör kavramları</span>
+        <span class="legend-chip force">Bileşke yöntemleri</span>
+      `;
+      return;
+    }
+
     legend.innerHTML = `
-      <span class="legend-chip laser">Girilen vektör</span>
-      <span class="legend-chip mirror">Yöntem çizgileri</span>
-      <span class="legend-chip force">Bileşke vektör</span>
+      <span class="legend-chip laser">${outcome.code}</span>
+      <span class="legend-chip mirror">${outcome.shortTitle}</span>
+      <span class="legend-chip force">${vectorsAllowsResultMethods() ? vectorModeLabel() : "Temel özellik inceleme"}</span>
     `;
     return;
   }
@@ -2820,6 +2880,7 @@ function renderModuleControls() {
   }
 
   if (state.scene === "vectors") {
+    const outcome = activeVectorsOutcome();
     const vectors = currentItems().filter((item) => isVector(item));
     const scenario = vectorScenario(vectors);
     const calculateLabel = state.vectors.resultVisible ? "Bileskeyi yeniden hesapla" : "Bileske hesapla";
@@ -2832,36 +2893,82 @@ function renderModuleControls() {
           ? "Sistem yalnizca 2 vektor ister. Iki vektoru bilesenleriyle olustur, baslangic noktalarini birlestir, sonra bileskeyi hesapla."
           : "En fazla 4 vektor olustur. Vektörler koordinat sisteminde gorunur; hesaplandiginda tumu bilesenlerine ayrilir.";
 
-    copy.textContent = "Vektor olusturma, mod secimi ve bileske hesaplama islemleri bu panelden yapilir.";
+    copy.textContent = "Önce vektör çıktısını seç, sonra sadece o çıktıya uygun çalışmayı yap.";
     controls.innerHTML = `
-      <div class="vector-controls">
-        <div class="scene-switch" aria-label="Vektor yontemi">
-          <button class="scene-button ${state.vectors.mode === "tip-to-tail" ? "active" : ""}" type="button" data-vector-mode="tip-to-tail">Uc uca ekleme</button>
-          <button class="scene-button ${state.vectors.mode === "parallelogram" ? "active" : ""}" type="button" data-vector-mode="parallelogram">Paralelkenar</button>
-          <button class="scene-button ${state.vectors.mode === "components" ? "active" : ""}" type="button" data-vector-mode="components">Bilesenler</button>
-        </div>
-        <div class="vector-builder">
-          <div class="field">
-            <label>Bilesen X</label>
-            <input id="vector-dx-input" type="number" step="1" placeholder="orn. 120" />
-          </div>
-          <div class="field">
-            <label>Bilesen Y</label>
-            <input id="vector-dy-input" type="number" step="1" placeholder="orn. 80" />
-          </div>
-        </div>
-        <div class="inline-actions">
-          <button class="primary-button compact-action" type="button" data-vector-action="create" ${canCreate ? "" : "disabled"}>Vektor ciz</button>
-          ${
-            scenario.canCalculate
-              ? `<button class="secondary-button compact-action" type="button" data-vector-action="calculate">${calculateLabel}</button>`
-              : ""
-          }
-          <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektörleri temizle</button>
-        </div>
-        <div class="vector-mode-note">${helperText}</div>
-        <div class="vector-mode-note subtle">${vectors.length} / ${limit} vektor olusturuldu.</div>
+      <div class="outcome-selector">
+        ${VECTOR_OUTCOMES.map((entry) => `
+          <button
+            class="outcome-card ${entry.id === state.vectorsOutcome ? "active" : ""}"
+            type="button"
+            data-vector-outcome="${entry.id}"
+          >
+            <strong>${entry.code}</strong>
+            <span>${entry.title}</span>
+          </button>
+        `).join("")}
       </div>
+      <div class="vector-mode-note">
+        ${
+          outcome
+            ? `<strong>${outcome.shortTitle}</strong> seçili. ${outcome.description}`
+            : "Vektör modülünde çalışmaya başlamadan önce yukarıdan bir çıktı seç."
+        }
+      </div>
+      ${
+        !outcome
+          ? ""
+          : !vectorsAllowsResultMethods()
+            ? `
+              <div class="vector-controls">
+                <div class="vector-builder">
+                  <div class="field">
+                    <label>Bilesen X</label>
+                    <input id="vector-dx-input" type="number" step="1" placeholder="orn. 120" />
+                  </div>
+                  <div class="field">
+                    <label>Bilesen Y</label>
+                    <input id="vector-dy-input" type="number" step="1" placeholder="orn. 0 veya -80" />
+                  </div>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button compact-action" type="button" data-vector-action="create" ${canCreate ? "" : "disabled"}>Vektor ciz</button>
+                  <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektörleri temizle</button>
+                </div>
+                <div class="vector-mode-note">Eşit vektör için aynı bileşenleri gir. Zıt vektör için aynı büyüklüğü koruyup işaretleri ters çevir. Aynı doğrultu için vektörleri sahnede aynı hat üzerine taşı.</div>
+                <div class="vector-mode-note subtle">${vectors.length} / ${limit} vektor olusturuldu • Yön, büyüklük, eşit vektör ve zıt vektör ilişkilerini gözlemle.</div>
+              </div>
+            `
+            : `
+              <div class="vector-controls">
+                <div class="scene-switch" aria-label="Vektor yontemi">
+                  <button class="scene-button ${state.vectors.mode === "tip-to-tail" ? "active" : ""}" type="button" data-vector-mode="tip-to-tail">Uc uca ekleme</button>
+                  <button class="scene-button ${state.vectors.mode === "parallelogram" ? "active" : ""}" type="button" data-vector-mode="parallelogram">Paralelkenar</button>
+                  <button class="scene-button ${state.vectors.mode === "components" ? "active" : ""}" type="button" data-vector-mode="components">Bilesenler</button>
+                </div>
+                <div class="vector-builder">
+                  <div class="field">
+                    <label>Bilesen X</label>
+                    <input id="vector-dx-input" type="number" step="1" placeholder="orn. 120" />
+                  </div>
+                  <div class="field">
+                    <label>Bilesen Y</label>
+                    <input id="vector-dy-input" type="number" step="1" placeholder="orn. 80" />
+                  </div>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button compact-action" type="button" data-vector-action="create" ${canCreate ? "" : "disabled"}>Vektor ciz</button>
+                  ${
+                    scenario.canCalculate
+                      ? `<button class="secondary-button compact-action" type="button" data-vector-action="calculate">${calculateLabel}</button>`
+                      : ""
+                  }
+                  <button class="secondary-button compact-action" type="button" data-vector-action="clear">Vektörleri temizle</button>
+                </div>
+                <div class="vector-mode-note">${helperText}</div>
+                <div class="vector-mode-note subtle">${vectors.length} / ${limit} vektor olusturuldu • Toplama yöntemleri ve bileşke bu çıktıda aktiftir.</div>
+              </div>
+            `
+      }
     `;
     return;
   }
@@ -5262,6 +5369,15 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
       return;
     }
 
+    if (state.scene === "vectors") {
+      const outcome = activeVectorsOutcome();
+      primary.textContent = outcome ? outcome.code : "Çıktı seç";
+      secondary.textContent = outcome ? outcome.shortTitle : "Vektör kazanımı bekleniyor";
+      tertiary.textContent = outcome ? "0 vektör • çalışma kurulmayı bekliyor" : "Önce vektör çıktısını seç";
+      sceneState.textContent = outcome ? "Hazır" : "Çıktı seç";
+      return;
+    }
+
     primary.textContent = "0 nesne";
     secondary.textContent = "Hazir";
     tertiary.textContent = "Bos calisma alani";
@@ -5281,15 +5397,20 @@ function renderSummaries(trace = { segments: [], interactions: 0 }) {
   }
 
   if (state.scene === "vectors") {
+    const outcome = activeVectorsOutcome();
     const vectors = items.filter((item) => isVector(item));
     const total = vectorResultant(vectors);
     const scenario = vectorScenario(vectors);
-    primary.textContent = `${vectors.length} vektor`;
-    secondary.textContent = vectorModeLabel();
-    tertiary.textContent = state.vectors.resultVisible
-      ? `${Math.round(Math.hypot(total.x, total.y))} br bileske • ${((Math.round(radToDeg(Math.atan2(-total.y, total.x))) % 360) + 360) % 360} derece`
-      : "Bileske hesaplanmayi bekliyor";
-    sceneState.textContent = scenario.canCalculate ? "Hesaba hazir" : "Yerlesim bekleniyor";
+    primary.textContent = outcome ? outcome.code : `${vectors.length} vektor`;
+    secondary.textContent = outcome ? outcome.shortTitle : vectorModeLabel();
+    tertiary.textContent = vectorsAllowsResultMethods()
+      ? state.vectors.resultVisible
+        ? `${Math.round(Math.hypot(total.x, total.y))} br bileske • ${((Math.round(radToDeg(Math.atan2(-total.y, total.x))) % 360) + 360) % 360} derece`
+        : "Bileske hesaplanmayi bekliyor"
+      : `${vectors.length} vektör • yön ve büyüklük karşılaştırması`;
+    sceneState.textContent = vectorsAllowsResultMethods()
+      ? (scenario.canCalculate ? "Hesaba hazir" : "Yerlesim bekleniyor")
+      : "Özellik inceleme";
     return;
   }
 
@@ -5541,7 +5662,11 @@ function renderUI() {
         ? "Seçilen çıktı için araç kutusundan nesne ekleyip düzeneği kur."
         : "Önce optik çıktısını seç. Sonra yalnızca o çıktıya uygun araçlar görünecek."
       : state.scene === "vectors"
-        ? "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas."
+        ? activeVectorsOutcome()
+          ? vectorsAllowsResultMethods()
+            ? "Vektörler bos. Modul kontrollerinden bilesenleri girip Vektor ciz dugmesine bas."
+            : "Temel vektör özellikleri için vektör oluştur ve aynı doğrultuda taşı."
+          : "Önce vektör çıktısını seç. Sonra yalnızca o çıktıya uygun çalışma açılacak."
         : state.scene === "heat"
           ? state.heat.mode === "heating"
             ? "Kap bos. Malzeme ekleyip isitmayi baslat."
@@ -5554,7 +5679,9 @@ function renderUI() {
         ? `${activeOpticsOutcome().code} için kullanılabilecek araçlar burada listelenir.`
         : "Araç kutusu kazanım seçimine göre açılır."
       : state.scene === "vectors"
-        ? "Vektor sahnesinde uretilen vektorler mod kontrol panelinden yonetilir."
+        ? activeVectorsOutcome()
+          ? `${activeVectorsOutcome().code} için vektör üretimi ve kontrolü modül panelinden yapılır.`
+          : "Vektör araçları çıktı seçimine göre modül panelinden açılır."
         : state.scene === "heat"
           ? state.heat.mode === "heating"
             ? "Malzemeleri ve termometreyi bu kutudan ekleyebilirsin."
@@ -5567,7 +5694,11 @@ function renderUI() {
         ? `${activeOpticsOutcome().code} • ${activeOpticsOutcome().description}`
         : "Optik modülünde önce çalışmak istediğin çıktıyı seç."
       : state.scene === "vectors"
-        ? "Vektörleri bilesenleriyle olustur, uygun metoda gore yerlestir ve sonra bileskeyi hesapla."
+        ? activeVectorsOutcome()
+          ? vectorsAllowsResultMethods()
+            ? `${activeVectorsOutcome().code} • ${activeVectorsOutcome().description}`
+            : `${activeVectorsOutcome().code} • ${activeVectorsOutcome().description}`
+          : "Vektör modülünde önce çalışmak istediğin çıktıyı seç."
         : state.scene === "heat"
           ? state.heat.mode === "heating"
             ? "Kap icine madde ekle, isitici gucunu ayarla ve grafigi izle."
@@ -5677,6 +5808,12 @@ function openScene(scene) {
     state.opticsOutcome = null;
     state.optics.items = [];
   }
+  if (state.scene === "vectors") {
+    state.vectorsOutcome = null;
+    state.vectors.items = [];
+    state.vectors.mode = "tip-to-tail";
+    state.vectors.resultVisible = false;
+  }
   state.view = "lab";
   selectedId = null;
   if (state.scene === "electricity") {
@@ -5710,10 +5847,13 @@ function setScene(scene) {
     state.opticsOutcome = null;
     state.optics.items = [];
   }
-  selectedId = null;
   if (state.scene === "vectors") {
+    state.vectorsOutcome = null;
+    state.vectors.items = [];
+    state.vectors.mode = "tip-to-tail";
     state.vectors.resultVisible = false;
   }
+  selectedId = null;
   if (state.scene === "electricity") {
     state.electricity.pendingTerminal = null;
     state.electricity.solution = computeElectricalSolution();
@@ -6166,6 +6306,22 @@ function initEvents() {
       }
     }
 
+    if (state.scene === "vectors") {
+      const outcomeButton = event.target.closest("[data-vector-outcome]");
+      if (outcomeButton) {
+        state.vectorsOutcome = outcomeButton.dataset.vectorOutcome;
+        state.vectors.items = [];
+        state.vectors.mode = "tip-to-tail";
+        state.vectors.resultVisible = false;
+        selectedId = null;
+        const outcome = activeVectorsOutcome();
+        state.notice = `${outcome.code} seçildi. Vektör çalışması bu çıktıya göre güncellendi.`;
+        saveState();
+        renderUI();
+        return;
+      }
+    }
+
     if (state.scene === "electricity") {
       const toolButton = event.target.closest("[data-electricity-tool]");
       if (toolButton) {
@@ -6250,6 +6406,11 @@ function initEvents() {
 
     const button = event.target.closest("[data-vector-mode]");
     if (button) {
+      if (!vectorsAllowsResultMethods()) {
+        state.notice = "Toplama yöntemleri yalnızca ikinci vektör çıktısında açılır.";
+        renderUI();
+        return;
+      }
       state.vectors.mode = button.dataset.vectorMode;
       state.vectors.items = [];
       state.vectors.resultVisible = false;
