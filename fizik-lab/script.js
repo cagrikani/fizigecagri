@@ -5251,6 +5251,61 @@ function vectorResultant(vectors) {
   return vectors.reduce((sum, vector) => ({ x: sum.x + vector.dx, y: sum.y + vector.dy }), { x: 0, y: 0 });
 }
 
+function vectorDirectionUnit(item) {
+  const magnitude = vectorMagnitude(item);
+  if (!magnitude) {
+    return { x: 0, y: 0 };
+  }
+  return { x: item.dx / magnitude, y: item.dy / magnitude };
+}
+
+function areParallelVectors(first, second) {
+  const firstMagnitude = vectorMagnitude(first);
+  const secondMagnitude = vectorMagnitude(second);
+  if (!firstMagnitude || !secondMagnitude) {
+    return false;
+  }
+  return Math.abs(first.dx * second.dy - first.dy * second.dx) <= 0.001 * firstMagnitude * secondMagnitude;
+}
+
+function areEqualVectors(first, second) {
+  return Math.abs(first.dx - second.dx) < 0.001 && Math.abs(first.dy - second.dy) < 0.001;
+}
+
+function areOppositeVectors(first, second) {
+  return Math.abs(first.dx + second.dx) < 0.001 && Math.abs(first.dy + second.dy) < 0.001;
+}
+
+function sameLineGroup(vectors, item) {
+  const unit = vectorDirectionUnit(item);
+  return vectors.filter((candidate) => {
+    if (candidate.id === item.id || !areParallelVectors(item, candidate)) {
+      return false;
+    }
+    const between = { x: candidate.x - item.x, y: candidate.y - item.y };
+    return Math.abs(between.x * unit.y - between.y * unit.x) <= 18;
+  });
+}
+
+function vectorTeachingBadges(vectors, item) {
+  const badges = [];
+  const partners = sameLineGroup(vectors, item);
+
+  if (partners.length) {
+    badges.push("Ayni dogrultu");
+  }
+
+  if (vectors.some((candidate) => candidate.id !== item.id && areEqualVectors(item, candidate))) {
+    badges.push("Esit vektor");
+  }
+
+  if (vectors.some((candidate) => candidate.id !== item.id && areOppositeVectors(item, candidate))) {
+    badges.push("Zit vektor");
+  }
+
+  return badges;
+}
+
 function drawVectors() {
   const vectors = currentItems().filter((item) => isVector(item));
   const selected = selectedItem();
@@ -5275,7 +5330,61 @@ function drawVectors() {
     ctx.textAlign = "center";
     ctx.fillText(vectorLabel(item), start.x + item.dx * 0.55, start.y + item.dy * 0.55 - 10);
     ctx.fillText(`${Math.round(vectorMagnitude(item))} br • ${vectorAngle(item)}°`, end.x, end.y - 14);
+
+    if (state.vectorsOutcome === "FIZ.9.2.3") {
+      const badges = vectorTeachingBadges(vectors, item);
+      if (badges.length) {
+        ctx.save();
+        ctx.textAlign = "left";
+        ctx.font = "700 11px Space Grotesk";
+        badges.forEach((badge, index) => {
+          const badgeX = end.x + 12;
+          const badgeY = end.y + 10 + index * 18;
+          const width = Math.max(78, badge.length * 6.3);
+          ctx.fillStyle = badge === "Zit vektor"
+            ? "rgba(255, 122, 69, 0.22)"
+            : badge === "Esit vektor"
+              ? "rgba(79, 209, 197, 0.22)"
+              : "rgba(110, 168, 254, 0.22)";
+          ctx.strokeStyle = badge === "Zit vektor"
+            ? "rgba(255, 159, 67, 0.5)"
+            : badge === "Esit vektor"
+              ? "rgba(79, 209, 197, 0.5)"
+              : "rgba(110, 168, 254, 0.5)";
+          ctx.lineWidth = 1.2;
+          roundedRectPath(badgeX - 8, badgeY - 12, width, 16, 8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "rgba(239, 244, 255, 0.95)";
+          ctx.fillText(badge, badgeX, badgeY);
+        });
+        ctx.restore();
+      }
+    }
   });
+
+  if (state.vectorsOutcome === "FIZ.9.2.3") {
+    ctx.save();
+    ctx.setLineDash([7, 7]);
+    ctx.strokeStyle = "rgba(110, 168, 254, 0.35)";
+    ctx.lineWidth = 1.6;
+    vectors.forEach((item, index) => {
+      vectors.slice(index + 1).forEach((candidate) => {
+        if (!areParallelVectors(item, candidate)) {
+          return;
+        }
+        const group = sameLineGroup(vectors, item);
+        if (!group.some((entry) => entry.id === candidate.id)) {
+          return;
+        }
+        ctx.beginPath();
+        ctx.moveTo(item.x, item.y);
+        ctx.lineTo(candidate.x, candidate.y);
+        ctx.stroke();
+      });
+    });
+    ctx.restore();
+  }
 
   if (!vectors.length || !state.vectors.resultVisible) {
     return;
