@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
 const projectRoot = new URL("../", import.meta.url);
@@ -18,6 +18,7 @@ test("sunucu paketi Fizik Atölyesi olarak taşınabilir yapıdadır", async () 
     "portal-optics.webp",
     "portal-modern.webp",
     "free-force-motion.webp",
+    "free-force-motion-newton-book-v2.webp",
     "free-energy.webp",
     "free-pressure.webp",
     "free-electric-magnetic.webp",
@@ -149,7 +150,7 @@ test("ana portal iki çalışma yolu ve bütün gelecek alanları sunar", async 
   assert.match(page, /portal-electricity\.webp/);
   assert.match(page, /portal-optics\.webp/);
   assert.match(page, /portal-modern\.webp/);
-  assert.match(page, /free-force-motion\.webp/);
+  assert.match(page, /free-force-motion-newton-book-v2\.webp/);
   assert.match(page, /free-modern\.webp/);
 });
 
@@ -171,6 +172,60 @@ test("Fizik Atölyesi ana sayfası responsive portal görsellerini içerir", asy
   assert.match(css, /\.portal-empty-bench\s*\{/);
   assert.match(css, /\.portal-footer\s*\{/);
   assert.match(css, /@media \(max-width: 620px\)/);
+});
+
+test("Serbest Kuvvet ve Hareket alanı yedi deneyli 3B Newton kitabını açar", async () => {
+  const portal = await readFile(new URL("app/page.tsx", projectRoot), "utf8");
+  const page = await readFile(new URL("app/NewtonBookLab.tsx", projectRoot), "utf8");
+  const packageJson = await readFile(new URL("package.json", projectRoot), "utf8");
+  const builtAssets = await readdir(new URL("sunucu-paketi/assets", projectRoot));
+
+  assert.match(portal, /lazy\(\(\) => import\("\.\/NewtonBookLab"\)\)/);
+  assert.match(portal, /module\.key === "force-motion"/);
+  assert.match(portal, /onNavigate\("force-motion"\)/);
+  assert.match(portal, /3B Newton kitabı açık/);
+  assert.match(portal, /newton-loading-screen/);
+  assert.match(packageJson, /"three"/);
+  assert.ok(builtAssets.some((asset) => /^NewtonBookLab-[^.]+\.js$/.test(asset)));
+
+  assert.match(page, /NewtonHologramScene/);
+  assert.match(page, /WebGLRenderer/);
+  assert.match(page, /OrbitControls/);
+  assert.match(page, /requestFullscreen/);
+  assert.match(page, /"resultant"/);
+  assert.match(page, /"inertia"/);
+  assert.match(page, /"friction"/);
+  assert.match(page, /"force-mass"/);
+  assert.match(page, /"reaction"/);
+  assert.match(page, /"momentum"/);
+  assert.match(page, /"cradle"/);
+  assert.match(page, /Bileşke kuvvet/);
+  assert.match(page, /Eylemsizlik/);
+  assert.match(page, /Sürtünme/);
+  assert.match(page, /F = m · a/);
+  assert.match(page, /Etki · tepki/);
+  assert.match(page, /Çarpışma güvenliği/);
+  assert.match(page, /Newton beşiği/);
+  assert.match(page, /ÖNCE TAHMİN ET/);
+  assert.match(page, /DENEYİ ÇALIŞTIR/);
+  assert.match(page, /LiveGraph/);
+  assert.match(page, /KANIT/);
+});
+
+test("3B Newton kitabı kaliteli sahne, kontrol paneli ve responsive düzen içerir", async () => {
+  const css = await readFile(new URL("app/globals.css", projectRoot), "utf8");
+  assert.match(css, /\.newton-book-lab\s*\{/);
+  assert.match(css, /\.newton-book-header\s*\{/);
+  assert.match(css, /\.newton-chapter-strip\s*\{/);
+  assert.match(css, /\.newton-book-workspace\s*\{/);
+  assert.match(css, /\.newton-webgl-stage\s*\{/);
+  assert.match(css, /\.newton-intro-overlay\s*\{/);
+  assert.match(css, /\.newton-control-panel\s*\{/);
+  assert.match(css, /\.newton-prediction\s*\{/);
+  assert.match(css, /\.newton-live-graph\s*\{/);
+  assert.match(css, /\.newton-book-footer\s*\{/);
+  assert.match(css, /@media \(max-width: 1180px\)/);
+  assert.match(css, /@media \(max-width: 520px\)/);
 });
 
 test("Elektrik alanı TYMM uyumlu Ohm yasası deneyini sunar", async () => {

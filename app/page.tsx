@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import ElectricityLabHub from "./ElectricityLabHub";
 import MechanicsLabHub from "./MechanicsLabHub";
 import ModernPhysicsLabHub from "./ModernPhysicsLabHub";
 import OpticsLabHub from "./OpticsLabHub";
+
+const NewtonBookLab = lazy(() => import("./NewtonBookLab"));
 
 type PortalView =
   | "home"
@@ -14,6 +16,7 @@ type PortalView =
   | "electricity"
   | "waves-optics"
   | "modern-physics"
+  | "force-motion"
   | "placeholder";
 
 type ModuleCard = {
@@ -64,9 +67,10 @@ const FREE_LAB_MODULES: ModuleCard[] = [
   {
     key: "force-motion",
     title: "Kuvvet ve Hareket",
-    description: "Kuvveti değiştir, hareketin nasıl karşılık verdiğini gözle.",
-    detail: "Serbest çalışma alanı",
-    visual: "./free-force-motion.webp",
+    description: "Newton’un yasalarını yedi canlı deney içeren üç boyutlu bir kitapta keşfet.",
+    detail: "3B Newton kitabı açık",
+    visual: "./free-force-motion-newton-book-v2.webp",
+    available: true,
   },
   {
     key: "energy",
@@ -459,6 +463,8 @@ function CollectionView({
             onNavigate("waves-optics");
           } else if (module.key === "modern-physics" && module.available) {
             onNavigate("modern-physics");
+          } else if (module.key === "force-motion" && module.available) {
+            onNavigate("force-motion");
           } else {
             onPlaceholder(module, type);
           }
@@ -545,6 +551,22 @@ export default function Home() {
 
   if (view === "modern-physics") {
     return <ModernPhysicsLabHub onBack={() => navigate("experiment-sets")} />;
+  }
+
+  if (view === "force-motion") {
+    return (
+      <Suspense
+        fallback={
+          <main className="newton-loading-screen" role="status">
+            <i />
+            <span>3B NEWTON KİTABI</span>
+            <h1>Deney sahnesi hazırlanıyor…</h1>
+          </main>
+        }
+      >
+        <NewtonBookLab onBack={() => navigate("free-labs")} />
+      </Suspense>
+    );
   }
 
   return (
