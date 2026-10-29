@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 type ExperimentId =
   | "resultant"
@@ -275,6 +277,218 @@ function glowMaterial(color: string, opacity = 0.95) {
   });
 }
 
+function roundedMesh(
+  width: number,
+  height: number,
+  depth: number,
+  radius: number,
+  material: THREE.Material,
+) {
+  const mesh = new THREE.Mesh(
+    new RoundedBoxGeometry(width, height, depth, 5, Math.min(radius, width / 2, height / 2, depth / 2)),
+    material,
+  );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function createWheel(radius = 0.25, width = 0.17) {
+  const wheel = new THREE.Group();
+  const tire = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, width, 32),
+    new THREE.MeshStandardMaterial({ color: "#111418", roughness: 0.82, metalness: 0.05 }),
+  );
+  tire.rotation.x = Math.PI / 2;
+  tire.castShadow = true;
+  wheel.add(tire);
+  [-1, 1].forEach((side) => {
+    const rim = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 0.56, radius * 0.56, 0.012, 24),
+      new THREE.MeshStandardMaterial({ color: "#bac5cc", metalness: 0.92, roughness: 0.16 }),
+    );
+    rim.rotation.x = Math.PI / 2;
+    rim.position.z = side * (width / 2 + 0.008);
+    wheel.add(rim);
+    const hub = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 0.14, radius * 0.14, 0.022, 20),
+      new THREE.MeshStandardMaterial({ color: "#303c43", metalness: 0.78, roughness: 0.24 }),
+    );
+    hub.rotation.x = Math.PI / 2;
+    hub.position.z = side * (width / 2 + 0.017);
+    wheel.add(hub);
+  });
+  return wheel;
+}
+
+function createPaperTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const context = canvas.getContext("2d");
+  if (!context) return new THREE.Texture();
+  const gradient = context.createLinearGradient(0, 0, 512, 512);
+  gradient.addColorStop(0, "#f8f1df");
+  gradient.addColorStop(0.5, "#eee3cb");
+  gradient.addColorStop(1, "#e1d1b4");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 512, 512);
+  for (let line = 0; line < 46; line += 1) {
+    const y = (line * 67) % 512;
+    context.strokeStyle = line % 3 === 0 ? "rgba(112,85,55,.08)" : "rgba(255,255,255,.15)";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(0, y);
+    context.bezierCurveTo(140, y + 7, 350, y - 5, 512, y + 2);
+    context.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function createBusModel() {
+  const bus = new THREE.Group();
+  const paint = new THREE.MeshPhysicalMaterial({
+    color: "#2478a6",
+    metalness: 0.42,
+    roughness: 0.2,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.15,
+  });
+  const lowerPaint = new THREE.MeshStandardMaterial({ color: "#16394d", metalness: 0.5, roughness: 0.3 });
+  const glass = new THREE.MeshPhysicalMaterial({
+    color: "#78c5e7",
+    metalness: 0.05,
+    roughness: 0.06,
+    transmission: 0.42,
+    transparent: true,
+    opacity: 0.78,
+    clearcoat: 1,
+  });
+  const body = roundedMesh(3.45, 1.18, 1.34, 0.2, paint);
+  body.position.y = 0.92;
+  bus.add(body);
+  const skirt = roundedMesh(3.2, 0.32, 1.38, 0.08, lowerPaint);
+  skirt.position.y = 0.43;
+  bus.add(skirt);
+  [-1.08, 0, 1.08].forEach((x) => {
+    [-1, 1].forEach((side) => {
+      const windowMesh = roundedMesh(0.76, 0.48, 0.022, 0.05, glass);
+      windowMesh.position.set(x, 1.11, side * 0.681);
+      bus.add(windowMesh);
+    });
+  });
+  const windshield = roundedMesh(0.035, 0.54, 1.03, 0.02, glass);
+  windshield.position.set(1.735, 1.08, 0);
+  bus.add(windshield);
+  const rearGlass = windshield.clone();
+  rearGlass.position.x = -1.735;
+  bus.add(rearGlass);
+  const wheels: THREE.Group[] = [];
+  [-1.12, 1.12].forEach((x) => [-0.72, 0.72].forEach((z) => {
+    const wheel = createWheel(0.3, 0.17);
+    wheel.position.set(x, 0.28, z);
+    bus.add(wheel);
+    wheels.push(wheel);
+  }));
+  [-0.38, 0.38].forEach((z) => {
+    const light = new THREE.Mesh(new THREE.SphereGeometry(0.07, 18, 12), glowMaterial("#fff1b8"));
+    light.scale.x = 0.45;
+    light.position.set(1.75, 0.67, z);
+    bus.add(light);
+  });
+  const bumper = roundedMesh(0.12, 0.15, 1.18, 0.04, new THREE.MeshStandardMaterial({ color: "#d5dde1", metalness: 0.86, roughness: 0.2 }));
+  bumper.position.set(1.78, 0.36, 0);
+  bus.add(bumper);
+  return { bus, wheels };
+}
+
+function createDynamicsCart(color: string) {
+  const cart = new THREE.Group();
+  const metal = new THREE.MeshStandardMaterial({ color: "#aab7c0", metalness: 0.88, roughness: 0.2 });
+  const paint = new THREE.MeshPhysicalMaterial({ color, metalness: 0.48, roughness: 0.2, clearcoat: 0.9 });
+  const chassis = roundedMesh(1.35, 0.28, 1.12, 0.1, metal);
+  chassis.position.y = 0.48;
+  cart.add(chassis);
+  const deck = roundedMesh(1.05, 0.3, 0.88, 0.08, paint);
+  deck.position.y = 0.73;
+  cart.add(deck);
+  const wheels: THREE.Group[] = [];
+  [-0.46, 0.46].forEach((x) => [-0.58, 0.58].forEach((z) => {
+    const wheel = createWheel(0.18, 0.12);
+    wheel.position.set(x, 0.28, z);
+    cart.add(wheel);
+    wheels.push(wheel);
+  }));
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.025, 10, 24, Math.PI), metal);
+  hook.rotation.y = Math.PI / 2;
+  hook.position.set(0.76, 0.52, 0);
+  cart.add(hook);
+  const weights: THREE.Mesh[] = [];
+  for (let index = 0; index < 5; index += 1) {
+    const weight = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.29, 0.11, 30), metal);
+    weight.position.set(0, 0.96 + index * 0.105, 0);
+    weight.castShadow = true;
+    cart.add(weight);
+    weights.push(weight);
+  }
+  return { cart, wheels, weights };
+}
+
+function createCrashCarModel() {
+  const car = new THREE.Group();
+  const paint = new THREE.MeshPhysicalMaterial({
+    color: "#d83b43",
+    metalness: 0.58,
+    roughness: 0.18,
+    clearcoat: 1,
+    clearcoatRoughness: 0.12,
+  });
+  const glass = new THREE.MeshPhysicalMaterial({
+    color: "#7bbbd2",
+    metalness: 0.08,
+    transmission: 0.48,
+    transparent: true,
+    opacity: 0.76,
+    roughness: 0.05,
+  });
+  const body = roundedMesh(1.7, 0.54, 1.16, 0.18, paint);
+  body.position.y = 0.62;
+  car.add(body);
+  const hood = roundedMesh(0.68, 0.24, 1.06, 0.1, paint);
+  hood.position.set(0.72, 0.84, 0);
+  car.add(hood);
+  const cabin = roundedMesh(0.78, 0.5, 0.97, 0.15, glass);
+  cabin.position.set(-0.22, 1.09, 0);
+  car.add(cabin);
+  const wheels: THREE.Group[] = [];
+  [-0.57, 0.57].forEach((x) => [-0.61, 0.61].forEach((z) => {
+    const wheel = createWheel(0.24, 0.15);
+    wheel.position.set(x, 0.28, z);
+    car.add(wheel);
+    wheels.push(wheel);
+  }));
+  const bumper = roundedMesh(0.12, 0.15, 1.04, 0.04, new THREE.MeshStandardMaterial({ color: "#c4cbd0", metalness: 0.86, roughness: 0.22 }));
+  bumper.position.set(0.92, 0.42, 0);
+  car.add(bumper);
+  [-0.34, 0.34].forEach((z) => {
+    const headlight = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), glowMaterial("#fff5bd"));
+    headlight.scale.x = 0.45;
+    headlight.position.set(0.89, 0.67, z);
+    car.add(headlight);
+  });
+  const airbag = new THREE.Mesh(
+    new THREE.SphereGeometry(0.34, 28, 20),
+    new THREE.MeshPhysicalMaterial({ color: "#f5f0df", roughness: 0.74, transparent: true, opacity: 0.9 }),
+  );
+  airbag.position.set(0.3, 1.12, 0);
+  airbag.scale.setScalar(0.01);
+  car.add(airbag);
+  return { car, hood, wheels, airbag };
+}
+
 function addCylinderBetween(
   group: THREE.Group,
   from: THREE.Vector3,
@@ -316,17 +530,40 @@ function addArrow(
 
 function addPerson(group: THREE.Group, x: number, z: number, color: string, facing = 1) {
   const person = new THREE.Group();
-  const material = glowMaterial(color, 0.9);
-  const dark = new THREE.MeshStandardMaterial({ color: "#122535", roughness: 0.62 });
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.42, 6, 12), material);
-  body.position.y = 0.68;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 16), material);
-  head.position.y = 1.18;
-  const hip = new THREE.Vector3(0, 0.45, 0);
-  addCylinderBetween(person, hip, new THREE.Vector3(-0.2, 0.05, 0), 0.055, dark);
-  addCylinderBetween(person, hip, new THREE.Vector3(0.2, 0.05, 0), 0.055, dark);
-  addCylinderBetween(person, new THREE.Vector3(0, 0.82, 0), new THREE.Vector3(0.34 * facing, 0.68, 0), 0.045, material);
-  person.add(body, head);
+  const fabric = new THREE.MeshPhysicalMaterial({ color, roughness: 0.58, metalness: 0.02, clearcoat: 0.08 });
+  const skin = new THREE.MeshStandardMaterial({ color: "#d9a078", roughness: 0.78 });
+  const trousers = new THREE.MeshStandardMaterial({ color: "#172536", roughness: 0.72 });
+  const shoes = new THREE.MeshStandardMaterial({ color: "#17191d", roughness: 0.8 });
+  const hair = new THREE.MeshStandardMaterial({ color: "#2f241f", roughness: 0.9 });
+  const torso = roundedMesh(0.34, 0.5, 0.23, 0.08, fabric);
+  torso.position.y = 0.76;
+  const collar = roundedMesh(0.22, 0.06, 0.24, 0.025, fabric);
+  collar.position.y = 1.03;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 18), skin);
+  head.scale.set(0.88, 1.08, 0.9);
+  head.position.y = 1.22;
+  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.184, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.48), hair);
+  hairCap.scale.set(0.9, 1.06, 0.92);
+  hairCap.position.y = 1.25;
+  const hip = new THREE.Vector3(0, 0.48, 0);
+  const leftFoot = new THREE.Vector3(-0.2, 0.06, 0.02);
+  const rightFoot = new THREE.Vector3(0.2, 0.06, -0.02);
+  addCylinderBetween(person, hip, leftFoot, 0.065, trousers);
+  addCylinderBetween(person, hip, rightFoot, 0.065, trousers);
+  [leftFoot, rightFoot].forEach((foot) => {
+    const shoe = roundedMesh(0.19, 0.09, 0.15, 0.035, shoes);
+    shoe.position.copy(foot);
+    shoe.position.x += 0.035 * facing;
+    person.add(shoe);
+  });
+  const shoulder = new THREE.Vector3(0, 0.93, 0);
+  const elbow = new THREE.Vector3(0.22 * facing, 0.8, 0);
+  const handPoint = new THREE.Vector3(0.4 * facing, 0.72, 0);
+  addCylinderBetween(person, shoulder, elbow, 0.055, fabric);
+  addCylinderBetween(person, elbow, handPoint, 0.045, skin);
+  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), skin);
+  hand.position.copy(handPoint);
+  person.add(torso, collar, head, hairCap, hand);
   person.position.set(x, 0, z);
   person.rotation.z = -0.12 * facing;
   person.traverse((object) => {
@@ -406,6 +643,10 @@ function NewtonHologramScene({
     renderer.domElement.style.touchAction = "none";
     mount.appendChild(renderer.domElement);
 
+    const environmentGenerator = new THREE.PMREMGenerator(renderer);
+    const environment = environmentGenerator.fromScene(new RoomEnvironment(), 0.035).texture;
+    scene.environment = environment;
+
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0.35, 0.2);
     controls.enableDamping = true;
@@ -417,7 +658,7 @@ function NewtonHologramScene({
     controls.minAzimuthAngle = -0.55;
     controls.maxAzimuthAngle = 0.55;
 
-    scene.add(new THREE.HemisphereLight("#bfeaff", "#261c35", 1.45));
+    scene.add(new THREE.HemisphereLight("#bfeaff", "#261c35", 1.15));
     const keyLight = new THREE.SpotLight("#fff2dc", 52, 35, 0.65, 0.4, 1.4);
     keyLight.position.set(-3, 9, 7);
     keyLight.target.position.set(0, 0, 0);
@@ -427,6 +668,21 @@ function NewtonHologramScene({
     const rimLight = new THREE.PointLight(experiment.accent, 22, 18, 1.7);
     rimLight.position.set(4.2, 3.8, -2.4);
     scene.add(rimLight);
+
+    const labWall = roundedMesh(
+      15,
+      7,
+      0.24,
+      0.08,
+      new THREE.MeshStandardMaterial({ color: "#0c1b26", metalness: 0.42, roughness: 0.38 }),
+    );
+    labWall.position.set(0, 2.3, -4.4);
+    scene.add(labWall);
+    [-5.4, -2.7, 0, 2.7, 5.4].forEach((x) => {
+      const strip = roundedMesh(0.035, 4.8, 0.035, 0.012, glowMaterial(x === 0 ? experiment.accent : "#6aa6c2", 0.48));
+      strip.position.set(x, 2.3, -4.22);
+      scene.add(strip);
+    });
 
     const tableMaterial = new THREE.MeshStandardMaterial({ color: "#2b1b17", roughness: 0.72, metalness: 0.06 });
     const table = new THREE.Mesh(new THREE.CylinderGeometry(7.8, 8.2, 0.75, 64), tableMaterial);
@@ -444,17 +700,17 @@ function NewtonHologramScene({
     const book = new THREE.Group();
     book.rotation.x = -0.04;
     scene.add(book);
-    const coverMaterial = new THREE.MeshStandardMaterial({ color: "#251828", roughness: 0.58, metalness: 0.18 });
-    const pageMaterial = new THREE.MeshStandardMaterial({ color: "#f0e7d2", roughness: 0.82, metalness: 0 });
+    const coverMaterial = new THREE.MeshPhysicalMaterial({ color: "#251828", roughness: 0.42, metalness: 0.12, clearcoat: 0.24, clearcoatRoughness: 0.45 });
+    const pageMaterial = new THREE.MeshStandardMaterial({ color: "#f0e7d2", map: createPaperTexture(), roughness: 0.88, metalness: 0 });
     const pageEdge = new THREE.MeshStandardMaterial({ color: "#b9a98e", roughness: 0.9 });
     [-2.24, 2.24].forEach((x, index) => {
-      const cover = new THREE.Mesh(new THREE.BoxGeometry(4.45, 0.18, 5.35), coverMaterial);
+      const cover = roundedMesh(4.45, 0.18, 5.35, 0.08, coverMaterial);
       cover.position.set(x, -0.42, 0);
       cover.rotation.z = index === 0 ? -0.025 : 0.025;
       cover.castShadow = true;
       cover.receiveShadow = true;
       book.add(cover);
-      const pages = new THREE.Mesh(new THREE.BoxGeometry(4.25, 0.22, 5.12), pageMaterial);
+      const pages = roundedMesh(4.25, 0.22, 5.12, 0.06, pageMaterial);
       pages.position.set(x, -0.24, 0);
       pages.rotation.z = index === 0 ? -0.025 : 0.025;
       pages.castShadow = true;
@@ -479,12 +735,15 @@ function NewtonHologramScene({
     book.add(stage);
     const hologramBase = new THREE.Mesh(
       new THREE.CylinderGeometry(3.15, 3.45, 0.12, 72),
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshPhysicalMaterial({
         color: "#0e2838",
         emissive: experiment.accent,
         emissiveIntensity: 0.18,
-        metalness: 0.55,
-        roughness: 0.24,
+        metalness: 0.68,
+        roughness: 0.16,
+        clearcoat: 1,
+        clearcoatRoughness: 0.08,
+        transmission: 0.08,
         transparent: true,
         opacity: 0.92,
       }),
@@ -521,7 +780,6 @@ function NewtonHologramScene({
     const cyan = glowMaterial("#66e7d0", 0.92);
     const pink = glowMaterial("#ff88b1", 0.92);
     const steel = new THREE.MeshStandardMaterial({ color: "#8fa5b3", metalness: 0.74, roughness: 0.24 });
-    const dark = new THREE.MeshStandardMaterial({ color: "#102333", roughness: 0.62, metalness: 0.22 });
 
     if (experiment.id === "resultant") {
       const rope = addCylinderBetween(stage, new THREE.Vector3(-1.5, 0.85, 0), new THREE.Vector3(4.7, 0.85, 0), 0.055, new THREE.MeshStandardMaterial({ color: "#c6aa77", roughness: 0.9 }));
@@ -541,51 +799,48 @@ function NewtonHologramScene({
     }
 
     if (experiment.id === "inertia") {
-      const bus = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.25, 1.35), new THREE.MeshStandardMaterial({ color: "#2f77a1", metalness: 0.35, roughness: 0.28 }));
-      body.position.y = 0.93;
-      body.castShadow = true;
-      bus.add(body);
-      [-1.1, 1.1].forEach((x) => [-0.72, 0.72].forEach((z) => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.18, 24), dark);
-        wheel.rotation.x = Math.PI / 2;
-        wheel.position.set(x, 0.25, z);
-        bus.add(wheel);
-      }));
-      [-1.1, 0, 1.1].forEach((x) => {
-        const windowMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.45), new THREE.MeshPhysicalMaterial({ color: "#9cdfff", transmission: 0.55, transparent: true, opacity: 0.7, roughness: 0.1 }));
-        windowMesh.position.set(x, 1.08, 0.681);
-        bus.add(windowMesh);
-      });
+      const { bus, wheels } = createBusModel();
       bus.position.set(-0.4, 0.1, 0);
       stage.add(bus);
-      const passenger = addPerson(stage, 0, 0.03, "#ffc96f", 1);
-      passenger.scale.setScalar(0.75);
-      passenger.position.y = 0.55;
-      const track = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.08, 1.8), dark);
-      track.position.set(1.55, 0.16, 0);
+      const passenger = addPerson(bus, 0.08, 0.01, "#e8a44b", 1);
+      passenger.scale.setScalar(0.64);
+      passenger.position.y = 0.32;
+      const track = roundedMesh(6.3, 0.1, 1.95, 0.04, new THREE.MeshStandardMaterial({ color: "#303d44", roughness: 0.88 }));
+      track.position.set(1.55, 0.15, 0);
       stage.add(track);
+      [-0.58, 0.58].forEach((z) => {
+        const lane = roundedMesh(5.9, 0.015, 0.045, 0.01, new THREE.MeshStandardMaterial({ color: "#e9d57a", roughness: 0.65 }));
+        lane.position.set(1.55, 0.21, z);
+        stage.add(lane);
+      });
       animated.push((value) => {
         const amount = easeInOut(value);
         bus.position.x = -0.5 + 1.8 * amount;
         const inertia = parameterRef.current.primary / Math.max(parameterRef.current.secondary, 0.5);
-        passenger.position.x = bus.position.x + 0.15 + clamp(inertia / 10, 0.2, 1.1) * Math.pow(amount, 2);
+        passenger.position.x = 0.08 + clamp(inertia / 22, 0.08, 0.42) * Math.pow(amount, 2);
+        passenger.rotation.z = -0.12 + clamp(inertia / 18, 0.04, 0.38) * amount;
+        wheels.forEach((wheel) => { wheel.rotation.z = -amount * 10; });
       });
     }
 
     if (experiment.id === "friction") {
-      const surface = new THREE.Mesh(new THREE.BoxGeometry(6.3, 0.12, 2.2), new THREE.MeshStandardMaterial({ color: "#466571", roughness: 0.68 }));
+      const surface = roundedMesh(6.3, 0.14, 2.2, 0.07, new THREE.MeshStandardMaterial({ color: "#667b82", metalness: 0.42, roughness: 0.42 }));
       surface.position.set(1.55, 0.17, 0);
       surface.receiveShadow = true;
       stage.add(surface);
-      for (let index = 0; index < 24; index += 1) {
-        const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.025, 1.95), new THREE.MeshBasicMaterial({ color: index % 2 ? "#66838d" : "#263f49" }));
-        ridge.position.set(-1.35 + index * 0.25, 0.25, 0);
+      for (let index = 0; index < 18; index += 1) {
+        const ridge = roundedMesh(0.022, 0.024, 1.88, 0.006, new THREE.MeshStandardMaterial({ color: index % 2 ? "#8ca0a5" : "#4b5c61", metalness: 0.28, roughness: 0.62 }));
+        ridge.position.set(-1.25 + index * 0.34, 0.255, 0);
         stage.add(ridge);
       }
-      const puck = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.2, 42), glowMaterial("#ffc86a"));
+      const puck = new THREE.Group();
+      const puckBody = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.18, 48), new THREE.MeshPhysicalMaterial({ color: "#d5dde0", metalness: 0.84, roughness: 0.16, clearcoat: 0.8 }));
+      const rubberRing = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.055, 12, 48), new THREE.MeshStandardMaterial({ color: "#20262a", roughness: 0.84 }));
+      rubberRing.rotation.x = Math.PI / 2;
+      const puckCap = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.195, 42), glowMaterial("#ffc86a", 0.82));
+      puck.add(puckBody, rubberRing, puckCap);
       puck.position.set(-1.25, 0.42, 0);
-      puck.castShadow = true;
+      puck.traverse((object) => { if (object instanceof THREE.Mesh) object.castShadow = true; });
       stage.add(puck);
       addArrow(stage, new THREE.Vector3(-1.2, 1.15, 0), new THREE.Vector3(1, 0, 0), 1.4, "#ffc86a");
       animated.push((value) => {
@@ -605,36 +860,39 @@ function NewtonHologramScene({
         return rail;
       });
       void rails;
-      const cart = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.55, 1.25), glowMaterial("#aa8cff", 0.94));
-      body.position.y = 0.63;
-      body.castShadow = true;
-      cart.add(body);
-      [-0.45, 0.45].forEach((x) => [-0.56, 0.56].forEach((z) => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.13, 20), dark);
-        wheel.rotation.x = Math.PI / 2;
-        wheel.position.set(x, 0.25, z);
-        cart.add(wheel);
-      }));
+      for (let index = 0; index < 13; index += 1) {
+        const sleeper = roundedMesh(0.12, 0.07, 1.38, 0.025, new THREE.MeshStandardMaterial({ color: "#26343b", metalness: 0.54, roughness: 0.36 }));
+        sleeper.position.set(-1.42 + index * 0.5, 0.18, 0);
+        stage.add(sleeper);
+      }
+      const { cart, wheels, weights } = createDynamicsCart("#7754c8");
       cart.position.set(-1.35, 0, 0);
       stage.add(cart);
-      const weight = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.34, 28), steel);
-      weight.position.set(0, 1.18, 0);
-      cart.add(weight);
       addArrow(cart, new THREE.Vector3(-0.65, 1.55, 0), new THREE.Vector3(1, 0, 0), 1.55, "#aa8cff");
       animated.push((value) => {
         const acceleration = parameterRef.current.primary / parameterRef.current.secondary;
         cart.position.x = -1.35 + clamp(acceleration * 1.25, 0.5, 5.2) * value * value;
-        cart.children.forEach((child) => {
-          if (child instanceof THREE.Mesh && child.geometry instanceof THREE.CylinderGeometry && child !== weight) child.rotation.z = -value * 13;
-        });
+        const visibleWeights = clamp(Math.round(parameterRef.current.secondary / 10), 1, weights.length);
+        weights.forEach((weight, index) => { weight.visible = index < visibleWeights; });
+        wheels.forEach((wheel) => { wheel.rotation.z = -value * 13; });
       });
     }
 
     if (experiment.id === "reaction") {
       addCylinderBetween(stage, new THREE.Vector3(-1.4, 2.25, 0), new THREE.Vector3(4.6, 2.25, 0), 0.025, steel);
+      [-1.35, 4.55].forEach((x) => {
+        const stand = roundedMesh(0.12, 2.25, 0.12, 0.035, new THREE.MeshStandardMaterial({ color: "#aab5bc", metalness: 0.86, roughness: 0.2 }));
+        stand.position.set(x, 1.17, 0);
+        stage.add(stand);
+        const foot = roundedMesh(0.65, 0.1, 0.52, 0.04, new THREE.MeshStandardMaterial({ color: "#52616a", metalness: 0.65, roughness: 0.32 }));
+        foot.position.set(x, 0.14, 0);
+        stage.add(foot);
+      });
       const balloon = new THREE.Group();
-      const skin = new THREE.Mesh(new THREE.SphereGeometry(0.62, 36, 28), glowMaterial("#ff8db5", 0.88));
+      const skin = new THREE.Mesh(
+        new THREE.SphereGeometry(0.62, 48, 32),
+        new THREE.MeshPhysicalMaterial({ color: "#e94c84", roughness: 0.2, clearcoat: 0.9, clearcoatRoughness: 0.08, transparent: true, opacity: 0.92 }),
+      );
       skin.scale.set(1.25, 0.82, 0.82);
       skin.castShadow = true;
       balloon.add(skin);
@@ -642,6 +900,12 @@ function NewtonHologramScene({
       nozzle.rotation.z = -Math.PI / 2;
       nozzle.position.x = -0.92;
       balloon.add(nozzle);
+      const straw = roundedMesh(0.62, 0.14, 0.14, 0.06, new THREE.MeshPhysicalMaterial({ color: "#eaf9ff", transmission: 0.6, transparent: true, opacity: 0.8, roughness: 0.08 }));
+      straw.position.y = 0.36;
+      balloon.add(straw);
+      const tape = roundedMesh(0.26, 0.08, 0.72, 0.025, new THREE.MeshPhysicalMaterial({ color: "#f7e6a3", roughness: 0.38, transparent: true, opacity: 0.75 }));
+      tape.position.y = 0.23;
+      balloon.add(tape);
       balloon.position.set(-1.15, 1.9, 0);
       stage.add(balloon);
       const particles: THREE.Mesh[] = [];
@@ -665,45 +929,43 @@ function NewtonHologramScene({
     }
 
     if (experiment.id === "momentum") {
-      const road = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.1, 2), new THREE.MeshStandardMaterial({ color: "#2c3941", roughness: 0.88 }));
+      const road = roundedMesh(6.4, 0.12, 2, 0.05, new THREE.MeshStandardMaterial({ color: "#2c343a", roughness: 0.9 }));
       road.position.set(1.55, 0.17, 0);
       stage.add(road);
-      const barrier = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.4, 2.2), new THREE.MeshStandardMaterial({ color: "#d7d8d1", roughness: 0.8 }));
+      for (let index = 0; index < 6; index += 1) {
+        const laneDash = roundedMesh(0.42, 0.015, 0.055, 0.012, new THREE.MeshStandardMaterial({ color: "#f0e5b2", roughness: 0.7 }));
+        laneDash.position.set(-0.8 + index * 0.85, 0.24, 0);
+        stage.add(laneDash);
+      }
+      const barrier = roundedMesh(0.35, 2.4, 2.2, 0.06, new THREE.MeshStandardMaterial({ color: "#d7d8d1", roughness: 0.7, metalness: 0.08 }));
       barrier.position.set(4.25, 1.35, 0);
       barrier.castShadow = true;
       stage.add(barrier);
-      const car = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.58, 1.2), new THREE.MeshStandardMaterial({ color: "#d84b4b", metalness: 0.56, roughness: 0.22 }));
-      body.position.y = 0.66;
-      body.castShadow = true;
-      car.add(body);
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 1.02), new THREE.MeshPhysicalMaterial({ color: "#91c8df", transmission: 0.4, transparent: true, opacity: 0.74, roughness: 0.08 }));
-      cabin.position.set(-0.2, 1.15, 0);
-      car.add(cabin);
-      [-0.55, 0.55].forEach((x) => [-0.58, 0.58].forEach((z) => {
-        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.16, 22), dark);
-        wheel.rotation.x = Math.PI / 2;
-        wheel.position.set(x, 0.28, z);
-        car.add(wheel);
-      }));
-      const airbag = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), new THREE.MeshPhysicalMaterial({ color: "#f7f0d9", roughness: 0.74, transparent: true, opacity: 0.88 }));
-      airbag.position.set(0.35, 1.15, 0);
-      airbag.scale.setScalar(0.01);
-      car.add(airbag);
+      for (let stripe = -0.82; stripe <= 0.82; stripe += 0.41) {
+        const marking = roundedMesh(0.025, 0.28, 0.3, 0.01, new THREE.MeshStandardMaterial({ color: stripe % 0.82 === 0 ? "#f1b52e" : "#23282b", roughness: 0.7 }));
+        marking.rotation.z = -0.6;
+        marking.position.set(4.055, 1.15 + stripe, 0);
+        stage.add(marking);
+      }
+      const { car, hood, wheels, airbag } = createCrashCarModel();
       car.position.set(-1.25, 0, 0);
       stage.add(car);
       animated.push((value) => {
         const impact = clamp(value / 0.78, 0, 1);
         car.position.x = -1.25 + 4.55 * easeInOut(impact);
         const crash = clamp((value - 0.78) / 0.22, 0, 1);
-        body.scale.x = 1 - crash * clamp(0.55 - parameterRef.current.secondary * 0.28, 0.14, 0.5);
-        body.position.x = crash * 0.2;
+        hood.scale.x = 1 - crash * clamp(0.72 - parameterRef.current.secondary * 0.3, 0.2, 0.58);
+        hood.position.x = 0.72 - crash * 0.14;
         airbag.scale.setScalar(0.01 + crash * 1.25);
+        wheels.forEach((wheel) => { wheel.rotation.z = -impact * 16; });
       });
     }
 
     if (experiment.id === "cradle") {
       const frameMaterial = new THREE.MeshStandardMaterial({ color: "#9aa8b2", metalness: 0.86, roughness: 0.2 });
+      const cradleBase = roundedMesh(5.05, 0.16, 2.5, 0.09, new THREE.MeshPhysicalMaterial({ color: "#243641", metalness: 0.68, roughness: 0.2, clearcoat: 0.75 }));
+      cradleBase.position.set(1.55, 0.16, 0);
+      stage.add(cradleBase);
       addCylinderBetween(stage, new THREE.Vector3(-0.65, 0.2, -1.05), new THREE.Vector3(-0.65, 2.85, -1.05), 0.08, frameMaterial);
       addCylinderBetween(stage, new THREE.Vector3(3.75, 0.2, -1.05), new THREE.Vector3(3.75, 2.85, -1.05), 0.08, frameMaterial);
       addCylinderBetween(stage, new THREE.Vector3(-0.65, 2.85, -1.05), new THREE.Vector3(3.75, 2.85, -1.05), 0.08, frameMaterial);
@@ -719,7 +981,7 @@ function NewtonHologramScene({
           const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, z), new THREE.Vector3(0, -1.55, 0)]);
           pendulum.add(new THREE.Line(geometry, stringMaterial));
         });
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.24, 32, 24), new THREE.MeshStandardMaterial({ color: "#dbe7ee", metalness: 0.96, roughness: 0.08 }));
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.24, 48, 32), new THREE.MeshPhysicalMaterial({ color: "#e7f0f4", metalness: 1, roughness: 0.06, clearcoat: 1 }));
         ball.position.y = -1.55;
         ball.castShadow = true;
         pendulum.add(ball);
@@ -790,6 +1052,8 @@ function NewtonHologramScene({
       cancelAnimationFrame(frame);
       renderer.domElement.removeEventListener("pointerdown", handlePointer);
       controls.dispose();
+      environment.dispose();
+      environmentGenerator.dispose();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh || object instanceof THREE.Line || object instanceof THREE.Sprite) {
           const geometry = (object as THREE.Mesh).geometry;
@@ -1054,7 +1318,8 @@ export default function NewtonBookLab({
       <section className="newton-book-workspace">
         <div className="newton-stage-card" key={`stage-${experiment.id}`}>
           <div className="newton-stage-toolbar">
-            <span><small>3B HOLOGRAFİK DENEY</small><b>{experiment.title}</b></span>
+            <span><small>GERÇEK ZAMANLI 3B DENEY</small><b>{experiment.title}</b></span>
+            <em className="newton-render-badge">PBR MALZEME · FİZİKSEL IŞIK</em>
             <span><i className={running ? "live" : ""} />{running ? "Deney çalışıyor" : completed.has(experiment.id) ? "Deney tamamlandı" : "Deney hazır"}</span>
           </div>
           <NewtonHologramScene

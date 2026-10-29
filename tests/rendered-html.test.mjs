@@ -198,6 +198,12 @@ test("Serbest Kuvvet ve Hareket alanı yedi deneyli 3B Newton kitabını açar",
   assert.match(page, /NewtonHologramScene/);
   assert.match(page, /WebGLRenderer/);
   assert.match(page, /OrbitControls/);
+  assert.match(page, /RoundedBoxGeometry/);
+  assert.match(page, /RoomEnvironment/);
+  assert.match(page, /createBusModel/);
+  assert.match(page, /createDynamicsCart/);
+  assert.match(page, /createCrashCarModel/);
+  assert.match(page, /PBR MALZEME · FİZİKSEL IŞIK/);
   assert.match(page, /requestFullscreen/);
   assert.match(page, /"resultant"/);
   assert.match(page, /"inertia"/);
