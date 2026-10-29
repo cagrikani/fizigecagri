@@ -38747,6 +38747,75 @@ footer > a {
 .newton-narrated-vector-axis > strong i { position: absolute; inset: 7px; border: 1px dashed rgba(103,232,208,.28); border-radius: 50%; animation: newton-vector-orbit 8s linear infinite; }
 @keyframes newton-vector-orbit { to { transform: rotate(360deg); } }
 
+.newton-inertia-dashboard {
+  position: absolute;
+  z-index: 6;
+  top: 76px;
+  right: 14px;
+  display: grid;
+  gap: 8px;
+  width: min(440px, 48%);
+  padding: 12px;
+  border: 1px solid rgba(151, 205, 226, .22);
+  border-radius: 17px;
+  background:
+    linear-gradient(145deg, rgba(130,200,255,.07), transparent 42%),
+    rgba(4, 18, 29, .8);
+  box-shadow: 0 24px 58px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.05);
+  backdrop-filter: blur(19px) saturate(1.2);
+}
+
+.newton-inertia-speed { display: grid; grid-template-columns: 82px 1fr; align-items: center; gap: 12px; min-height: 82px; padding: 4px 7px 8px; border-bottom: 1px solid rgba(145,196,214,.12); }
+.newton-inertia-speed > div { position: relative; display: grid; place-items: center; align-content: center; width: 76px; height: 76px; border-radius: 50%; background: conic-gradient(#82c8ff var(--speed-level), rgba(130,200,255,.1) 0); box-shadow: 0 0 28px rgba(130,200,255,.13); }
+.newton-inertia-speed > div::before { position: absolute; inset: 7px; border-radius: 50%; background: #09202d; box-shadow: inset 0 0 18px rgba(0,0,0,.35); content: ""; }
+.newton-inertia-speed > div > * { position: relative; z-index: 1; }
+.newton-inertia-speed strong { font-family: Georgia, serif; font-size: 24px; font-weight: 500; line-height: .9; }
+.newton-inertia-speed small { color: #79a6b7; font-size: 6px; font-weight: 900; }
+.newton-inertia-speed > span { color: #82c8ff; font-size: 9px; font-weight: 950; letter-spacing: .12em; }
+
+.newton-inertia-motion { display: grid; gap: 6px; }
+.newton-inertia-motion article { display: grid; grid-template-columns: 40px minmax(105px, .8fr) minmax(70px, 1fr); align-items: center; gap: 9px; min-height: 51px; padding: 6px 8px; border: 1px solid rgba(147,199,218,.12); border-radius: 11px; background: rgba(255,255,255,.025); }
+.newton-inertia-motion article > div { display: grid; gap: 3px; }
+.newton-inertia-motion article small { color: #7295a2; font-size: 5px; font-weight: 950; letter-spacing: .12em; }
+.newton-inertia-motion article b { color: #dcecf0; font-size: 7px; line-height: 1.35; }
+
+.newton-bus-symbol { position: relative; display: block; width: 38px; height: 23px; border: 1px solid rgba(130,200,255,.6); border-radius: 7px 8px 4px 4px; background: linear-gradient(150deg, #3388b5, #17506e); box-shadow: 0 6px 14px rgba(0,0,0,.24), 0 0 16px rgba(130,200,255,.1); }
+.newton-bus-symbol::before { position: absolute; top: 4px; right: 5px; left: 5px; height: 7px; border-radius: 3px; background: linear-gradient(90deg, #b9e5f4 47%, transparent 48% 52%, #b9e5f4 53%); opacity: .7; content: ""; }
+.newton-bus-symbol span { position: absolute; bottom: -4px; width: 8px; height: 8px; border: 2px solid #61747d; border-radius: 50%; background: #121a1f; }
+.newton-bus-symbol span:first-child { left: 5px; }
+.newton-bus-symbol span:last-child { right: 5px; }
+
+.newton-passenger-symbol { position: relative; display: block; width: 38px; height: 38px; }
+.newton-passenger-symbol::before { position: absolute; top: 1px; left: 14px; width: 11px; height: 11px; border-radius: 50%; background: #d5a17f; content: ""; }
+.newton-passenger-symbol::after { position: absolute; top: 13px; left: 10px; width: 19px; height: 22px; border-radius: 8px 8px 5px 5px; background: linear-gradient(145deg, #e7ad4d, #9a621f); content: ""; }
+.newton-passenger-symbol span { position: absolute; z-index: 2; top: 15px; left: 18px; width: 2px; height: 21px; background: #f3cf62; opacity: 0; transform: rotate(-29deg); transform-origin: top; transition: opacity 350ms ease; }
+.newton-inertia-visual.phase-7 .newton-passenger-symbol span { opacity: 1; }
+
+.newton-motion-vector { position: relative; display: block; justify-self: start; height: 6px; border-radius: 99px; transition: width 160ms linear, opacity 350ms ease; }
+.newton-motion-vector::after { position: absolute; top: 50%; right: -1px; width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; content: ""; transform: translateY(-50%); }
+.newton-motion-vector.bus-velocity { background: linear-gradient(90deg, rgba(130,200,255,.24), #82c8ff); box-shadow: 0 0 12px rgba(130,200,255,.28); }
+.newton-motion-vector.bus-velocity::after { border-left: 12px solid #82c8ff; }
+.newton-motion-vector.passenger-motion { width: 88%; border-top: 2px dashed rgba(255,199,105,.42); background: transparent; opacity: .22; }
+.newton-motion-vector.passenger-motion::after { right: -2px; border-top-width: 6px; border-bottom-width: 6px; border-left: 11px solid #ffc769; }
+.newton-motion-vector.passenger-motion.active { opacity: 1; filter: drop-shadow(0 0 7px rgba(255,199,105,.35)); }
+
+.newton-inertia-force { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 9px; min-height: 45px; padding: 7px 8px; border: 1px solid rgba(255,151,105,.14); border-radius: 11px; background: rgba(255,117,76,.035); opacity: 0; transform: translateY(5px); transition: 420ms ease; }
+.newton-inertia-force.shown { opacity: 1; transform: translateY(0); }
+.newton-inertia-force > span { display: grid; place-items: center; width: 34px; height: 28px; border-radius: 9px; background: rgba(255,128,92,.12); color: #ff9c75; font-size: 16px; }
+.newton-inertia-force > div { display: grid; gap: 3px; }
+.newton-inertia-force small { color: #b77c69; font-size: 5px; font-weight: 950; letter-spacing: .08em; }
+.newton-inertia-force b { color: #e9d7d0; font-size: 7px; }
+.newton-inertia-force > strong { color: #ffae87; font-family: Georgia, serif; font-size: 17px; font-weight: 500; }
+.newton-inertia-force > strong small { font-family: Arial, sans-serif; font-size: 6px; }
+
+.newton-seatbelt-card { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 9px; max-height: 0; padding: 0 8px; overflow: hidden; border: 1px solid transparent; border-radius: 11px; opacity: 0; transition: max-height 520ms ease, padding 520ms ease, opacity 420ms ease, border-color 420ms ease; }
+.newton-seatbelt-card.shown { max-height: 58px; padding: 8px; border-color: rgba(243,207,98,.2); background: rgba(243,207,98,.055); opacity: 1; }
+.newton-seatbelt-card > i { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(243,207,98,.32); border-radius: 9px; color: #f3cf62; font-size: 18px; font-style: normal; }
+.newton-seatbelt-card > div { display: grid; gap: 3px; }
+.newton-seatbelt-card small { color: #c1a94f; font-size: 5px; font-weight: 950; letter-spacing: .1em; }
+.newton-seatbelt-card b { color: #f4edcf; font-size: 7px; }
+.newton-seatbelt-card > span { padding: 5px 7px; border-radius: 99px; background: rgba(243,207,98,.12); color: #f3cf62; font-size: 5px; font-weight: 950; letter-spacing: .08em; }
+
 .newton-narrated-net {
   display: grid;
   grid-template-columns: auto auto 1fr;
@@ -39164,6 +39233,7 @@ footer > a {
   .newton-narrated-header strong { font-size: 15px; }
   .newton-narrated-header small { text-align: right; }
   .newton-narrated-vector-card { top: 67px; width: min(360px, 56%); }
+  .newton-inertia-dashboard { top: 66px; width: min(410px, 58%); }
   .newton-narrated-step-rail { bottom: 64px; }
   .newton-narrated-controls { grid-template-columns: auto 1fr; gap: 8px; padding: 7px 8px; }
   .newton-narrated-play { min-width: 190px; }
@@ -39185,6 +39255,14 @@ footer > a {
   .newton-narrated-hud { top: 8px; left: 8px; padding: 7px 8px; }
   .newton-narrated-hud b { font-size: 9px; }
   .newton-narrated-vector-card { top: 62px; right: 8px; width: calc(100% - 16px); padding: 9px 10px; }
+  .newton-inertia-dashboard { top: 61px; right: 8px; width: calc(100% - 16px); padding: 7px; }
+  .newton-inertia-speed { grid-template-columns: 58px 1fr; min-height: 58px; padding: 2px 5px 5px; }
+  .newton-inertia-speed > div { width: 54px; height: 54px; }
+  .newton-inertia-speed strong { font-size: 18px; }
+  .newton-inertia-motion article { grid-template-columns: 34px minmax(90px, .8fr) 1fr; min-height: 41px; padding: 4px 6px; }
+  .newton-inertia-force { min-height: 36px; padding: 4px 6px; }
+  .newton-inertia-force > div b { display: none; }
+  .newton-seatbelt-card > span { display: none; }
   .newton-narrated-vector-labels small { display: none; }
   .newton-narrated-vector-labels { grid-template-columns: 1fr 1fr; }
   .newton-narrated-vector-axis { height: 42px; margin: 3px 0; }

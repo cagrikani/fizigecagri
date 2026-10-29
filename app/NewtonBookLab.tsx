@@ -725,6 +725,7 @@ type SceneProps = {
   canTurnPrevious: boolean;
   canTurnNext: boolean;
   presentationMode?: boolean;
+  presentationPhase?: number;
 };
 
 function NewtonHologramScene({
@@ -738,6 +739,7 @@ function NewtonHologramScene({
   canTurnPrevious,
   canTurnNext,
   presentationMode = false,
+  presentationPhase = 0,
 }: SceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const parameterRef = useRef(parameters);
@@ -745,12 +747,14 @@ function NewtonHologramScene({
   const runningRef = useRef(running);
   const runRef = useRef(onRun);
   const turnRef = useRef(onTurn);
+  const presentationPhaseRef = useRef(presentationPhase);
 
   useEffect(() => { parameterRef.current = parameters; }, [parameters]);
   useEffect(() => { progressRef.current = progress; }, [progress]);
   useEffect(() => { runningRef.current = running; }, [running]);
   useEffect(() => { runRef.current = onRun; }, [onRun]);
   useEffect(() => { turnRef.current = onTurn; }, [onTurn]);
+  useEffect(() => { presentationPhaseRef.current = presentationPhase; }, [presentationPhase]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -995,6 +999,8 @@ function NewtonHologramScene({
         marker.position.x = markerX;
         leftArrow.position.set(markerX, 1.42, 0);
         rightArrow.position.set(markerX, 1.42, 0);
+        leftArrow.visible = !presentationMode || presentationPhaseRef.current >= 1;
+        rightArrow.visible = !presentationMode || presentationPhaseRef.current >= 1;
         leftArrow.setLength(0.72 + (primary / 140) * 1.45, 0.3, 0.17);
         rightArrow.setLength(0.72 + (secondary / 140) * 1.45, 0.3, 0.17);
       });
@@ -1007,6 +1013,13 @@ function NewtonHologramScene({
       const passenger = addPerson(bus, 0.08, 0.01, "#e8a44b", 1);
       passenger.scale.setScalar(0.64);
       passenger.position.y = 0.32;
+      const seatBelt = addCylinderBetween(
+        passenger,
+        new THREE.Vector3(-0.12, 1.02, 0.14),
+        new THREE.Vector3(0.13, 0.5, 0.14),
+        0.022,
+        new THREE.MeshPhysicalMaterial({ color: "#f3cf62", emissive: "#c8901e", emissiveIntensity: 0.42, roughness: 0.46 }),
+      );
       const track = roundedMesh(6.3, 0.1, 1.95, 0.04, new THREE.MeshStandardMaterial({ color: "#303d44", roughness: 0.88 }));
       track.position.set(1.55, 0.15, 0);
       stage.add(track);
@@ -1016,12 +1029,15 @@ function NewtonHologramScene({
         stage.add(lane);
       });
       animated.push((value) => {
-        const amount = easeInOut(value);
-        bus.position.x = -0.5 + 1.8 * amount;
+        const travel = easeInOut(clamp(value / 0.62, 0, 1));
+        const braking = easeInOut(clamp((value - 0.54) / 0.46, 0, 1));
+        bus.position.x = -0.7 + 2.15 * travel;
         const inertia = parameterRef.current.primary / Math.max(parameterRef.current.secondary, 0.5);
-        passenger.position.x = 0.08 + clamp(inertia / 22, 0.08, 0.42) * Math.pow(amount, 2);
-        passenger.rotation.z = -0.12 + clamp(inertia / 18, 0.04, 0.38) * amount;
-        wheels.forEach((wheel) => { wheel.rotation.z = -amount * 10; });
+        seatBelt.visible = !presentationMode || presentationPhaseRef.current >= 7;
+        const restraint = seatBelt.visible ? 0.62 : 1;
+        passenger.position.x = 0.08 + clamp(inertia / 22, 0.08, 0.42) * braking * restraint;
+        passenger.rotation.z = -0.12 + clamp(inertia / 18, 0.04, 0.38) * braking * restraint;
+        wheels.forEach((wheel) => { wheel.rotation.z = -travel * 12; });
       });
     }
 
@@ -1585,6 +1601,180 @@ function ResultantNarratedLesson({
   );
 }
 
+const INERTIA_NARRATION_DURATION = 34.68;
+const INERTIA_NARRATION_SEGMENTS = [
+  { end: 5.48, kicker: "NEWTON’UN 1. YASASI", caption: "Cisimler hareket durumlarını korumaya eğilimlidir." },
+  { end: 7.72, kicker: "EYLEMSİZLİK", caption: "Bu hareket durumunu koruma eğilimine eylemsizlik denir." },
+  { end: 13.84, kicker: "HAREKET DURUMU", caption: "Duran cisim durmak, hareket eden cisim sabit hızla ilerlemek ister." },
+  { end: 21.18, kicker: "FREN ANI", caption: "Otobüs yavaşlarken yolcunun vücudu önceki hareketini sürdürür." },
+  { end: 23.84, kicker: "YOLCUNUN HAREKETİ", caption: "Bu nedenle yolcu otobüse göre öne doğru yönelir." },
+  { end: 26.84, kicker: "DENEY DEĞİŞKENLERİ", caption: "İlk hızı ve fren süresini ayrı ayrı değiştirebilirsin." },
+  { end: 30.8, kicker: "KISA FREN SÜRESİ", caption: "Daha kısa fren süresinde yolcunun öne yönelmesi daha belirgindir." },
+  { end: INERTIA_NARRATION_DURATION, kicker: "GÜVENLİK BAĞLANTISI", caption: "Emniyet kemeri yolcuyu güvenli biçimde durdurur." },
+] as const;
+
+function getInertiaNarrationPhase(time: number) {
+  const index = INERTIA_NARRATION_SEGMENTS.findIndex((segment) => time < segment.end);
+  return index === -1 ? INERTIA_NARRATION_SEGMENTS.length - 1 : index;
+}
+
+function InertiaNarratedLesson({
+  onComplete,
+  onTimeChange,
+}: {
+  onComplete: () => void;
+  onTimeChange: (time: number, duration: number) => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const animationRef = useRef(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(INERTIA_NARRATION_DURATION);
+  const [playing, setPlaying] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    const update = () => {
+      if (audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime);
+        onTimeChange(audioRef.current.currentTime, audioRef.current.duration || INERTIA_NARRATION_DURATION);
+      }
+      animationRef.current = requestAnimationFrame(update);
+    };
+    animationRef.current = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [onTimeChange, playing]);
+
+  const phase = getInertiaNarrationPhase(currentTime);
+  const segment = INERTIA_NARRATION_SEGMENTS[phase] ?? INERTIA_NARRATION_SEGMENTS.at(-1)!;
+  const progress = clamp(currentTime / Math.max(duration, 0.1), 0, 1);
+  const brakingProgress = clamp((currentTime - 13.84) / (21.18 - 13.84), 0, 1);
+  const speed = phase < 3 ? 8 : phase === 3 ? 8 * (1 - brakingProgress) : 0;
+  const braking = phase >= 3;
+  const beltVisible = phase >= 7;
+
+  const togglePlayback = async () => {
+    const audio = audioRef.current;
+    if (!audio || audioError) return;
+    if (audio.ended || currentTime >= duration - 0.05) {
+      audio.currentTime = 0;
+      setCurrentTime(0);
+      setFinished(false);
+    }
+    if (audio.paused) await audio.play();
+    else audio.pause();
+  };
+
+  const restart = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    setCurrentTime(0);
+    setFinished(false);
+    await audio.play();
+  };
+
+  return (
+    <section className="newton-narrated-lesson newton-inertia-lesson" aria-label="Eylemsizlik sesli anlatımı">
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        src="./audio/02-eylemsizlik.wav"
+        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || INERTIA_NARRATION_DURATION)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setFinished(true);
+          setCurrentTime(duration);
+          onTimeChange(duration, duration);
+        }}
+        onError={() => setAudioError(true)}
+      />
+
+      <header className="newton-narrated-header">
+        <span><i className={playing ? "live" : ""} /> SESLİ KEŞİF · 02</span>
+        <strong>Eylemsizliği hareketin içinde izle</strong>
+        <small>{finished ? "Anlatım tamamlandı" : "Otobüsü ve yolcuyu birlikte takip et"}</small>
+      </header>
+
+      <div className={`newton-narrated-visual newton-inertia-visual phase-${phase}`}>
+        <div className="newton-narrated-hud">
+          <span>SESLE EŞZAMANLI SAHNE · {String(phase + 1).padStart(2, "0")}/08</span>
+          <b>{segment.kicker}</b>
+        </div>
+
+        <div className="newton-inertia-dashboard">
+          <div className="newton-inertia-speed" style={{ "--speed-level": `${(speed / 8) * 100}%` } as React.CSSProperties}>
+            <div><i /><strong>{speed.toFixed(1)}</strong><small>m/s</small></div>
+            <span>{braking ? speed > 0.15 ? "FRENLİYOR" : "OTOBÜS DURDU" : "SABİT HIZ"}</span>
+          </div>
+
+          <div className="newton-inertia-motion">
+            <article>
+              <i className="newton-bus-symbol"><span /><span /></i>
+              <div><small>OTOBÜS</small><b>{braking ? "Hızı azalıyor" : "Sağa doğru ilerliyor"}</b></div>
+              <span className={`newton-motion-vector bus-velocity ${braking ? "braking" : ""}`} style={{ width: `${Math.max(12, (speed / 8) * 100)}%` }}><i /></span>
+            </article>
+            <article>
+              <i className="newton-passenger-symbol"><span /></i>
+              <div><small>YOLCU</small><b>{braking ? "İleri hareketini koruyor" : "Otobüsle aynı hızda"}</b></div>
+              <span className={`newton-motion-vector passenger-motion ${braking ? "active" : ""}`}><i /></span>
+            </article>
+          </div>
+
+          <div className={`newton-inertia-force ${braking ? "shown" : ""}`}>
+            <span><i />←</span>
+            <div><small>OTOBÜSE ETKİ EDEN NET KUVVET</small><b>Hareket yönüne zıt · fren kuvveti</b></div>
+            <strong>{(8 / (phase >= 6 ? 0.5 : 1.5)).toFixed(1)} <small>m/s²</small></strong>
+          </div>
+
+          <div className={`newton-seatbelt-card ${beltVisible ? "shown" : ""}`}>
+            <i>╱</i>
+            <div><small>EMNİYET KEMERİ</small><b>Yolcuya durdurucu kuvvet uygular.</b></div>
+            <span>GÜVENLİ DURUŞ</span>
+          </div>
+        </div>
+
+        <div className="newton-narrated-step-rail" aria-hidden="true">
+          {INERTIA_NARRATION_SEGMENTS.map((item, index) => (
+            <i key={item.end} className={index < phase ? "complete" : index === phase ? "active" : ""} />
+          ))}
+        </div>
+
+        <div className="newton-narrated-caption" aria-live="polite">
+          <span>0{phase + 1}</span>
+          <p><small>{segment.kicker}</small>{segment.caption}</p>
+        </div>
+      </div>
+
+      <div className="newton-narrated-controls">
+        <button type="button" className="newton-narrated-play" onClick={togglePlayback} disabled={audioError}>
+          <i>{playing ? "Ⅱ" : "▶"}</i>
+          <span><small>{playing ? "ANLATIM OYNUYOR" : finished ? "TEKRAR DİNLE" : currentTime > 0 ? "DEVAM ET" : "ANLATIMI BAŞLAT"}</small><b>{playing ? "Fren anını ve yolcuyu izle" : "Sesli keşfi çalıştır"}</b></span>
+        </button>
+        <div className="newton-narrated-progress" aria-label={`Sesli anlatım yüzde ${Math.round(progress * 100)} tamamlandı`}>
+          <div><i style={{ width: `${progress * 100}%` }} /></div>
+          <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
+          <span>{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, "0")}</span>
+        </div>
+        {currentTime > 0 && !finished && <button type="button" className="newton-narrated-restart" onClick={restart}>↺ Baştan</button>}
+      </div>
+
+      {audioError && <p className="newton-narrated-error">Ses dosyası yüklenemedi. İnternet bağlantısını kontrol edip yeniden deneyin.</p>}
+      {finished && (
+        <div className="newton-narrated-finish">
+          <span>✓ EYLEMSİZLİK ANLATIMI TAMAMLANDI</span>
+          <strong>Şimdi frenlemeyi sen tasarla.</strong>
+          <p>İlk hızı ve fren süresini değiştir; yolcunun öne hareketini grafikle karşılaştır.</p>
+          <button type="button" onClick={onComplete}>Deneye geç <i>→</i></button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function NewtonBookLab({
   onBack,
   context = "free",
@@ -1610,19 +1800,37 @@ export default function NewtonBookLab({
   const [introOpen, setIntroOpen] = useState(true);
   const [resultantNarrationDone, setResultantNarrationDone] = useState(false);
   const [resultantNarrationTime, setResultantNarrationTime] = useState(0);
+  const [inertiaNarrationDone, setInertiaNarrationDone] = useState(false);
+  const [inertiaNarrationTime, setInertiaNarrationTime] = useState(0);
   const labRef = useRef<HTMLElement>(null);
   const experiment = EXPERIMENTS[chapter];
   const values = parameters[experiment.id];
-  const lessonLocked = experiment.id === "resultant" && !resultantNarrationDone;
-  const narrationPhase = getResultantNarrationPhase(resultantNarrationTime);
-  const sceneValues = lessonLocked
-    ? { primary: narrationPhase >= 4 ? 140 : 100, secondary: narrationPhase >= 4 ? 80 : 100 }
-    : values;
-  const sceneProgress = lessonLocked
+  const resultantLessonLocked = experiment.id === "resultant" && !resultantNarrationDone;
+  const inertiaLessonLocked = experiment.id === "inertia" && !inertiaNarrationDone;
+  const lessonLocked = resultantLessonLocked || inertiaLessonLocked;
+  const resultantNarrationPhase = getResultantNarrationPhase(resultantNarrationTime);
+  const inertiaNarrationPhase = getInertiaNarrationPhase(inertiaNarrationTime);
+  const sceneValues = resultantLessonLocked
+    ? { primary: resultantNarrationPhase >= 4 ? 140 : 100, secondary: resultantNarrationPhase >= 4 ? 80 : 100 }
+    : inertiaLessonLocked
+      ? { primary: 8, secondary: inertiaNarrationPhase >= 6 ? 0.5 : 1.5 }
+      : values;
+  const inertiaSceneProgress = inertiaNarrationTime < 7.72
+    ? 0
+    : inertiaNarrationTime < 13.84
+      ? clamp((inertiaNarrationTime - 7.72) / (13.84 - 7.72), 0, 1) * 0.54
+      : 0.54 + clamp((inertiaNarrationTime - 13.84) / (21.18 - 13.84), 0, 1) * 0.46;
+  const sceneProgress = resultantLessonLocked
     ? clamp((resultantNarrationTime - 17.24) / (22.54 - 17.24), 0, 1)
-    : progress;
+    : inertiaLessonLocked
+      ? inertiaSceneProgress
+      : progress;
+  const presentationPhase = resultantLessonLocked ? resultantNarrationPhase : inertiaNarrationPhase;
   const handleNarrationTime = useCallback((time: number) => {
     setResultantNarrationTime(time);
+  }, []);
+  const handleInertiaNarrationTime = useCallback((time: number) => {
+    setInertiaNarrationTime(time);
   }, []);
   const metrics = useMemo(
     () => getMetrics(experiment, values.primary, values.secondary),
@@ -1742,16 +1950,23 @@ export default function NewtonBookLab({
             canTurnPrevious={chapter > 0}
             canTurnNext={chapter < EXPERIMENTS.length - 1}
             presentationMode={lessonLocked && !introOpen}
+            presentationPhase={presentationPhase}
           />
           <div className="newton-scene-help">
             <span><i>↠</i> Işıklı kenara dokun ve sayfayı çevir</span>
             <span><i>↻</i> Sahneyi sürükleyerek döndür</span>
             <span><i>＋</i> Yakınlaşmak için kaydır</span>
           </div>
-          {lessonLocked && !introOpen && (
+          {resultantLessonLocked && !introOpen && (
             <ResultantNarratedLesson
               onComplete={() => setResultantNarrationDone(true)}
               onTimeChange={handleNarrationTime}
+            />
+          )}
+          {inertiaLessonLocked && !introOpen && (
+            <InertiaNarratedLesson
+              onComplete={() => setInertiaNarrationDone(true)}
+              onTimeChange={handleInertiaNarrationTime}
             />
           )}
           {introOpen && (
@@ -1775,7 +1990,7 @@ export default function NewtonBookLab({
           {lessonLocked && (
             <div className="newton-control-lock">
               <i>♫</i>
-              <span><small>ÖNCE İZLE VE DİNLE</small><b>Sesli anlatım tamamlanınca deney açılır.</b></span>
+              <span><small>ÖNCE İZLE VE DİNLE</small><b>{experiment.shortTitle} anlatımı tamamlanınca deney açılır.</b></span>
             </div>
           )}
           <div className="newton-page-heading">
