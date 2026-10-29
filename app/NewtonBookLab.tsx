@@ -984,7 +984,7 @@ function NewtonHologramScene({
       addArrow(stage, new THREE.Vector3(1.85, 1.55, 0), new THREE.Vector3(1, 0, 0), 1.45, "#ff88b1");
       animated.push((value) => {
         const net = parameterRef.current.primary - parameterRef.current.secondary;
-        marker.position.x = 1.55 + clamp(net / 48, -2.1, 2.1) * easeInOut(value);
+        marker.position.x = 1.55 - clamp(net / 48, -2.1, 2.1) * easeInOut(value);
       });
     }
 
@@ -1412,6 +1412,208 @@ function LiveGraph({
   );
 }
 
+const RESULTANT_NARRATION_DURATION = 36.52;
+const RESULTANT_NARRATION_SEGMENTS = [
+  { end: 5.4, kicker: "BİRDEN FAZLA KUVVET", caption: "Bir cisme aynı anda birden fazla kuvvet etki edebilir." },
+  { end: 10.6, kicker: "TOPLAM ETKİ", caption: "Kuvvetlerin toplam etkisine bileşke kuvvet denir." },
+  { end: 16.8, kicker: "ZIT YÖNLER", caption: "Halat çekmede iki takım zıt yönlerde kuvvet uygular." },
+  { end: 22.9, kicker: "DENGE", caption: "Kuvvetler eşitse bileşke sıfırdır; hareket durumu değişmez." },
+  { end: 29.1, kicker: "BÜYÜK KUVVETİN YÖNÜ", caption: "Kuvvetlerden biri büyürse halat o kuvvetin yönünde hareket eder." },
+  { end: RESULTANT_NARRATION_DURATION, kicker: "SIRA SENDE", caption: "Kuvvetleri değiştir, önce tahmin et, sonra deneyle kanıtla." },
+] as const;
+
+function NarratedPerson({ x, team }: { x: number; team: "left" | "right" }) {
+  const facing = team === "left" ? 1 : -1;
+  const color = team === "left" ? "#59dec9" : "#ff7fa9";
+  return (
+    <g className="newton-narrated-person" transform={`translate(${x} 0) scale(${facing} 1)`}>
+      <ellipse cx="0" cy="451" rx="38" ry="9" fill="rgba(1,11,18,.35)" />
+      <path d="M-10 347 C-22 368 -20 397 -30 438" stroke="#172936" strokeWidth="19" strokeLinecap="round" />
+      <path d="M10 347 C22 368 20 397 31 438" stroke="#172936" strokeWidth="19" strokeLinecap="round" />
+      <path d="M-36 438 h36" stroke="#101b23" strokeWidth="15" strokeLinecap="round" />
+      <path d="M16 438 h36" stroke="#101b23" strokeWidth="15" strokeLinecap="round" />
+      <path d="M-27 276 Q0 258 27 276 L22 354 Q0 367 -22 354Z" fill={color} />
+      <path d="M21 290 Q49 304 66 326" stroke={color} strokeWidth="17" strokeLinecap="round" />
+      <path d="M66 326 L95 331" stroke="#d9a17d" strokeWidth="13" strokeLinecap="round" />
+      <circle cx="0" cy="244" r="27" fill="#d9a17d" />
+      <path d="M-24 238 Q0 207 25 238 Q10 224 -22 247Z" fill="#2e261f" />
+      <path d="M-28 280 Q-48 307 -52 337" stroke={color} strokeWidth="16" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function ResultantNarratedLesson({ onComplete }: { onComplete: () => void }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const animationRef = useRef(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(RESULTANT_NARRATION_DURATION);
+  const [playing, setPlaying] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    const update = () => {
+      if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+      animationRef.current = requestAnimationFrame(update);
+    };
+    animationRef.current = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(animationRef.current);
+  }, [playing]);
+
+  const phaseIndex = RESULTANT_NARRATION_SEGMENTS.findIndex((segment) => currentTime < segment.end);
+  const phase = phaseIndex === -1 ? RESULTANT_NARRATION_SEGMENTS.length - 1 : phaseIndex;
+  const segment = RESULTANT_NARRATION_SEGMENTS[phase] ?? RESULTANT_NARRATION_SEGMENTS.at(-1)!;
+  const progress = clamp(currentTime / Math.max(duration, 0.1), 0, 1);
+  const unbalanced = phase >= 4;
+  const leftForce = unbalanced ? 140 : 100;
+  const rightForce = unbalanced ? 80 : 100;
+  const markerShift = unbalanced ? -76 : 0;
+
+  const togglePlayback = async () => {
+    const audio = audioRef.current;
+    if (!audio || audioError) return;
+    if (audio.ended || currentTime >= duration - 0.05) {
+      audio.currentTime = 0;
+      setCurrentTime(0);
+      setFinished(false);
+    }
+    if (audio.paused) {
+      await audio.play();
+    } else {
+      audio.pause();
+    }
+  };
+
+  const restart = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    setCurrentTime(0);
+    setFinished(false);
+    await audio.play();
+  };
+
+  return (
+    <section className="newton-narrated-lesson" aria-label="Bileşke kuvvet sesli anlatımı">
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        src="./audio/01-bileske-kuvvet.wav"
+        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || RESULTANT_NARRATION_DURATION)}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => {
+          setPlaying(false);
+          setFinished(true);
+          setCurrentTime(duration);
+        }}
+        onError={() => setAudioError(true)}
+      />
+
+      <header className="newton-narrated-header">
+        <span><i className={playing ? "live" : ""} /> SESLİ KEŞİF · 01</span>
+        <strong>Bileşke kuvveti önce izle</strong>
+        <small>{finished ? "Anlatım tamamlandı" : "Deneye başlamadan önce anlatımı tamamla"}</small>
+      </header>
+
+      <div className={`newton-narrated-visual phase-${phase}`}>
+        <div className="newton-narrated-hud">
+          <span>{segment.kicker}</span>
+          <b>{phase < 1 ? "Bir cisim · birden çok kuvvet" : phase < 3 ? "ΣF = Fsol − Fsağ" : unbalanced ? "ΣF = 60 N · sola" : "ΣF = 0 N · denge"}</b>
+        </div>
+        <svg viewBox="0 0 1000 540" role="img" aria-label="İki takımın bir halatı zıt yönlerde çektiği bileşke kuvvet sahnesi">
+          <defs>
+            <linearGradient id="narrated-floor" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#173342" />
+              <stop offset="1" stopColor="#07131d" />
+            </linearGradient>
+            <linearGradient id="narrated-rope" x1="0" x2="1">
+              <stop offset="0" stopColor="#a98450" />
+              <stop offset="0.5" stopColor="#e1c28a" />
+              <stop offset="1" stopColor="#8e6b3f" />
+            </linearGradient>
+            <filter id="narrated-glow">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+            <marker id="narrated-left-arrow" markerWidth="8" markerHeight="8" refX="3" refY="4" orient="auto">
+              <path d="M8 0 0 4l8 4Z" fill="#59dec9" />
+            </marker>
+            <marker id="narrated-right-arrow" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+              <path d="M0 0 8 4 0 8Z" fill="#ff7fa9" />
+            </marker>
+          </defs>
+          <rect width="1000" height="540" fill="#081722" />
+          <path d="M0 0h1000v318H0z" fill="#102a38" />
+          {[120, 260, 400, 540, 680, 820].map((x) => <path key={x} d={`M${x} 0v318`} stroke="rgba(115,207,218,.055)" />)}
+          <path d="M0 318h1000v222H0z" fill="url(#narrated-floor)" />
+          <path d="M0 407h1000M100 365h800" stroke="rgba(111,196,209,.09)" />
+          <ellipse cx="500" cy="458" rx="410" ry="34" fill="rgba(0,0,0,.22)" />
+
+          <g className="newton-narrated-team left-team">
+            <NarratedPerson x={128} team="left" />
+            <NarratedPerson x={202} team="left" />
+            <NarratedPerson x={276} team="left" />
+          </g>
+          <g className="newton-narrated-team right-team">
+            <NarratedPerson x={872} team="right" />
+            <NarratedPerson x={798} team="right" />
+            <NarratedPerson x={724} team="right" />
+          </g>
+
+          <g className="newton-narrated-rope" style={{ transform: `translateX(${markerShift}px)` }}>
+            <path d="M335 331 C435 325 565 337 665 331" fill="none" stroke="url(#narrated-rope)" strokeWidth="13" strokeLinecap="round" />
+            <circle cx="500" cy="331" r="20" fill="#f7f1df" stroke="#152a36" strokeWidth="8" />
+            <path d="M500 311v40" stroke="#67e8d0" strokeWidth="5" filter="url(#narrated-glow)" />
+          </g>
+
+          <g className={`newton-narrated-forces ${phase >= 1 ? "shown" : ""}`}>
+            <path d="M480 214H265" stroke="#59dec9" strokeWidth={unbalanced ? 15 : 11} markerEnd="url(#narrated-left-arrow)" />
+            <path d="M520 214H735" stroke="#ff7fa9" strokeWidth={unbalanced ? 8 : 11} markerEnd="url(#narrated-right-arrow)" />
+            <g transform="translate(292 156)"><rect width="126" height="42" rx="21" fill="#102a36" stroke="#59dec9" /><text x="63" y="28" textAnchor="middle" fill="#cffff6">{leftForce} N</text></g>
+            <g transform="translate(582 156)"><rect width="126" height="42" rx="21" fill="#102a36" stroke="#ff7fa9" /><text x="63" y="28" textAnchor="middle" fill="#ffe0ea">{rightForce} N</text></g>
+          </g>
+
+          <g className={`newton-narrated-result ${phase >= 3 ? "shown" : ""}`} transform="translate(500 95)">
+            <circle r="37" fill={unbalanced ? "#59dec9" : "#152f3c"} stroke="#e8fafb" strokeOpacity=".3" />
+            <text y="8" textAnchor="middle" fill={unbalanced ? "#071b23" : "#e8fafb"}>{unbalanced ? "60 N" : "0 N"}</text>
+            <text y="64" textAnchor="middle" fill="#9abac5">{unbalanced ? "SOLA HAREKET" : "DENGE"}</text>
+          </g>
+        </svg>
+
+        <div className="newton-narrated-caption" aria-live="polite">
+          <span>{String(phase + 1).padStart(2, "0")}</span>
+          <p>{segment.caption}</p>
+        </div>
+      </div>
+
+      <div className="newton-narrated-controls">
+        <button type="button" className="newton-narrated-play" onClick={togglePlayback} disabled={audioError}>
+          <i>{playing ? "Ⅱ" : currentTime > 0 && !finished ? "▶" : "▶"}</i>
+          <span><small>{playing ? "ANLATIM OYNUYOR" : finished ? "TEKRAR DİNLE" : currentTime > 0 ? "DEVAM ET" : "ANLATIMI BAŞLAT"}</small><b>{playing ? "Dinlerken sahneyi izle" : "Sesli keşfi çalıştır"}</b></span>
+        </button>
+        <div className="newton-narrated-progress" aria-label={`Sesli anlatım yüzde ${Math.round(progress * 100)} tamamlandı`}>
+          <div><i style={{ width: `${progress * 100}%` }} /></div>
+          <span>{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, "0")}</span>
+          <span>{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, "0")}</span>
+        </div>
+        {currentTime > 0 && !finished && <button type="button" className="newton-narrated-restart" onClick={restart}>↺ Baştan</button>}
+      </div>
+
+      {audioError && <p className="newton-narrated-error">Ses dosyası yüklenemedi. İnternet bağlantısını kontrol edip yeniden deneyin.</p>}
+      {finished && (
+        <div className="newton-narrated-finish">
+          <span>✓ ANLATIM TAMAMLANDI</span>
+          <strong>Şimdi kuvvetleri sen değiştir.</strong>
+          <p>Önce tahminini seç, ardından deneyi çalıştır ve bileşkeyi gözlemle.</p>
+          <button type="button" onClick={onComplete}>Deneye geç <i>→</i></button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function NewtonBookLab({
   onBack,
   context = "free",
@@ -1435,9 +1637,11 @@ export default function NewtonBookLab({
   });
   const [quality, setQuality] = useState<Quality>("high");
   const [introOpen, setIntroOpen] = useState(true);
+  const [resultantNarrationDone, setResultantNarrationDone] = useState(false);
   const labRef = useRef<HTMLElement>(null);
   const experiment = EXPERIMENTS[chapter];
   const values = parameters[experiment.id];
+  const lessonLocked = experiment.id === "resultant" && !resultantNarrationDone;
   const metrics = useMemo(
     () => getMetrics(experiment, values.primary, values.secondary),
     [experiment, values.primary, values.secondary],
@@ -1561,6 +1765,9 @@ export default function NewtonBookLab({
             <span><i>↻</i> Sahneyi sürükleyerek döndür</span>
             <span><i>＋</i> Yakınlaşmak için kaydır</span>
           </div>
+          {lessonLocked && !introOpen && (
+            <ResultantNarratedLesson onComplete={() => setResultantNarrationDone(true)} />
+          )}
           {introOpen && (
             <div className="newton-intro-overlay">
               <div className="newton-intro-orbit" aria-hidden="true"><i /><i /><i /></div>
@@ -1578,7 +1785,13 @@ export default function NewtonBookLab({
           )}
         </div>
 
-        <aside className="newton-control-panel" key={`panel-${experiment.id}`}>
+        <aside className={`newton-control-panel ${lessonLocked ? "is-lesson-locked" : ""}`} key={`panel-${experiment.id}`}>
+          {lessonLocked && (
+            <div className="newton-control-lock">
+              <i>♫</i>
+              <span><small>ÖNCE İZLE VE DİNLE</small><b>Sesli anlatım tamamlanınca deney açılır.</b></span>
+            </div>
+          )}
           <div className="newton-page-heading">
             <span>{experiment.number} · {experiment.law}</span>
             <h2>{experiment.title}</h2>
@@ -1600,6 +1813,7 @@ export default function NewtonBookLab({
                   key={option}
                   className={prediction[experiment.id] === index ? "selected" : ""}
                   onClick={() => setPrediction((current) => ({ ...current, [experiment.id]: index }))}
+                  disabled={lessonLocked}
                 >{option}</button>
               ))}
             </div>
@@ -1614,6 +1828,7 @@ export default function NewtonBookLab({
                 max={experiment.primaryMax}
                 step={experiment.primaryStep}
                 value={values.primary}
+                disabled={lessonLocked}
                 onChange={(event) => updateParameter("primary", Number(event.target.value))}
               />
             </label>
@@ -1625,12 +1840,13 @@ export default function NewtonBookLab({
                 max={experiment.secondaryMax}
                 step={experiment.secondaryStep}
                 value={values.secondary}
+                disabled={lessonLocked}
                 onChange={(event) => updateParameter("secondary", Number(event.target.value))}
               />
             </label>
           </div>
 
-          <button type="button" className="newton-run-button" onClick={runExperiment} disabled={running}>
+          <button type="button" className="newton-run-button" onClick={runExperiment} disabled={running || lessonLocked}>
             <i>{running ? "•••" : "▶"}</i>
             <span><small>{running ? "ÖLÇÜM SÜRÜYOR" : "DENEYİ ÇALIŞTIR"}</small><b>{running ? `%${Math.round(progress * 100)}` : "Tahminimi sınayalım"}</b></span>
           </button>
