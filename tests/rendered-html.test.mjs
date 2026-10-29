@@ -213,6 +213,13 @@ test("Serbest Kuvvet ve Hareket alanı yedi deneyli 3B Newton kitabını açar",
   assert.match(page, /ResultantNarratedLesson/);
   assert.match(page, /01-bileske-kuvvet\.wav/);
   assert.match(page, /RESULTANT_NARRATION_SEGMENTS/);
+  assert.match(page, /end: 3\.72/);
+  assert.match(page, /end: 31\.46/);
+  assert.match(page, /getResultantNarrationPhase/);
+  assert.match(page, /newton-narrated-vector-card/);
+  assert.match(page, /leftArrow\.setLength/);
+  assert.match(page, /rightArrow\.setLength/);
+  assert.match(page, /presentationMode/);
   assert.match(page, /ÖNCE İZLE VE DİNLE/);
   assert.match(page, /Anlatım tamamlandı/);
   await access(new URL("public/audio/01-bileske-kuvvet.wav", projectRoot));
@@ -256,6 +263,9 @@ test("3B Newton kitabı kaliteli sahne, kontrol paneli ve responsive düzen içe
   assert.match(css, /\.newton-intro-overlay\s*\{/);
   assert.match(css, /\.newton-narrated-lesson\s*\{/);
   assert.match(css, /\.newton-narrated-visual\s*\{/);
+  assert.match(css, /\.newton-narrated-vector-card\s*\{/);
+  assert.match(css, /\.newton-narrated-vector-axis\s*\{/);
+  assert.match(css, /\.newton-narrated-step-rail\s*\{/);
   assert.match(css, /\.newton-control-panel\.is-lesson-locked/);
   assert.match(css, /\.newton-control-panel\s*\{/);
   assert.match(css, /\.newton-prediction\s*\{/);
