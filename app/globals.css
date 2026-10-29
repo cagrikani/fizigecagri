@@ -4280,6 +4280,83 @@ input:focus-visible {
   white-space: nowrap;
 }
 
+.module-choice-grid > .newton-mechanics-choice {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(300px, 1.1fr) auto;
+  min-height: 286px;
+  padding: 17px;
+  border-color: rgba(93, 218, 198, 0.24);
+  background:
+    radial-gradient(circle at 70% 20%, rgba(99, 226, 207, 0.13), transparent 34%),
+    linear-gradient(135deg, #071823, #102b39 68%, #122735);
+  box-shadow: 0 25px 58px rgba(7, 33, 44, 0.24);
+}
+
+.module-choice-grid > .newton-mechanics-choice:hover {
+  border-color: #66ddc8;
+  box-shadow: 0 30px 68px rgba(7, 33, 44, 0.32), 0 0 0 5px rgba(102, 221, 200, 0.07);
+}
+
+.newton-mechanics-choice .newton-mechanics-choice-visual {
+  width: 100%;
+  height: 250px;
+  border-radius: 16px;
+  background: #071722;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.28);
+}
+
+.newton-mechanics-choice-visual::after {
+  background:
+    linear-gradient(180deg, rgba(4,16,24,0.02), transparent 48%, rgba(4,16,24,0.52)),
+    linear-gradient(135deg, rgba(116, 237, 218, 0.1), transparent 42%);
+}
+
+.newton-choice-quality {
+  position: absolute;
+  z-index: 3;
+  top: 13px;
+  left: 13px;
+  padding: 7px 9px;
+  border: 1px solid rgba(139, 239, 224, 0.46);
+  border-radius: 999px;
+  background: rgba(5,20,29,0.76);
+  color: #8debdc;
+  font-size: 6px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+  backdrop-filter: blur(10px);
+}
+
+.newton-mechanics-choice .module-choice-copy small { color: #78dfcd; }
+.newton-mechanics-choice .module-choice-copy b {
+  max-width: 430px;
+  color: #f2fbfd;
+  font-family: Georgia, serif;
+  font-size: 34px;
+  font-weight: 500;
+  line-height: 1.02;
+}
+.newton-mechanics-choice .module-choice-copy em { max-width: 500px; color: #9bb7c1; font-size: 10px; }
+.module-choice-grid > .newton-mechanics-choice > strong { align-self: center; color: #79e4d2; }
+
+.newton-choice-laws {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.newton-choice-laws i {
+  padding: 6px 8px;
+  border: 1px solid rgba(128, 211, 201, 0.2);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.045);
+  color: #c2dce2;
+  font-size: 6px;
+  font-style: normal;
+  font-weight: 850;
+}
+
 .choice-grid-lines {
   position: absolute;
   inset: 0;
@@ -5659,6 +5736,13 @@ footer > a {
     grid-template-columns: 1fr;
   }
 
+  .module-choice-grid > .newton-mechanics-choice {
+    grid-column: auto;
+    grid-template-columns: minmax(270px, 0.8fr) 1fr;
+  }
+
+  .module-choice-grid > .newton-mechanics-choice > strong { grid-column: 2; justify-self: start; }
+
   .hero {
     grid-template-columns: 1fr;
     padding-top: 38px;
@@ -5720,6 +5804,21 @@ footer > a {
   .module-choice-grid > button > strong {
     grid-column: 2;
   }
+
+  .module-choice-grid > .newton-mechanics-choice {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .newton-mechanics-choice .newton-mechanics-choice-visual {
+    width: 100%;
+    height: 230px;
+  }
+
+  .newton-mechanics-choice .module-choice-copy { padding: 7px 5px 0; }
+  .newton-mechanics-choice .module-choice-copy b { font-size: 28px; }
+  .module-choice-grid > .newton-mechanics-choice > strong { grid-column: auto; padding: 0 5px 5px; }
 
   .choice-gate-one {
     left: 62px;
@@ -38431,6 +38530,12 @@ footer > a {
 }
 
 .newton-stage-card { position: relative; min-width: 0; }
+.newton-stage-card,
+.newton-control-panel { animation: newton-page-arrive 420ms cubic-bezier(0.2, 0.75, 0.25, 1); }
+@keyframes newton-page-arrive {
+  from { opacity: 0; transform: translateY(9px) scale(0.992); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 .newton-stage-toolbar {
   position: absolute;
   z-index: 6;
@@ -38512,6 +38617,40 @@ footer > a {
 .newton-intro-overlay > span { color: var(--newton-accent); font-size: 8px; font-weight: 950; letter-spacing: 0.2em; }
 .newton-intro-overlay h2 { margin: 12px 0 13px; color: #f3fbfd; font-family: Georgia, serif; font-size: clamp(48px, 6vw, 82px); font-weight: 500; line-height: 0.9; letter-spacing: -0.055em; }
 .newton-intro-overlay p { max-width: 520px; margin: 0 0 23px; color: #aac1ca; font-size: 11px; line-height: 1.6; }
+.newton-intro-laws {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 7px;
+  width: min(480px, 100%);
+  margin: -8px 0 19px;
+}
+.newton-intro-laws span {
+  display: grid;
+  grid-template-columns: 27px 1fr;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 7px 9px;
+  border: 1px solid rgba(157, 207, 222, 0.2);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.045);
+  color: #d5e9ee;
+  text-align: left;
+  backdrop-filter: blur(10px);
+}
+.newton-intro-laws i {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border: 1px solid var(--newton-accent);
+  border-radius: 50%;
+  color: var(--newton-accent);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 950;
+}
+.newton-intro-laws b { font-size: 7px; line-height: 1.35; }
 .newton-intro-overlay > button {
   display: flex;
   align-items: center;
@@ -38557,6 +38696,23 @@ footer > a {
 }
 .newton-page-heading h2 { margin: 6px 0 8px; color: #f1fafc; font-family: Georgia, serif; font-size: 28px; line-height: 1.05; }
 .newton-page-heading p { margin: 0; color: #8faab5; font-size: 9px; line-height: 1.55; }
+
+.newton-law-card {
+  display: grid;
+  grid-template-columns: minmax(128px, 0.72fr) 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, var(--newton-accent) 28%, transparent);
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--newton-accent) 10%, transparent), transparent),
+    rgba(255,255,255,0.028);
+}
+.newton-law-card > div { display: grid; gap: 5px; }
+.newton-law-card small { color: var(--newton-accent); font-size: 6px; font-weight: 950; letter-spacing: 0.12em; }
+.newton-law-card strong { color: #f3fbfd; font-family: Georgia, serif; font-size: 18px; font-weight: 600; white-space: nowrap; }
+.newton-law-card p { margin: 0; padding-left: 12px; border-left: 1px solid rgba(154, 203, 217, 0.17); color: #91adb7; font-size: 7px; line-height: 1.55; }
 
 .newton-prediction {
   display: grid;
@@ -38706,6 +38862,10 @@ footer > a {
   .newton-intro-overlay h2 { font-size: 48px; }
   .newton-intro-orbit { width: 68px; height: 68px; }
   .newton-prediction > div { grid-template-columns: 1fr; }
+  .newton-intro-laws { grid-template-columns: 1fr; max-width: 250px; }
+  .newton-intro-laws span { min-height: 36px; }
+  .newton-law-card { grid-template-columns: 1fr; }
+  .newton-law-card p { padding: 9px 0 0; border-top: 1px solid rgba(154, 203, 217, 0.17); border-left: 0; }
   .newton-book-footer { grid-template-columns: 1fr 1fr; }
   .newton-book-footer > div { display: none; }
 }

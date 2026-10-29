@@ -32,8 +32,8 @@ const EXPERIMENT_MODULES: ModuleCard[] = [
   {
     key: "mechanics",
     title: "Mekanik",
-    description: "Hareketten salınımlara, altı etkileşimli deney.",
-    detail: "6 deney açık",
+    description: "Gerçek düzeneklerden profesyonel 3B Newton kitabına, yedi etkileşimli çalışma.",
+    detail: "7 çalışma açık",
     visual: "./portal-mechanics.webp",
     available: true,
   },
@@ -233,7 +233,7 @@ function HomeView({
           </div>
           <div className="portal-hero-notes">
             <span>
-              <b>13</b>
+              <b>14</b>
               çalışan deney
             </span>
             <span>

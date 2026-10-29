@@ -37,13 +37,15 @@ type Experiment = {
   secondaryDefault: number;
   predictions: string[];
   accent: string;
+  equation: string;
+  principle: string;
 };
 
 const EXPERIMENTS: Experiment[] = [
   {
     id: "resultant",
     number: "01",
-    law: "KUVVETLERİN BİLEŞKESİ",
+    law: "HAZIRLIK · KUVVETLERİN BİLEŞKESİ",
     title: "Halat hangi yöne gider?",
     shortTitle: "Bileşke kuvvet",
     prompt: "İki takım aynı büyüklükte kuvvet uygularsa ne olur?",
@@ -62,11 +64,13 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 100,
     predictions: ["Sol takım", "Dengede kalır", "Sağ takım"],
     accent: "#67e8d0",
+    equation: "ΣF = F₁ − F₂",
+    principle: "Hareketi tek tek kuvvetler değil, kuvvetlerin bileşkesi belirler.",
   },
   {
     id: "inertia",
     number: "02",
-    law: "NEWTON’UN 1. YASASI",
+    law: "1. YASA · EYLEMSİZLİK",
     title: "Otobüs durur, yolcu neden ilerler?",
     shortTitle: "Eylemsizlik",
     prompt: "Fren süresi kısalınca yolcunun öne hareketi nasıl değişir?",
@@ -85,11 +89,13 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 1.5,
     predictions: ["Daha az ilerler", "Değişmez", "Daha çok ilerler"],
     accent: "#82c8ff",
+    equation: "ΣF = 0  →  v = sabit",
+    principle: "Net kuvvet sıfırsa cisim duruyorsa durur, hareket ediyorsa sabit hızla hareketini sürdürür.",
   },
   {
     id: "friction",
     number: "03",
-    law: "SÜRTÜNME KUVVETİ",
+    law: "1. YASA · NET KUVVET VE SÜRTÜNME",
     title: "Aynı disk, iki farklı yüzey",
     shortTitle: "Sürtünme",
     prompt: "Yüzey pürüzlendikçe durma mesafesi nasıl değişir?",
@@ -108,11 +114,13 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 0.3,
     predictions: ["Artar", "Değişmez", "Azalır"],
     accent: "#ffc86a",
+    equation: "Fₛ = μ · N",
+    principle: "Sürtünme hareket yönüne zıt bir net kuvvet oluşturarak hızın değişmesine neden olur.",
   },
   {
     id: "force-mass",
     number: "04",
-    law: "NEWTON’UN 2. YASASI",
+    law: "2. YASA · KUVVET–KÜTLE–İVME",
     title: "Kuvvet, kütle ve ivme",
     shortTitle: "F = m · a",
     prompt: "Aynı kuvvet daha büyük kütleye uygulanırsa ivme ne olur?",
@@ -131,11 +139,13 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 25,
     predictions: ["İvme artar", "İvme değişmez", "İvme azalır"],
     accent: "#aa8cff",
+    equation: "ΣF = m · a",
+    principle: "İvme net kuvvetle doğru, kütleyle ters orantılıdır.",
   },
   {
     id: "reaction",
     number: "05",
-    law: "NEWTON’UN 3. YASASI",
+    law: "3. YASA · ETKİ–TEPKİ",
     title: "Balon roket nasıl ilerler?",
     shortTitle: "Etki · tepki",
     prompt: "Balondan çıkan hava arttıkça roketin ivmesi nasıl değişir?",
@@ -154,11 +164,13 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 0.5,
     predictions: ["İvme artar", "İvme değişmez", "İvme azalır"],
     accent: "#ff8db5",
+    equation: "F_AB = −F_BA",
+    principle: "Kuvvetler eşit büyüklükte, zıt yönlüdür ve farklı cisimlere etki eder.",
   },
   {
     id: "momentum",
     number: "06",
-    law: "MOMENTUM · İTME",
+    law: "UYGULAMA · MOMENTUM VE İTME",
     title: "Güvenli duruşun sırrı",
     shortTitle: "Çarpışma güvenliği",
     prompt: "Durma süresi uzadığında ortalama çarpışma kuvveti ne olur?",
@@ -177,11 +189,13 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 0.5,
     predictions: ["Kuvvet artar", "Kuvvet değişmez", "Kuvvet azalır"],
     accent: "#ff806f",
+    equation: "Δp = F · Δt",
+    principle: "Aynı momentum değişimi daha uzun sürede gerçekleşirse ortalama kuvvet küçülür.",
   },
   {
     id: "cradle",
     number: "07",
-    law: "MOMENTUMUN KORUNUMU",
+    law: "UYGULAMA · MOMENTUMUN KORUNUMU",
     title: "Newton beşiğinde aktarım",
     shortTitle: "Newton beşiği",
     prompt: "Bir yerine iki bilye bırakırsan karşı tarafta kaç bilye yükselir?",
@@ -200,6 +214,8 @@ const EXPERIMENTS: Experiment[] = [
     secondaryDefault: 3,
     predictions: ["Bir bilye", "Aynı sayıda bilye", "Tüm bilyeler"],
     accent: "#9ce4ff",
+    equation: "Σp_önce = Σp_sonra",
+    principle: "Dış kuvvetin ihmal edildiği sistemde toplam momentum korunur.",
   },
 ];
 
@@ -237,7 +253,7 @@ function createTextSprite(text: string, color = "#eafcff", width = 1024) {
   context.font = "800 50px Arial";
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillText(text, canvas.width / 2, canvas.height / 2 + 3);
+  context.fillText(text, canvas.width / 2, canvas.height / 2 + 3, canvas.width - 72);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const sprite = new THREE.Sprite(
@@ -491,6 +507,14 @@ function NewtonHologramScene({
     const title = createTextSprite(`${experiment.number} · ${experiment.shortTitle}`, experiment.accent);
     title.position.set(1.55, 3.15, -1.55);
     stage.add(title);
+    const lawLabel = createTextSprite(experiment.law, experiment.accent, 1200);
+    lawLabel.position.set(-2.45, 1.85, -0.78);
+    lawLabel.scale.set(3.35, 0.5, 1);
+    stage.add(lawLabel);
+    const equationLabel = createTextSprite(experiment.equation, "#f5fbfd", 820);
+    equationLabel.position.set(-2.45, 1.18, -0.78);
+    equationLabel.scale.set(2.7, 0.55, 1);
+    stage.add(equationLabel);
     const runButton = addRunButton(stage, experiment.accent);
 
     const animated: ((value: number, time: number) => void)[] = [];
@@ -901,7 +925,13 @@ function LiveGraph({
   );
 }
 
-export default function NewtonBookLab({ onBack }: { onBack: () => void }) {
+export default function NewtonBookLab({
+  onBack,
+  context = "free",
+}: {
+  onBack: () => void;
+  context?: "free" | "mechanics";
+}) {
   const [chapter, setChapter] = useState(0);
   const [parameters, setParameters] = useState<Parameters>(DEFAULT_PARAMETERS);
   const [running, setRunning] = useState(false);
@@ -978,7 +1008,9 @@ export default function NewtonBookLab({ onBack }: { onBack: () => void }) {
   return (
     <main className="newton-book-lab" ref={labRef} style={{ "--newton-accent": experiment.accent } as React.CSSProperties}>
       <header className="newton-book-header">
-        <button type="button" onClick={onBack}>← Serbest alanlara dön</button>
+        <button type="button" onClick={onBack}>
+          ← {context === "mechanics" ? "Mekanik deneylerine dön" : "Serbest alanlara dön"}
+        </button>
         <div>
           <span>FA</span>
           <b>FİZİK ATÖLYESİ</b>
@@ -1020,7 +1052,7 @@ export default function NewtonBookLab({ onBack }: { onBack: () => void }) {
       </nav>
 
       <section className="newton-book-workspace">
-        <div className="newton-stage-card">
+        <div className="newton-stage-card" key={`stage-${experiment.id}`}>
           <div className="newton-stage-toolbar">
             <span><small>3B HOLOGRAFİK DENEY</small><b>{experiment.title}</b></span>
             <span><i className={running ? "live" : ""} />{running ? "Deney çalışıyor" : completed.has(experiment.id) ? "Deney tamamlandı" : "Deney hazır"}</span>
@@ -1044,18 +1076,28 @@ export default function NewtonBookLab({ onBack }: { onBack: () => void }) {
               <span>FİZİK ATÖLYESİ SUNAR</span>
               <h2>Newton’un<br />Hareket Yasaları</h2>
               <p>Masadaki kitabı aç; her sayfada bir fizik yasasını kendi deneyinle çalıştır.</p>
+              <div className="newton-intro-laws" aria-label="Kitaptaki Newton yasaları">
+                <span><i>1</i><b>Eylemsizlik</b></span>
+                <span><i>2</i><b>ΣF = m · a</b></span>
+                <span><i>3</i><b>Etki · tepki</b></span>
+              </div>
               <button type="button" onClick={() => setIntroOpen(false)}>3B kitabı aç <i>→</i></button>
               <small>Fare, dokunmatik ekran ve klavye ile uyumludur.</small>
             </div>
           )}
         </div>
 
-        <aside className="newton-control-panel">
+        <aside className="newton-control-panel" key={`panel-${experiment.id}`}>
           <div className="newton-page-heading">
             <span>{experiment.number} · {experiment.law}</span>
             <h2>{experiment.title}</h2>
             <p>{experiment.description}</p>
           </div>
+
+          <section className="newton-law-card">
+            <div><small>BU SAYFANIN YASASI</small><strong>{experiment.equation}</strong></div>
+            <p>{experiment.principle}</p>
+          </section>
 
           <section className="newton-prediction">
             <small>ÖNCE TAHMİN ET</small>

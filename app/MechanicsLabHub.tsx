@@ -2,13 +2,15 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import BallisticPendulumLab from "./BallisticPendulumLab";
 import CollisionLab from "./CollisionLab";
 import FreeFallLab from "./FreeFallLab";
 import HarmonicMotionLab from "./HarmonicMotionLab";
 import MotionLab from "./MotionLab";
 import TwoDimensionalMotionLab from "./TwoDimensionalMotionLab";
+
+const NewtonBookLab = lazy(() => import("./NewtonBookLab"));
 
 type ActiveModule =
   | "motion"
@@ -17,6 +19,7 @@ type ActiveModule =
   | "collisions"
   | "ballistic-pendulum"
   | "harmonic-motion"
+  | "newton-book"
   | null;
 
 export default function MechanicsLabHub({
@@ -31,6 +34,25 @@ export default function MechanicsLabHub({
       window.scrollTo({ top: 0, behavior: "auto" });
     }
   }, [activeModule]);
+
+  if (activeModule === "newton-book") {
+    return (
+      <Suspense
+        fallback={
+          <main className="newton-loading-screen" role="status">
+            <i />
+            <span>MEKANİK · 3B NEWTON KİTABI</span>
+            <h1>Deney sayfaları hazırlanıyor…</h1>
+          </main>
+        }
+      >
+        <NewtonBookLab
+          context="mechanics"
+          onBack={() => setActiveModule(null)}
+        />
+      </Suspense>
+    );
+  }
 
   return (
     <main className="page-shell mechanics-inner-shell">
@@ -88,6 +110,9 @@ export default function MechanicsLabHub({
             >
               Basit harmonik hareket
             </button>
+            <button type="button" onClick={() => setActiveModule("newton-book")}>
+              Newton 3B
+            </button>
           </nav>
         )}
         <span className="curriculum-chip">
@@ -108,7 +133,8 @@ export default function MechanicsLabHub({
         <section className="module-launcher" id="ust">
           <div className="module-launcher-copy">
             <span>MEKANİK · ETKİLEŞİMLİ DENEYLER</span>
-            <h1>Çalışmak istediğin deneyi seç.</h1>
+            <h1>Gerçek düzeneklerden üç boyutlu fiziğe.</h1>
+            <p>Bir laboratuvar deneyini kur veya Newton’un yasalarını sayfaların içinden yükselen 3B deneylerle keşfet.</p>
           </div>
           <div className="module-choice-grid">
             <button
@@ -233,6 +259,35 @@ export default function MechanicsLabHub({
                 <em>Yay–kütle ve basit sarkaç deneyleri</em>
               </span>
               <strong>Deneyi aç →</strong>
+            </button>
+            <button
+              className="newton-mechanics-choice"
+              type="button"
+              aria-pressed={activeModule === "newton-book"}
+              onClick={() => setActiveModule("newton-book")}
+            >
+              <span
+                className="module-choice-visual newton-mechanics-choice-visual"
+                aria-hidden="true"
+              >
+                <img
+                  src="./free-force-motion-newton-book-v2.webp"
+                  alt=""
+                  draggable="false"
+                />
+                <i className="newton-choice-quality">ETKİLEŞİMLİ 3B</i>
+              </span>
+              <span className="module-choice-copy">
+                <small>MODÜL 07 · PROFESYONEL 3B KİTAP</small>
+                <b>Newton’un hareket yasaları</b>
+                <em>1., 2. ve 3. yasayı yedi canlı deney, ölçüm ve grafikle keşfet</em>
+                <span className="newton-choice-laws">
+                  <i>1 · Eylemsizlik</i>
+                  <i>2 · F = m·a</i>
+                  <i>3 · Etki–tepki</i>
+                </span>
+              </span>
+              <strong>3B kitabı aç →</strong>
             </button>
           </div>
         </section>

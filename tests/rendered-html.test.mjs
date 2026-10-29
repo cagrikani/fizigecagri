@@ -72,7 +72,7 @@ test("sunucu paketi Fizik Atölyesi olarak taşınabilir yapıdadır", async () 
   );
 });
 
-test("altı mekanik deneyi etkileşimlidir; vektör ve tork modülleri kaldırılmıştır", async () => {
+test("mekanik alanı altı gerçek düzenek ve profesyonel 3B Newton kitabı sunar", async () => {
   const page = await readFile(new URL("app/MechanicsLabHub.tsx", projectRoot), "utf8");
   assert.match(page, /activeModule/);
   assert.match(page, /module-choice-grid/);
@@ -82,31 +82,37 @@ test("altı mekanik deneyi etkileşimlidir; vektör ve tork modülleri kaldırı
   assert.match(page, /setActiveModule\("collisions"\)/);
   assert.match(page, /setActiveModule\("ballistic-pendulum"\)/);
   assert.match(page, /setActiveModule\("harmonic-motion"\)/);
+  assert.match(page, /setActiveModule\("newton-book"\)/);
   assert.match(page, /activeModule === "motion"/);
   assert.match(page, /activeModule === "free-fall"/);
   assert.match(page, /activeModule === "two-dimensional"/);
   assert.match(page, /activeModule === "collisions"/);
   assert.match(page, /activeModule === "ballistic-pendulum"/);
   assert.match(page, /activeModule === "harmonic-motion"/);
+  assert.match(page, /activeModule === "newton-book"/);
   assert.match(page, /FreeFallLab/);
   assert.match(page, /TwoDimensionalMotionLab/);
   assert.match(page, /CollisionLab/);
   assert.match(page, /BallisticPendulumLab/);
   assert.match(page, /HarmonicMotionLab/);
+  assert.match(page, /NewtonBookLab/);
   assert.match(page, /Serbest düşme/);
   assert.match(page, /İki boyutta hareket/);
   assert.match(page, /Çarpışmalar/);
   assert.match(page, /Balistik sarkaç/);
   assert.match(page, /Basit harmonik hareket/);
+  assert.match(page, /Newton’un hareket yasaları/);
   assert.match(page, /mechanics-motion\.webp/);
   assert.match(page, /mechanics-freefall\.webp/);
   assert.match(page, /mechanics-two-dimensional\.webp/);
   assert.match(page, /mechanics-collisions\.webp/);
   assert.match(page, /mechanics-ballistic\.webp/);
   assert.match(page, /mechanics-harmonic-motion\.webp/);
+  assert.match(page, /free-force-motion-newton-book-v2\.webp/);
   assert.doesNotMatch(page, /vectors|VectorWorkspace|mechanics-vectors|Vektörler|TorqueLab|torque|Dönme dinamiği ve tork/i);
   assert.match(page, /MODÜL 01 · DENEY 1/);
   assert.match(page, /MODÜL 06 · DENEY 6/);
+  assert.match(page, /MODÜL 07 · PROFESYONEL 3B KİTAP/);
 });
 
 test("ana portal iki çalışma yolu ve bütün gelecek alanları sunar", async () => {
@@ -142,7 +148,8 @@ test("ana portal iki çalışma yolu ve bütün gelecek alanları sunar", async 
   assert.match(page, /onNavigate\("electricity"\)/);
   assert.match(page, /2 deney açık/);
   assert.match(page, /3 deney açık/);
-  assert.match(page, /<b>13<\/b>\s*çalışan deney/);
+  assert.match(page, /<b>14<\/b>\s*çalışan deney/);
+  assert.match(page, /7 çalışma açık/);
   assert.match(page, /fizik-atolyesi-hero\.png/);
   assert.match(page, /portal-guided-lab\.webp/);
   assert.match(page, /portal-free-simulation\.webp/);
@@ -206,6 +213,14 @@ test("Serbest Kuvvet ve Hareket alanı yedi deneyli 3B Newton kitabını açar",
   assert.match(page, /Etki · tepki/);
   assert.match(page, /Çarpışma güvenliği/);
   assert.match(page, /Newton beşiği/);
+  assert.match(page, /1\. YASA · EYLEMSİZLİK/);
+  assert.match(page, /2\. YASA · KUVVET–KÜTLE–İVME/);
+  assert.match(page, /3\. YASA · ETKİ–TEPKİ/);
+  assert.match(page, /ΣF = m · a/);
+  assert.match(page, /F_AB = −F_BA/);
+  assert.match(page, /newton-law-card/);
+  assert.match(page, /newton-intro-laws/);
+  assert.match(page, /context === "mechanics"/);
   assert.match(page, /ÖNCE TAHMİN ET/);
   assert.match(page, /DENEYİ ÇALIŞTIR/);
   assert.match(page, /LiveGraph/);
