@@ -41,6 +41,7 @@ type Experiment = {
   accent: string;
   equation: string;
   principle: string;
+  quickFacts: [string, string, string];
 };
 
 const EXPERIMENTS: Experiment[] = [
@@ -68,6 +69,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#67e8d0",
     equation: "ΣF = F₁ − F₂",
     principle: "Hareketi tek tek kuvvetler değil, kuvvetlerin bileşkesi belirler.",
+    quickFacts: [
+      "Zıt yönlü kuvvetler birbirinden çıkarılır.",
+      "Bileşke sıfırsa cismin hızı değişmez.",
+      "Hareket, büyük kuvvetin yönünde değişir.",
+    ],
   },
   {
     id: "inertia",
@@ -93,6 +99,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#82c8ff",
     equation: "ΣF = 0  →  v = sabit",
     principle: "Net kuvvet sıfırsa cisim duruyorsa durur, hareket ediyorsa sabit hızla hareketini sürdürür.",
+    quickFacts: [
+      "Eylemsizlik, hareket durumunu koruma eğilimidir.",
+      "Ani fren, yolcuyu öne doğru hareket ettirir.",
+      "Emniyet kemeri bu hareketi güvenle sınırlar.",
+    ],
   },
   {
     id: "friction",
@@ -118,6 +129,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#ffc86a",
     equation: "Fₛ = μ · N",
     principle: "Sürtünme hareket yönüne zıt bir net kuvvet oluşturarak hızın değişmesine neden olur.",
+    quickFacts: [
+      "Sürtünme kuvveti hareket yönüne zıttır.",
+      "Pürüzlü yüzey diski daha kısa sürede durdurur.",
+      "Aynı hızda durma mesafesini yüzey belirler.",
+    ],
   },
   {
     id: "force-mass",
@@ -143,6 +159,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#aa8cff",
     equation: "ΣF = m · a",
     principle: "İvme net kuvvetle doğru, kütleyle ters orantılıdır.",
+    quickFacts: [
+      "Net kuvvet arttıkça ivme artar.",
+      "Aynı kuvvette büyük kütle daha az ivmelenir.",
+      "Kuvvet ve ivme aynı yönlüdür.",
+    ],
   },
   {
     id: "reaction",
@@ -168,6 +189,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#ff8db5",
     equation: "F_AB = −F_BA",
     principle: "Kuvvetler eşit büyüklükte, zıt yönlüdür ve farklı cisimlere etki eder.",
+    quickFacts: [
+      "Balon havayı geriye iter.",
+      "Hava balonu eşit kuvvetle ileri iter.",
+      "Etki ve tepki farklı cisimler üzerindedir.",
+    ],
   },
   {
     id: "momentum",
@@ -193,6 +219,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#ff806f",
     equation: "Δp = F · Δt",
     principle: "Aynı momentum değişimi daha uzun sürede gerçekleşirse ortalama kuvvet küçülür.",
+    quickFacts: [
+      "Çarpışmada aracın momentumu değişir.",
+      "Durma süresi uzadıkça ortalama kuvvet azalır.",
+      "Hava yastığı ve ezilme bölgesi süreyi uzatır.",
+    ],
   },
   {
     id: "cradle",
@@ -218,6 +249,11 @@ const EXPERIMENTS: Experiment[] = [
     accent: "#9ce4ff",
     equation: "Σp_önce = Σp_sonra",
     principle: "Dış kuvvetin ihmal edildiği sistemde toplam momentum korunur.",
+    quickFacts: [
+      "Momentum bilyeler boyunca aktarılır.",
+      "İdeal sistemde toplam momentum korunur.",
+      "Bırakılan bilye sayısı kadar bilye yükselir.",
+    ],
   },
 ];
 
@@ -342,6 +378,91 @@ function createPaperTexture() {
     context.bezierCurveTo(140, y + 7, 350, y - 5, 512, y + 2);
     context.stroke();
   }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+function drawWrappedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+) {
+  const words = text.split(" ");
+  let line = "";
+  let cursorY = y;
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (context.measureText(candidate).width > maxWidth && line) {
+      context.fillText(line, x, cursorY);
+      line = word;
+      cursorY += lineHeight;
+    } else {
+      line = candidate;
+    }
+  });
+  if (line) context.fillText(line, x, cursorY);
+  return cursorY;
+}
+
+function createBookInfoTexture(experiment: Experiment) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 1280;
+  const context = canvas.getContext("2d");
+  if (!context) return new THREE.Texture();
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.textBaseline = "top";
+  context.fillStyle = "#715d49";
+  context.font = "900 27px Arial";
+  context.letterSpacing = "4px";
+  context.fillText(`SAYFA ${experiment.number} · KISA BİLGİ`, 80, 70);
+  context.letterSpacing = "0px";
+  context.fillStyle = "#27231f";
+  context.font = "700 58px Georgia";
+  drawWrappedText(context, experiment.shortTitle, 80, 125, 850, 66);
+  context.fillStyle = experiment.accent;
+  context.fillRect(80, 276, 150, 8);
+  context.fillStyle = "#302b26";
+  context.font = "800 62px Arial";
+  context.fillText(experiment.equation, 80, 320);
+  context.fillStyle = "#6c5c4d";
+  context.font = "500 31px Arial";
+  drawWrappedText(context, experiment.principle, 80, 430, 850, 43);
+  context.strokeStyle = "rgba(93,76,58,.24)";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(80, 590);
+  context.lineTo(936, 590);
+  context.stroke();
+  context.fillStyle = "#715d49";
+  context.font = "900 24px Arial";
+  context.letterSpacing = "3px";
+  context.fillText("AKLINDA KALSIN", 80, 625);
+  context.letterSpacing = "0px";
+  experiment.quickFacts.forEach((fact, index) => {
+    const top = 706 + index * 155;
+    context.fillStyle = experiment.accent;
+    context.beginPath();
+    context.arc(105, top + 23, 24, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#10212b";
+    context.font = "900 25px Arial";
+    context.textAlign = "center";
+    context.fillText(String(index + 1), 105, top + 8);
+    context.textAlign = "left";
+    context.fillStyle = "#3e3730";
+    context.font = "600 31px Arial";
+    drawWrappedText(context, fact, 155, top, 750, 41);
+  });
+  context.fillStyle = "#8b7764";
+  context.font = "700 22px Arial";
+  context.textAlign = "right";
+  context.fillText("Kenarına dokun · sonraki deneye geç", 936, 1200);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
@@ -600,6 +721,9 @@ type SceneProps = {
   running: boolean;
   quality: Quality;
   onRun: () => void;
+  onTurn: (direction: -1 | 1) => void;
+  canTurnPrevious: boolean;
+  canTurnNext: boolean;
 };
 
 function NewtonHologramScene({
@@ -609,17 +733,22 @@ function NewtonHologramScene({
   running,
   quality,
   onRun,
+  onTurn,
+  canTurnPrevious,
+  canTurnNext,
 }: SceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const parameterRef = useRef(parameters);
   const progressRef = useRef(progress);
   const runningRef = useRef(running);
   const runRef = useRef(onRun);
+  const turnRef = useRef(onTurn);
 
   useEffect(() => { parameterRef.current = parameters; }, [parameters]);
   useEffect(() => { progressRef.current = progress; }, [progress]);
   useEffect(() => { runningRef.current = running; }, [running]);
   useEffect(() => { runRef.current = onRun; }, [onRun]);
+  useEffect(() => { turnRef.current = onTurn; }, [onTurn]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -730,6 +859,75 @@ function NewtonHologramScene({
     spine.position.set(0, -0.28, 0);
     book.add(spine);
 
+    const infoPanel = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.82, 4.78),
+      new THREE.MeshBasicMaterial({
+        map: createBookInfoTexture(experiment),
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    infoPanel.rotation.x = -Math.PI / 2;
+    infoPanel.position.set(-2.24, -0.102, 0);
+    book.add(infoPanel);
+
+    const pageTurn = new THREE.Group();
+    pageTurn.position.set(0, -0.075, 0);
+    pageTurn.visible = false;
+    const turningSheet = roundedMesh(
+      4.18,
+      0.035,
+      5.03,
+      0.035,
+      new THREE.MeshPhysicalMaterial({
+        color: "#f2e7d0",
+        map: createPaperTexture(),
+        roughness: 0.86,
+        side: THREE.DoubleSide,
+      }),
+    );
+    turningSheet.position.x = 2.09;
+    pageTurn.add(turningSheet);
+    book.add(pageTurn);
+
+    const addPageEdge = (direction: -1 | 1) => {
+      const x = direction === 1 ? 4.36 : -4.36;
+      const action = direction === 1 ? "next-page" : "previous-page";
+      const hitArea = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.42, 5.15),
+        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.01, depthWrite: false }),
+      );
+      hitArea.position.set(x, -0.02, 0);
+      hitArea.userData.action = action;
+      book.add(hitArea);
+      const edge = roundedMesh(
+        0.16,
+        0.16,
+        4.7,
+        0.045,
+        new THREE.MeshPhysicalMaterial({
+          color: experiment.accent,
+          emissive: experiment.accent,
+          emissiveIntensity: 0.8,
+          metalness: 0.35,
+          roughness: 0.28,
+          transparent: true,
+          opacity: 0.82,
+        }),
+      );
+      edge.position.set(x, -0.02, 0);
+      edge.userData.action = action;
+      book.add(edge);
+      const label = createTextSprite(direction === 1 ? "SAYFAYI ÇEVİR  →" : "←  ÖNCEKİ SAYFA", experiment.accent, 760);
+      label.position.set(x + direction * 0.05, 0.55, 1.78);
+      label.scale.set(2.15, 0.4, 1);
+      label.userData.action = action;
+      book.add(label);
+    };
+    if (canTurnPrevious) addPageEdge(-1);
+    if (canTurnNext) addPageEdge(1);
+
     const stage = new THREE.Group();
     stage.position.y = 0.02;
     book.add(stage);
@@ -766,14 +964,6 @@ function NewtonHologramScene({
     const title = createTextSprite(`${experiment.number} · ${experiment.shortTitle}`, experiment.accent);
     title.position.set(1.55, 3.15, -1.55);
     stage.add(title);
-    const lawLabel = createTextSprite(experiment.law, experiment.accent, 1200);
-    lawLabel.position.set(-2.45, 1.85, -0.78);
-    lawLabel.scale.set(3.35, 0.5, 1);
-    stage.add(lawLabel);
-    const equationLabel = createTextSprite(experiment.equation, "#f5fbfd", 820);
-    equationLabel.position.set(-2.45, 1.18, -0.78);
-    equationLabel.scale.set(2.7, 0.55, 1);
-    stage.add(equationLabel);
     const runButton = addRunButton(stage, experiment.accent);
 
     const animated: ((value: number, time: number) => void)[] = [];
@@ -1002,6 +1192,19 @@ function NewtonHologramScene({
       });
     }
 
+    const clock = new THREE.Clock();
+    let pageTurnDirection: -1 | 0 | 1 = 0;
+    let pageTurnStartedAt = 0;
+    const startPageTurn = (direction: -1 | 1) => {
+      if (pageTurnDirection !== 0 || runningRef.current) return;
+      if ((direction === 1 && !canTurnNext) || (direction === -1 && !canTurnPrevious)) return;
+      pageTurnDirection = direction;
+      pageTurnStartedAt = clock.getElapsedTime();
+      pageTurn.visible = true;
+      pageTurn.position.y = -0.075;
+      pageTurn.rotation.z = direction === 1 ? 0 : Math.PI;
+    };
+
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     const handlePointer = (event: PointerEvent) => {
@@ -1009,24 +1212,44 @@ function NewtonHologramScene({
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
-      const hit = raycaster.intersectObjects(scene.children, true).find((intersection) => {
+      const intersections = raycaster.intersectObjects(scene.children, true);
+      const hit = intersections.find((intersection) => {
         let object: THREE.Object3D | null = intersection.object;
         while (object) {
-          if (object.userData.action === "run") return true;
+          if (typeof object.userData.action === "string") return true;
           object = object.parent;
         }
         return false;
       });
-      if (hit) runRef.current();
+      if (!hit) return;
+      let object: THREE.Object3D | null = hit.object;
+      while (object && typeof object.userData.action !== "string") object = object.parent;
+      if (object?.userData.action === "run") runRef.current();
+      if (object?.userData.action === "next-page") startPageTurn(1);
+      if (object?.userData.action === "previous-page") startPageTurn(-1);
     };
     renderer.domElement.addEventListener("pointerdown", handlePointer);
 
-    const clock = new THREE.Clock();
     let frame = 0;
     const draw = () => {
       frame = requestAnimationFrame(draw);
       const time = clock.getElapsedTime();
       const value = progressRef.current;
+      if (pageTurnDirection !== 0) {
+        const turnProgress = clamp((time - pageTurnStartedAt) / 0.82, 0, 1);
+        const easedTurn = easeInOut(turnProgress);
+        pageTurn.rotation.z = pageTurnDirection === 1
+          ? easedTurn * Math.PI
+          : Math.PI - easedTurn * Math.PI;
+        pageTurn.position.y = -0.075 + Math.sin(turnProgress * Math.PI) * 0.22;
+        turningSheet.scale.x = 1 - Math.sin(turnProgress * Math.PI) * 0.07;
+        if (turnProgress >= 1) {
+          const finishedDirection = pageTurnDirection;
+          pageTurnDirection = 0;
+          pageTurn.visible = false;
+          turnRef.current(finishedDirection);
+        }
+      }
       animated.forEach((animate) => animate(value, time));
       hologramBase.material.emissiveIntensity = 0.14 + Math.sin(time * 1.8) * 0.04;
       runButton.scale.setScalar(runningRef.current ? 0.84 + Math.sin(time * 9) * 0.05 : 1 + Math.sin(time * 2.1) * 0.035);
@@ -1068,7 +1291,7 @@ function NewtonHologramScene({
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, [experiment, quality]);
+  }, [canTurnNext, canTurnPrevious, experiment, quality]);
 
   return <div className="newton-webgl-stage" ref={mountRef} />;
 }
@@ -1329,11 +1552,14 @@ export default function NewtonBookLab({
             running={running}
             quality={quality}
             onRun={runExperiment}
+            onTurn={moveChapter}
+            canTurnPrevious={chapter > 0}
+            canTurnNext={chapter < EXPERIMENTS.length - 1}
           />
           <div className="newton-scene-help">
+            <span><i>↠</i> Işıklı kenara dokun ve sayfayı çevir</span>
             <span><i>↻</i> Sahneyi sürükleyerek döndür</span>
             <span><i>＋</i> Yakınlaşmak için kaydır</span>
-            <span><i>●</i> Kitaptaki ışıklı düğmeye dokun</span>
           </div>
           {introOpen && (
             <div className="newton-intro-overlay">

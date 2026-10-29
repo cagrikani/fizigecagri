@@ -204,6 +204,12 @@ test("Serbest Kuvvet ve Hareket alanı yedi deneyli 3B Newton kitabını açar",
   assert.match(page, /createDynamicsCart/);
   assert.match(page, /createCrashCarModel/);
   assert.match(page, /PBR MALZEME · FİZİKSEL IŞIK/);
+  assert.match(page, /createBookInfoTexture/);
+  assert.match(page, /quickFacts/);
+  assert.match(page, /next-page/);
+  assert.match(page, /previous-page/);
+  assert.match(page, /SAYFAYI ÇEVİR/);
+  assert.match(page, /pageTurn\.rotation\.z/);
   assert.match(page, /requestFullscreen/);
   assert.match(page, /"resultant"/);
   assert.match(page, /"inertia"/);
